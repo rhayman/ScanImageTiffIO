@@ -221,7 +221,8 @@ public:
 
 	virtual bool isOpened();
 	virtual bool open(std::string outputPath);
-	virtual SITiffWriter& operator << (cv::Mat& frame);
+	virtual bool close();
+	virtual void operator << (cv::Mat& frame);
     bool writeSIHdr(const std::string swTag, const std::string imDescTag);
 
 protected:

@@ -336,6 +336,7 @@ std::vector<double> SITiffReader::getAllTimeStamps() {
 		std::cout << "Finished scraping timestamps..." << std::endl;
 		return headerdata->getTimeStamps();
 	}
+	return std::vector<double>();
 }
 
 void SITiffReader::getFrameNumAndTimeStamp(const unsigned int dirnum, unsigned int & framenum, double & timestamp)
@@ -371,6 +372,14 @@ cv::Mat SITiffReader::readframe(int framedir)
 	{
 		cv::Mat frame;
 		int framenum = framedir;
+		/*
+		From the man pages for TIFFSetDirectory:
+
+		TIFFSetDirectory changes the current directory and reads its contents with TIFFReadDirectory.
+		The parameter dirnum specifies the subfile/directory as an integer number, with the first directory numbered zero.
+
+		NB This differs from the 1-based indexing for framenumbers that ScanImage uses (fucking Matlab)
+		*/
 		TIFFSetDirectory(m_tif, framenum);
 		uint32 w = 0, h = 0;
 		uint16 photometric = 0;
@@ -615,14 +624,6 @@ bool SITiffWriter::writeHdr(const cv::Mat & _img) {
     return true;
 }
 
-// void SITiffWriter::writeTag( WLByteStream& strm, TiffTag tag, TiffFieldType fieldType,
-//                              int count, int value ) {
-//     strm.putWord( tag );
-//     strm.putWord( fieldType );
-//     strm.putDWord( count );
-//     strm.putDWord( value );
-// }
-
 bool SITiffWriter::writeSIHdr(const std::string swTag, const std::string imDescTag) {
     auto _swTag = swTag.c_str();
     auto _imDescTag = imDescTag.c_str();
@@ -664,9 +665,18 @@ bool SITiffWriter::open(std::string outputPath)
 		m_filename = outputPath;
 		opened = true;
 	}
+	return opened;
 }
 
-SITiffWriter& SITiffWriter::operator << (cv::Mat& frame)
+bool SITiffWriter::close() {
+	if ( opened ) {
+		TIFFClose(m_tif);
+		opened = false;
+	}
+	return opened;
+}
+
+void SITiffWriter::operator << (cv::Mat& frame)
 {
 	if (opened)
 	{

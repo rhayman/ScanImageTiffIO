@@ -1,0 +1,12 @@
+prefix=/usr/local
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: ScanImageTiff
+Description: tiff file io for tiffs written with scanImage
+Version: 1.0.1
+
+Requires:
+Libs: -L${libdir} -ltiff -lopencv_core -lopencv_imgproc 
+Cflags: -I${includedir} -I/usr/include/x86_64-linux-gnu
