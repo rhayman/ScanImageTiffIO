@@ -9,6 +9,17 @@ Initially this was for use with r2p2 (link), a GUI I wrote that is basically an 
 
 There is now a python branch that I'm writing that allows the library to be accessed from Python using pybind11 (link). I'm still figuring the Python interface out...
 
+Dependencies
+============
+You'll need to install:
+
+- opencv (https://opencv.org/)
+
+- libtiff (http://www.libtiff.org/)
+
+Installation
+============
+
 So far I've done
 
 `
