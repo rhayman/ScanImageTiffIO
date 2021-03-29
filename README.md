@@ -51,3 +51,22 @@ The header file will be:
 
 and am reading the pybind11 documentation...
 
+Based on which I've now done:
+
+`
+python3 -m pip install pytest
+`
+
+and,
+
+`
+git clone https://github.com/pybind/pybind11.git
+cd pybind11
+mkdir build
+cd build
+cmake ..
+make check -j 8
+sudo make install
+`
+
+The last step dumped a load of .h files in /usr/local/include/pybind11 and a bunch of files in the cmake folders (/usr/local/share/cmake/pybind11)
