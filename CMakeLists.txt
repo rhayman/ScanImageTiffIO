@@ -4,9 +4,20 @@ include(GNUInstallDirs)
 
 # ----------- opencv -----------
 find_package( OpenCV REQUIRED core imgproc )
+# ---------- libtiff -----------
 find_package(TIFF REQUIRED)
+# ---------- python ------------
+find_package(PythonLibs 3 REQUIRED)
 
+# ---------- includes -----------
 include_directories(${OpenCV_INCLUDE_DIRS} ${TIFF_INCLUDE_DIRS})
+include_directories(${PYTHON_INCLUDE_DIRS})
+
+# ----- pybind11 ------
+add_subdirectory(pybind11)
+pybind11_add_module(ScanImageTiff_py SHARED src/ScanImageTiff.cpp)
+target_link_libraries(ScanImageTiff_py PRIVATE ${PYTHON_LIBRARIES} ${OPENCV_LIBS} ${TIFF_LIBRARIES})
+
 message(STATUS "TIFF_INCLUDE_DIRS")
 message(STATUS ${TIFF_INCLUDE_DIRS})
 
@@ -26,3 +37,5 @@ install(TARGETS ScanImageTiff
     PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 install(FILES ${CMAKE_BINARY_DIR}/ScanImageTiff.pc
     DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/pkgconfig)
+
+
