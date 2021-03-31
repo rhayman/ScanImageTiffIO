@@ -85,3 +85,10 @@ Whilst in the build directory you can start an iPython session and import and us
 >> import scanimagetiffio
 >> data = scanimagetiffio.SITiffReader("/path/to/the/file.tiff")
 `
+
+Problems
+========
+
+need to include <pybind11/stl.h> in the .cpp file and maybe <pybind11/functional.h> too
+
+need to figure out how to allow cv::Mat return type 
