@@ -15,8 +15,8 @@ include_directories(${PYTHON_INCLUDE_DIRS})
 
 # ----- pybind11 ------
 add_subdirectory(pybind11)
-pybind11_add_module(ScanImageTiff_py SHARED src/ScanImageTiff.cpp)
-target_link_libraries(ScanImageTiff_py PRIVATE ${PYTHON_LIBRARIES} ${OPENCV_LIBS} ${TIFF_LIBRARIES})
+pybind11_add_module(scanimagetiffio SHARED src/ScanImageTiff.cpp)
+target_link_libraries(scanimagetiffio PRIVATE ${OPENCV_LIBS} ${TIFF_LIBRARIES})
 
 message(STATUS "TIFF_INCLUDE_DIRS")
 message(STATUS ${TIFF_INCLUDE_DIRS})

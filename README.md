@@ -70,3 +70,18 @@ sudo make install
 `
 
 The last step dumped a load of .h files in /usr/local/include/pybind11 and a bunch of files in the cmake folders (/usr/local/share/cmake/pybind11)
+
+So the only way I've got this to work is by compiling the Python binding manually like so:
+
+`
+c++ -O3 -Wall -shared -std=c++11 -fPIC $(python3 -m pybind11 --includes) ../src/ScanImageTiff.cpp -o scanimagetiffio$(python3-config --extension-suffix) `pkg-config --cflags --libs opencv4` -ltiff
+`
+
+This will result in a library file called scanimagetiffio.cpython-38-x86_64-linux-gnu.so or similar being created in the build directory
+
+Whilst in the build directory you can start an iPython session and import and use like so:
+
+`
+>> import scanimagetiffio
+>> data = scanimagetiffio.SITiffReader("/path/to/the/file.tiff")
+`

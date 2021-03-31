@@ -1,8 +1,8 @@
 #include "../include/ScanImageTiff.h"
+#include "../pybind11/include/pybind11/pybind11.h"
 
 #include <stdio.h>
 #include <stdio_ext.h>
-
 #include <limits>
 
 void SITiffHeader::read(TIFF * m_tif, int dirnum)
@@ -426,18 +426,18 @@ cv::Mat SITiffReader::readframe(int framedir)
 	            frame = cv::Mat(h, w, cv_matrix_type);
 	            uchar * data = frame.ptr();
 
-	            for (int y = 0; y < m_imageheight; y+=tile_height0, data += frame.step*tile_height0)
+	            for (unsigned int y = 0; y < m_imageheight; y+=tile_height0, data += frame.step*tile_height0)
 	            {
-	            	int tile_height = tile_height0;
+	            	unsigned int tile_height = tile_height0;
 
 
 	            	if( y + tile_height > m_imageheight )
 	                    tile_height = m_imageheight - y;
 	                // tile_height is always equal to 8
 
-	                for(int x = 0; x < m_imagewidth; x += tile_width0, tileidx++)
+	                for(unsigned int x = 0; x < m_imagewidth; x += tile_width0, tileidx++)
 	                {
-	                	int tile_width = tile_width0, ok;
+	                	unsigned int tile_width = tile_width0, ok;
 
 	                    if( x + tile_width > m_imagewidth )
 	                        tile_width = m_imagewidth - x;
@@ -449,7 +449,7 @@ cv::Mat SITiffReader::readframe(int framedir)
 	                    	close();
 	                    	return cv::Mat();
 	                    }
-	                    for(int i = 0; i < tile_height; ++i)
+	                    for(unsigned int i = 0; i < tile_height; ++i)
 	                    {
 	                    	std::memcpy((ushort*)(data + frame.step*i)+x,
 	                                    buffer16 + i*tile_width0*ncn,
@@ -635,8 +635,6 @@ bool SITiffWriter::writeSIHdr(const std::string swTag, const std::string imDescT
 
 bool SITiffWriter::write( const cv::Mat& img, const std::vector<int>& params)
 {
-	int channels = img.channels();
-    int width = img.cols, height = img.rows;
     int depth = img.depth();
     if(img.type() == CV_32FC3)
     {
@@ -705,4 +703,36 @@ std::string SITiffWriter::type2str(int type)
 	r += "C";
 	r += (chans+'0');
 	return r;
+}
+
+// ----------------- Python binding ----------------
+
+namespace py = pybind11;
+
+PYBIND11_MODULE(scanimagetiffio, m) {
+	py::class_<SITiffReader>(m, "SITiffReader")
+		.def(py::init<std::string>())
+		.def("open", &SITiffReader::open)
+		.def("isOpen", &SITiffReader::isOpen)
+		.def("readheader", &SITiffReader::readheader)
+		.def("readframe", &SITiffReader::readframe)
+		.def("close", &SITiffReader::close)
+		.def("release", &SITiffReader::release)
+		.def("getVersion", &SITiffReader::getVersion)
+		.def("getfilename", &SITiffReader::getfilename)
+		.def("getNumFrames", &SITiffReader::getNumFrames)
+		.def("getAllTimeStamps", &SITiffReader::getAllTimeStamps)
+		.def("scrapeHeaders", &SITiffReader::scrapeHeaders)
+		.def("countDirectories", &SITiffReader::countDirectories)
+		.def("getSizePerDir", &SITiffReader::getSizePerDir)
+		.def("getChanLut", &SITiffReader::getChanLut)
+		.def("getSavedChans", &SITiffReader::getSavedChans)
+		.def("getChanOffsets", &SITiffReader::getChanOffsets)
+		.def("getFrameNumAndTimeStamp", &SITiffReader::getFrameNumAndTimeStamp)
+		.def("printHeader", &SITiffReader::printHeader)
+		.def("printImageDescriptionTag", &SITiffReader::printImageDescriptionTag)
+		.def("getSWTag", &SITiffReader::getSWTag)
+		.def("getImDescTag", &SITiffReader::getImDescTag)
+		.def("getImageSize", &SITiffReader::getImageSize)
+		.def("setImageSize", &SITiffReader::setImageSize);
 }
