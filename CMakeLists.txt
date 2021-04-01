@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.1)
 project(ScanImageTiff VERSION 1.0.1 DESCRIPTION "tiff file io for tiffs written with scanImage")
-include(GNUInstallDirs)
+#include(GNUInstallDirs)
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 # ----------- opencv -----------
 find_package( OpenCV REQUIRED core imgproc )
@@ -8,23 +10,30 @@ find_package( OpenCV REQUIRED core imgproc )
 find_package(TIFF REQUIRED)
 # ---------- python ------------
 find_package(PythonLibs 3 REQUIRED)
+# ---------- pybind11 -----------
+find_package(pybind11 CONFIG REQUIRED)
 
 # ---------- includes -----------
-include_directories(${OpenCV_INCLUDE_DIRS} ${TIFF_INCLUDE_DIRS})
-include_directories(${PYTHON_INCLUDE_DIRS})
+include_directories( ${CMAKE_CURRENT_SOURCE_DIR} )
+include_directories( ${OpenCV_INCLUDE_DIRS} )
+include_directories( ${OpenCV_INCLUDE_DIRS}/opencv4 )
+include_directories( ${TIFF_INCLUDE_DIRS} )
+include_directories( ${PYTHON_INCLUDE_DIRS} )
+include_directories( ${pybind11_INCLUDE_DIR})
 
-#SET(CMAKE_CXX_FLAGS "-std=c++11 -Wall -O3 -fPIC `pkg-config --libs --cflags opencv4` -ltiff")
-# ----- pybind11 ------
-add_subdirectory(pybind11)
-pybind11_add_module(scanimagetiffio SHARED src/ScanImageTiff.cpp src/ndarray_converter.cpp)
-target_link_libraries(scanimagetiffio PRIVATE ${OPENCV_LIBS} ${TIFF_LIBRARIES} ${PYTHON_LIBRARIES})
-target_compile_definitions(scanimagetiffio PRIVATE)
+SET(CMAKE_CXX_FLAGS "-std=c++11 -Wall -O3 -fPIC")
 
-message(STATUS "TIFF_INCLUDE_DIRS")
-message(STATUS ${TIFF_INCLUDE_DIRS})
+LINK_DIRECTORIES(
+  ${OpenCV_LIB_DIR}
+)
+
+add_library(scanimagetiffio SHARED src/ScanImageTiff.cpp src/ndarray_converter.cpp)
+target_link_libraries(scanimagetiffio ${OpenCV_LIBS} ${TIFF_LIBRARIES} ${PYTHON_LIBRARIES})
+SET_TARGET_PROPERTIES(scanimagetiffio PROPERTIES PREFIX "")
 
 add_library(ScanImageTiff SHARED src/ScanImageTiff.cpp)
 target_link_libraries(ScanImageTiff ${OpenCV_LIBS} ${TIFF_LIBRARIES})
+
 
 set_target_properties(ScanImageTiff PROPERTIES
     VERSION ${PROJECT_VERSION}

@@ -153,40 +153,40 @@ public:
 	bool open();
 	bool isOpen() { return isopened; }
 	bool readheader();
-	cv::Mat readframe(int framedir=0);
+	cv::Mat readframe(int framedir=0) const;
 	// bool readframe(cv::OutputArray);
 	bool close();
 	bool release();
-	int getVersion() { return headerdata->getVersion(); }
+	int getVersion() const { return headerdata->getVersion(); }
 
-	std::string getfilename() { return m_filename; }
-	int getNumFrames(int idx, int & count) { return headerdata->getNumFrames(m_tif, idx, count); }
-	std::vector<double> getAllTimeStamps();
+	std::string getfilename() const { return m_filename; }
+	int getNumFrames(int idx, int & count) const { return headerdata->getNumFrames(m_tif, idx, count); }
+	std::vector<double> getAllTimeStamps() const;
 	/*
 	quickGetNumFrames - called when a tif file is opened and counts the number of
 	directories in a tif file. should scrape the tiff headers for all pertinent information
 	so this operation is done only once at load time
 	TODO: rename sensibly and fill out all vectors etc
 	*/
-	int scrapeHeaders(int & count) { return headerdata->scrapeHeaders(m_tif, count); }
-	int countDirectories(int & count) { return headerdata->countDirectories(m_tif, count); }
-	unsigned int getSizePerDir(int dirnum=0) { return headerdata->getSizePerDir(m_tif, dirnum); }
-	std::map<int, std::pair<int, int>> getChanLut() { return headerdata->getChanLut(); }
-	std::map<unsigned int, unsigned int> getSavedChans() { return headerdata->getChanSaved(); }
-	std::map<int, int> getChanOffsets() { return headerdata->getChanOffsets(); }
+	int scrapeHeaders(int & count) const { return headerdata->scrapeHeaders(m_tif, count); }
+	int countDirectories(int & count) const { return headerdata->countDirectories(m_tif, count); }
+	unsigned int getSizePerDir(int dirnum=0) const { return headerdata->getSizePerDir(m_tif, dirnum); }
+	std::map<int, std::pair<int, int>> getChanLut() const { return headerdata->getChanLut(); }
+	std::map<unsigned int, unsigned int> getSavedChans() const { return headerdata->getChanSaved(); }
+	std::map<int, int> getChanOffsets() const { return headerdata->getChanOffsets(); }
 
 	/*
 	The first argument is the directory in the tiff file you want the frame number & timestamp for
 	which are the last two args
 	*/
-	void getFrameNumAndTimeStamp(const unsigned int, unsigned int &, double &);
+	void getFrameNumAndTimeStamp(const unsigned int, unsigned int &, double &) const;
 
-	void printHeader(int framenum) { headerdata->printHeader(m_tif, framenum); }
-	void printImageDescriptionTag() { std::string tag; headerdata->getImageDescTag(m_tif); }
-	std::string getSWTag(int n) { return headerdata->getSoftwareTag(m_tif, n); }
-	std::string getImDescTag(int n) { return headerdata->getImageDescTag(m_tif, n); }
+	void printHeader(int framenum) const { headerdata->printHeader(m_tif, framenum); }
+	void printImageDescriptionTag() const { std::string tag; headerdata->getImageDescTag(m_tif); }
+	std::string getSWTag(int n) const { return headerdata->getSoftwareTag(m_tif, n); }
+	std::string getImDescTag(int n) const { return headerdata->getImageDescTag(m_tif, n); }
 
-	void getImageSize(unsigned int & h, unsigned int & w) { h = m_imageheight; w = m_imagewidth; }
+	void getImageSize(unsigned int & h, unsigned int & w) const { h = m_imageheight; w = m_imagewidth; }
 	// called only by SITiffHeader
 	void setImageSize(int h, int w) { m_imageheight = h; m_imagewidth = w; }
 

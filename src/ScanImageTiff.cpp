@@ -1,5 +1,8 @@
 #include "../include/ScanImageTiff.h"
 #include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
+#include <pybind11/operators.h>
+
 // #include "../pybind11/include/pybind11/stl.h"
 // #include "../pybind11/include/pybind11/numpy.h"
 #include "../include/ndarray_converter.h"
@@ -7,6 +10,7 @@
 #include <stdio.h>
 #include <stdio_ext.h>
 #include <limits>
+#include <tuple>
 
 void SITiffHeader::read(TIFF * m_tif, int dirnum)
 {
@@ -190,12 +194,10 @@ int SITiffHeader::getNumFrames(TIFF * m_tif, int idx, int & count)
 	{
 		TIFFSetDirectory(m_tif, idx);
 		if ( TIFFReadDirectory(m_tif) == 1 )
-		{
 			++count;
-			return 0;
-		}
 		else
 			TIFFSetDirectory(m_tif, 0);
+		return 0;
 	}
 	return 1;
 }
@@ -713,6 +715,8 @@ std::string SITiffWriter::type2str(int type)
 namespace py = pybind11;
 
 PYBIND11_MODULE(scanimagetiffio, m) {
+	NDArrayConverter::init_numpy();
+
 	py::class_<SITiffReader>(m, "SITiffReader")
 		.def(py::init<std::string>())
 		.def("open", &SITiffReader::open)
@@ -723,10 +727,10 @@ PYBIND11_MODULE(scanimagetiffio, m) {
 		.def("release", &SITiffReader::release)
 		.def("getVersion", &SITiffReader::getVersion)
 		.def("getfilename", &SITiffReader::getfilename)
-		.def("getNumFrames", &SITiffReader::getNumFrames)
+		.def("getNumFrames", [] (const SITiffReader & s, int idx, int & count) {s.getNumFrames(idx,count); return pybind11::make_tuple(idx,count); })
 		.def("getAllTimeStamps", &SITiffReader::getAllTimeStamps)
 		.def("scrapeHeaders", &SITiffReader::scrapeHeaders)
-		.def("countDirectories", &SITiffReader::countDirectories)
+		.def("countDirectories", [] (const SITiffReader & s, int & count) { s.countDirectories(count); return pybind11::make_tuple(count); })
 		.def("getSizePerDir", &SITiffReader::getSizePerDir)
 		.def("getChanLut", &SITiffReader::getChanLut)
 		.def("getSavedChans", &SITiffReader::getSavedChans)
