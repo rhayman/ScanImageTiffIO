@@ -1,5 +1,8 @@
 #include "../include/ScanImageTiff.h"
-#include "../pybind11/include/pybind11/pybind11.h"
+#include <pybind11/pybind11.h>
+// #include "../pybind11/include/pybind11/stl.h"
+// #include "../pybind11/include/pybind11/numpy.h"
+#include "../include/ndarray_converter.h"
 
 #include <stdio.h>
 #include <stdio_ext.h>

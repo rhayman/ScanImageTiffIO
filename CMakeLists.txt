@@ -16,8 +16,8 @@ include_directories(${PYTHON_INCLUDE_DIRS})
 #SET(CMAKE_CXX_FLAGS "-std=c++11 -Wall -O3 -fPIC `pkg-config --libs --cflags opencv4` -ltiff")
 # ----- pybind11 ------
 add_subdirectory(pybind11)
-pybind11_add_module(scanimagetiffio SHARED src/ScanImageTiff.cpp)
-target_link_libraries(scanimagetiffio PRIVATE ${OPENCV_LIBS} ${TIFF_LIBRARIES})
+pybind11_add_module(scanimagetiffio SHARED src/ScanImageTiff.cpp src/ndarray_converter.cpp)
+target_link_libraries(scanimagetiffio PRIVATE ${OPENCV_LIBS} ${TIFF_LIBRARIES} ${PYTHON_LIBRARIES})
 target_compile_definitions(scanimagetiffio PRIVATE)
 
 message(STATUS "TIFF_INCLUDE_DIRS")
