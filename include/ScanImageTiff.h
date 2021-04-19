@@ -14,6 +14,7 @@
 #include <sstream>
 
 #include "LogFileLoader.h"
+#include "TransformContainer.hpp"
 // Some string utilities
 // Split a string given a delimiter and either return in a
 // pre-constructed vector (#1) or returns a new one (#2)
@@ -244,11 +245,12 @@ namespace twophoton {
 		public:
 			bool openTiff (std::string fname);
 			bool openLog (std::string fname);
+			void interpolateIndices();
 			// const std::string getTiffName() { return tiff_fname; }
 			// const std::string getLogName() { return log_fname; }
 			// bool close();  // close both tiff and logfile
 			// bool interpTimes();
-			// cv::Mat readFrame(int frame_num=0) const;
+			cv::Mat readFrame(int frame_num=0) const;
 			// std::vector<double> getTimeStamps() const;
 			// std::vector<double> getX() const;
 			// std::vector<double> getZ() const;
@@ -257,11 +259,13 @@ namespace twophoton {
 			// double getX(const int) const;
 			// double getZ(const int) const;
 			// double getTheta(const int) const;
+			std::tuple<double, double, double> getPos(const unsigned int) const;
 		private:
 			std::string tiff_fname;
 			std::string log_fname;
 			std::shared_ptr<SITiffReader> TiffReader;
 			std::shared_ptr<LogFileLoader> LogLoader;
+			std::shared_ptr<std::map<unsigned int, TransformContainer>> m_all_transforms = nullptr;
 
 	};
 }; // namespace twophoton

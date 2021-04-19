@@ -3,8 +3,6 @@
 #include <pybind11/stl.h>
 #include <pybind11/operators.h>
 
-// #include "../pybind11/include/pybind11/stl.h"
-// #include "../pybind11/include/pybind11/numpy.h"
 #include "../include/ndarray_converter.h"
 
 #include <stdio.h>
@@ -720,6 +718,62 @@ namespace twophoton {
 		LogLoader = std::make_shared<LogFileLoader>(fname);
 		return LogLoader->load();
 	}
+
+	cv::Mat SITiffIO::readFrame(int frame_num) const {
+		return TiffReader->readframe(frame_num);
+	}
+
+	std::tuple<double, double, double> SITiffIO::getPos(const unsigned int i) const {
+		auto search = m_all_transforms->find(i);
+		if ( search != m_all_transforms->end() ) {
+			auto transform_container = search->second;
+			double x, z, r;
+			transform_container.getPosData(x, z, r);
+			return std::make_tuple(x, z, r);
+		}
+	}
+
+	void SITiffIO::interpolateIndices() {
+		if ( ! TiffReader ) {
+			// return some kind of error
+			return;
+		}
+		if ( ! LogLoader ) {
+			// return some kind of error
+			return;
+		}
+
+		int startFrame = 0;
+		int endFrame = 0;
+		TiffReader->countDirectories(endFrame);
+
+		cv::Mat T = cv::Mat::eye(2, 3, CV_64F);
+		double tiff_ts, x, z, r;
+		unsigned int frame_num;
+		int logfile_idx;
+		TransformContainer tc{};
+
+		if ( m_all_transforms == nullptr )
+			m_all_transforms = std::make_shared<std::map<unsigned int, TransformContainer>>();
+		else
+			m_all_transforms->clear();
+
+		for (int i = startFrame; i < endFrame; ++i) {
+			TiffReader->getFrameNumAndTimeStamp(i, frame_num, tiff_ts);
+			logfile_idx = LogLoader->findNearestIdx(tiff_ts);
+			r = LogLoader->getRadianRotation(logfile_idx);
+			x = LogLoader->getXTranslation(logfile_idx);
+			z = LogLoader->getZTranslation(logfile_idx);
+
+			tc.m_framenumber = i;
+			tc.m_timestamp = tiff_ts;
+			tc.setPosData(x,z,r);
+			cv::Mat A = (cv::Mat_<double>(1,1) << r);
+			tc.addTransform(TransformType::kInitialRotation, A);
+			auto transform_map = m_all_transforms.get();
+			transform_map->emplace(frame_num, tc);
+		}
+	}
 }
 // ----------------- Python binding ----------------
 
@@ -730,8 +784,9 @@ PYBIND11_MODULE(scanimagetiffio, m) {
 
 	py::class_<twophoton::SITiffIO>(m, "SITiffIO")
 		.def(py::init<>())
-		.def("open", &twophoton::SITiffIO::openTiff)
-		.def("isOpen", &twophoton::SITiffIO::openLog);
-		// .def("readheader", &SITiffIO::readheader)
-		// .def("readframe", &SITiffIO::readframe);
+		.def("open_tiff_file", &twophoton::SITiffIO::openTiff)
+		.def("open_log_file", &twophoton::SITiffIO::openLog)
+		.def("interp_times", &twophoton::SITiffIO::interpolateIndices)
+		.def("get_pos", &twophoton::SITiffIO::getPos)
+		.def("get_frame", &twophoton::SITiffIO::readFrame);
 }

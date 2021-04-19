@@ -9,7 +9,7 @@ find_package( OpenCV REQUIRED core imgproc )
 # ---------- libtiff -----------
 find_package(TIFF REQUIRED)
 # ---------- python ------------
-find_package(PythonLibs 3 REQUIRED)
+find_package (Python3 REQUIRED COMPONENTS Interpreter Development NumPy)
 # ---------- pybind11 -----------
 find_package(pybind11 CONFIG REQUIRED)
 
@@ -18,7 +18,8 @@ include_directories( ${CMAKE_CURRENT_SOURCE_DIR} )
 include_directories( ${OpenCV_INCLUDE_DIRS} )
 include_directories( ${OpenCV_INCLUDE_DIRS}/opencv4 )
 include_directories( ${TIFF_INCLUDE_DIRS} )
-include_directories( ${PYTHON_INCLUDE_DIRS} )
+include_directories( ${Python3_INCLUDE_DIRS} )
+include_directories(( ${Python3_NumPy_INCLUDE_DIRS}))
 include_directories( ${pybind11_INCLUDE_DIR})
 
 SET(CMAKE_CXX_FLAGS "-std=c++11 -Wall -O3 -fPIC")
@@ -30,6 +31,7 @@ LINK_DIRECTORIES(
 add_library(scanimagetiffio SHARED 
     src/ScanImageTiff.cpp 
     src/LogFileLoader.cpp 
+    src/TransformContainer.cpp 
     src/ndarray_converter.cpp)
 
 target_link_libraries(scanimagetiffio ${OpenCV_LIBS} ${TIFF_LIBRARIES} ${PYTHON_LIBRARIES})
@@ -37,7 +39,7 @@ target_link_libraries(scanimagetiffio ${OpenCV_LIBS} ${TIFF_LIBRARIES} ${PYTHON_
 SET_TARGET_PROPERTIES(scanimagetiffio PROPERTIES PREFIX "")
 
 add_library(ScanImageTiff SHARED src/ScanImageTiff.cpp)
-target_link_libraries(ScanImageTiff ${OpenCV_LIBS} ${TIFF_LIBRARIES})
+target_link_libraries(ScanImageTiff ${OpenCV_LIBS} ${TIFF_LIBRARIES} ${Python3_LIBRARIES})
 
 set_target_properties(ScanImageTiff PROPERTIES
     VERSION ${PROJECT_VERSION}
