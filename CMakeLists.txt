@@ -27,7 +27,11 @@ LINK_DIRECTORIES(
   ${OpenCV_LIB_DIR}
 )
 
-add_library(scanimagetiffio SHARED src/ScanImageTiff.cpp src/ndarray_converter.cpp)
+add_library(scanimagetiffio SHARED 
+    src/ScanImageTiff.cpp 
+    src/LogFileLoader.cpp 
+    src/ndarray_converter.cpp)
+
 target_link_libraries(scanimagetiffio ${OpenCV_LIBS} ${TIFF_LIBRARIES} ${PYTHON_LIBRARIES})
 # remove the "lib" from start of the library name
 SET_TARGET_PROPERTIES(scanimagetiffio PROPERTIES PREFIX "")
