@@ -47,21 +47,13 @@ This next is a bit more work but here is what I usually do (this takes a while):
 
 `
 mkdir opencv_repos
-
 cd opencv_repos
-
 git clone https://github.com/opencv/opencv.git
-
 git clone https://github.com/opencv/opencv_contrib.git
-
 mkdir build
-
 cd build
-
 cmake -DOPENCV_EXTRA_MODULES_PATH=/home/robin/opencv/opencv_contrib/modules -D CMAKE_BUILD_TYPE=Release -D CMAKE_INSTALL_PREFIX=/usr/local ../opencv/
-
 make -j8
-
 sudo make install
 `
 
