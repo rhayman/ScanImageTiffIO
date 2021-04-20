@@ -734,11 +734,11 @@ namespace twophoton {
 	}
 
 	void SITiffIO::interpolateIndices() {
-		if ( ! TiffReader ) {
+		if ( TiffReader == nullptr ) {
 			// return some kind of error
 			return;
 		}
-		if ( ! LogLoader ) {
+		if ( LogLoader == nullptr ) {
 			// return some kind of error
 			return;
 		}
@@ -774,6 +774,56 @@ namespace twophoton {
 			transform_map->emplace(frame_num, tc);
 		}
 	}
+
+	std::vector<double> SITiffIO::getTimeStamps() const {
+		std::vector<double> result;
+		if ( m_all_transforms != nullptr ) {
+			for( auto it = m_all_transforms->cbegin(); it != m_all_transforms->cend(); ++it) {
+				auto tc = it->second;
+				result.push_back(tc.m_timestamp);
+			}
+		}
+		return result;
+	}
+
+	std::vector<double> SITiffIO::getX() const {
+		std::vector<double> result;
+		if ( m_all_transforms != nullptr ) {
+			double x, z, t;
+			for( auto it = m_all_transforms->cbegin(); it != m_all_transforms->cend(); ++it) {
+				auto tc = it->second;
+				tc.getPosData(x, z, t);
+				result.push_back(x);
+			}
+		}
+		return result;
+	}
+
+	std::vector<double> SITiffIO::getZ() const {
+		std::vector<double> result;
+		if ( m_all_transforms != nullptr ) {
+			double x, z, t;
+			for( auto it = m_all_transforms->cbegin(); it != m_all_transforms->cend(); ++it) {
+				auto tc = it->second;
+				tc.getPosData(x, z, t);
+				result.push_back(z);
+			}
+		}
+		return result;
+	}
+
+	std::vector<double> SITiffIO::getTheta() const {
+		std::vector<double> result;
+		if ( m_all_transforms != nullptr ) {
+			double x, z, t;
+			for( auto it = m_all_transforms->cbegin(); it != m_all_transforms->cend(); ++it) {
+				auto tc = it->second;
+				tc.getPosData(x, z, t);
+				result.push_back(t);
+			}
+		}
+		return result;
+	}
 }
 // ----------------- Python binding ----------------
 
@@ -784,9 +834,13 @@ PYBIND11_MODULE(scanimagetiffio, m) {
 
 	py::class_<twophoton::SITiffIO>(m, "SITiffIO")
 		.def(py::init<>())
-		.def("open_tiff_file", &twophoton::SITiffIO::openTiff)
-		.def("open_log_file", &twophoton::SITiffIO::openLog)
-		.def("interp_times", &twophoton::SITiffIO::interpolateIndices)
-		.def("get_pos", &twophoton::SITiffIO::getPos)
-		.def("get_frame", &twophoton::SITiffIO::readFrame);
+		.def("open_tiff_file", &twophoton::SITiffIO::openTiff, "Open a tiff file")
+		.def("open_log_file", &twophoton::SITiffIO::openLog, "Open a log file")
+		.def("interp_times", &twophoton::SITiffIO::interpolateIndices, "Interpolate the times in the tiff frames to events (position and time) in the log file")
+		.def("get_pos", &twophoton::SITiffIO::getPos, "Gets a 3-tuple of X, Z and theta for the given frame")
+		.def("get_frame", &twophoton::SITiffIO::readFrame, "Gets the data/ image for the given frame")
+		.def("get_all_x", &twophoton::SITiffIO::getX, "Gets all the X values")
+		.def("get_all_z", &twophoton::SITiffIO::getZ, "Gets all the Z values")
+		.def("get_all_theta", &twophoton::SITiffIO::getTheta, "Gets all the rotational values")
+		.def("get_all_timestamps", &twophoton::SITiffIO::getTimeStamps, "Gets all the timestamps");
 }

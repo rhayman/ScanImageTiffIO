@@ -251,20 +251,20 @@ namespace twophoton {
 			// bool close();  // close both tiff and logfile
 			// bool interpTimes();
 			cv::Mat readFrame(int frame_num=0) const;
-			// std::vector<double> getTimeStamps() const;
-			// std::vector<double> getX() const;
-			// std::vector<double> getZ() const;
-			// std::vector<double> getTheta() const;
+			std::vector<double> getTimeStamps() const;
+			std::vector<double> getX() const;
+			std::vector<double> getZ() const;
+			std::vector<double> getTheta() const;
 			// double getTimeStamp(const int) const;
-			// double getX(const int) const;
-			// double getZ(const int) const;
+			// double getX(const unsigned int) const;
+			// double getZ(const unsigned int) const;
 			// double getTheta(const int) const;
 			std::tuple<double, double, double> getPos(const unsigned int) const;
 		private:
 			std::string tiff_fname;
 			std::string log_fname;
-			std::shared_ptr<SITiffReader> TiffReader;
-			std::shared_ptr<LogFileLoader> LogLoader;
+			std::shared_ptr<SITiffReader> TiffReader = nullptr;
+			std::shared_ptr<LogFileLoader> LogLoader = nullptr;
 			std::shared_ptr<std::map<unsigned int, TransformContainer>> m_all_transforms = nullptr;
 
 	};

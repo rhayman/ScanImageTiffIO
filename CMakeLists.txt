@@ -34,7 +34,7 @@ add_library(scanimagetiffio SHARED
     src/TransformContainer.cpp 
     src/ndarray_converter.cpp)
 
-target_link_libraries(scanimagetiffio ${OpenCV_LIBS} ${TIFF_LIBRARIES} ${PYTHON_LIBRARIES})
+target_link_libraries(scanimagetiffio ${OpenCV_LIBS} ${TIFF_LIBRARIES} ${Python3_LIBRARIES})
 # remove the "lib" from start of the library name
 SET_TARGET_PROPERTIES(scanimagetiffio PROPERTIES PREFIX "")
 
