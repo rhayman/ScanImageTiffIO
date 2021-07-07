@@ -245,24 +245,28 @@ namespace twophoton {
 		public:
 			bool openTiff (std::string fname);
 			bool openLog (std::string fname);
+			bool openXML(std::string fname);
 			void interpolateIndices();
-			// const std::string getTiffName() { return tiff_fname; }
-			// const std::string getLogName() { return log_fname; }
-			// bool close();  // close both tiff and logfile
-			// bool interpTimes();
+			unsigned int getNChannels() { return m_nchans; }
+			void setChannel(unsigned int i) { channel2display = i; }
 			cv::Mat readFrame(int frame_num=0) const;
 			std::vector<double> getTimeStamps() const;
 			std::vector<double> getX() const;
 			std::vector<double> getZ() const;
 			std::vector<double> getTheta() const;
+			std::vector<double> getFrameNumbers() const;
 			// double getTimeStamp(const int) const;
 			// double getX(const unsigned int) const;
 			// double getZ(const unsigned int) const;
 			// double getTheta(const int) const;
 			std::tuple<double, double, double> getPos(const unsigned int) const;
+			std::tuple<double, double> getTrackerTranslation(const unsigned int) const;
+			std::tuple<std::vector<double>, std::vector<double>> getAllTrackerTranslation() const;
 		private:
 			std::string tiff_fname;
 			std::string log_fname;
+			unsigned int m_nchans = 1;
+			unsigned int channel2display = 1;
 			std::shared_ptr<SITiffReader> TiffReader = nullptr;
 			std::shared_ptr<LogFileLoader> LogLoader = nullptr;
 			std::shared_ptr<std::map<unsigned int, TransformContainer>> m_all_transforms = nullptr;

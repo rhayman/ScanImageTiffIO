@@ -2,6 +2,7 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #include <pybind11/operators.h>
+#include <pybind11/stl_bind.h>
 
 #include "../include/ndarray_converter.h"
 
@@ -710,7 +711,12 @@ namespace twophoton {
 	bool SITiffIO::openTiff(std::string fname) {
 		tiff_fname = fname;
 		TiffReader = std::make_shared<SITiffReader>(fname);
-		return TiffReader->open();
+		if ( TiffReader->open() ) {
+			auto chans = TiffReader->getSavedChans();
+			m_nchans = chans.size();
+			return true;
+		}
+		return false;
 	}
 
 	bool SITiffIO::openLog(std::string fname) {
@@ -719,8 +725,25 @@ namespace twophoton {
 		return LogLoader->load();
 	}
 
+	bool SITiffIO::openXML(std::string fname) {
+		cv::FileStorage storage(fname, cv::FileStorage::READ);
+		cv::FileNode node = storage["Transformations"];
+		cv::FileNodeIterator iter = node.begin(), iter_end = node.end();
+		if ( m_all_transforms == nullptr )
+			m_all_transforms = std::make_shared<std::map<unsigned int, TransformContainer>>();
+		else
+			m_all_transforms->clear();
+		for(; iter != iter_end; ++iter) {
+			TransformContainer tc_node;
+			*iter >> tc_node;
+			m_all_transforms->emplace(tc_node.m_framenumber, tc_node);
+		}
+		return true;
+	}
+
 	cv::Mat SITiffIO::readFrame(int frame_num) const {
-		return TiffReader->readframe(frame_num);
+		auto dir_to_read = frame_num * m_nchans - (m_nchans - channel2display);
+		return TiffReader->readframe(dir_to_read);
 	}
 
 	std::tuple<double, double, double> SITiffIO::getPos(const unsigned int i) const {
@@ -731,6 +754,30 @@ namespace twophoton {
 			transform_container.getPosData(x, z, r);
 			return std::make_tuple(x, z, r);
 		}
+	}
+
+	std::tuple<double, double> SITiffIO::getTrackerTranslation(const unsigned int i) const {
+		auto search = m_all_transforms->find(i);
+		if ( search != m_all_transforms->end() ) {
+			auto transform_container = search->second;
+			cv::Mat T = transform_container.getTransform(TransformType::kTrackerTranslation);
+			double x_move = T.at<double>(0, 0);
+			double y_move = T.at<double>(0, 1);
+			return std::make_tuple(x_move, y_move);
+		}
+	}
+
+	std::tuple<std::vector<double>, std::vector<double>> SITiffIO::getAllTrackerTranslation() const {
+		std::vector<double> _x, _y;
+		if ( ! m_all_transforms )
+			return std::make_tuple(_x, _y);
+		for ( auto const & T : *m_all_transforms ) {
+			auto transform_container = T.second;
+			auto M = transform_container.getTransform(TransformType::kTrackerTranslation);
+			_x.push_back(M.at<double>(0, 0));
+			_y.push_back(M.at<double>(0, 1));
+		}
+		return std::make_tuple(_x, _y);
 	}
 
 	void SITiffIO::interpolateIndices() {
@@ -746,6 +793,7 @@ namespace twophoton {
 		int startFrame = 0;
 		int endFrame = 0;
 		TiffReader->countDirectories(endFrame);
+		std::cout << "Counted " << endFrame << " directories" << std::endl;
 
 		cv::Mat T = cv::Mat::eye(2, 3, CV_64F);
 		double tiff_ts, x, z, r;
@@ -824,6 +872,17 @@ namespace twophoton {
 		}
 		return result;
 	}
+
+	std::vector<double> SITiffIO::getFrameNumbers() const {
+		std::vector<double> result;
+		if ( m_all_transforms != nullptr ) {
+			for( auto it = m_all_transforms->cbegin(); it != m_all_transforms->cend(); ++it) {
+				auto f = it->first;
+				result.push_back(f);
+			}
+		}
+		return result;
+	}
 }
 // ----------------- Python binding ----------------
 
@@ -836,11 +895,16 @@ PYBIND11_MODULE(scanimagetiffio, m) {
 		.def(py::init<>())
 		.def("open_tiff_file", &twophoton::SITiffIO::openTiff, "Open a tiff file")
 		.def("open_log_file", &twophoton::SITiffIO::openLog, "Open a log file")
+		.def("open_xml_file", &twophoton::SITiffIO::openXML, "Open an xml file")
+		.def("set_channel", &twophoton::SITiffIO::setChannel, "Sets the channel to take frames from")
 		.def("interp_times", &twophoton::SITiffIO::interpolateIndices, "Interpolate the times in the tiff frames to events (position and time) in the log file")
 		.def("get_pos", &twophoton::SITiffIO::getPos, "Gets a 3-tuple of X, Z and theta for the given frame")
+		.def("get_tracker", &twophoton::SITiffIO::getTrackerTranslation, "Get the x and y translation for a tracked bounding box")
+		.def("get_all_tracker", &twophoton::SITiffIO::getAllTrackerTranslation, "Get all the x and y translations for a tracked bounding box")
 		.def("get_frame", &twophoton::SITiffIO::readFrame, "Gets the data/ image for the given frame")
 		.def("get_all_x", &twophoton::SITiffIO::getX, "Gets all the X values")
 		.def("get_all_z", &twophoton::SITiffIO::getZ, "Gets all the Z values")
 		.def("get_all_theta", &twophoton::SITiffIO::getTheta, "Gets all the rotational values")
+		.def("get_frame_numbers", &twophoton::SITiffIO::getFrameNumbers, "Gets all the rotational values")
 		.def("get_all_timestamps", &twophoton::SITiffIO::getTimeStamps, "Gets all the timestamps");
 }
