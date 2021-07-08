@@ -773,9 +773,11 @@ namespace twophoton {
 			return std::make_tuple(_x, _y);
 		for ( auto const & T : *m_all_transforms ) {
 			auto transform_container = T.second;
-			auto M = transform_container.getTransform(TransformType::kTrackerTranslation);
-			_x.push_back(M.at<double>(0, 0));
-			_y.push_back(M.at<double>(0, 1));
+			if ( transform_container.hasTransform(TransformType::kTrackerTranslation) ) {
+				auto M = transform_container.getTransform(TransformType::kTrackerTranslation);
+				_x.push_back(M.at<double>(0, 0));
+				_y.push_back(M.at<double>(0, 1));
+			}
 		}
 		return std::make_tuple(_x, _y);
 	}
