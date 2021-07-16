@@ -144,25 +144,6 @@ namespace twophoton {
 		return std::string();
 	}
 
-	std::string SITiffHeader::grabStr(const std::string & source, const std::string & target)
-	{
-		std::size_t start = source.find(target);
-		if ( start != std::string::npos )
-		{
-			std::string fn = source.substr(start + target.length());
-			std::size_t newline = fn.find('\n');
-			if ( newline != std::string::npos )
-			{
-				fn = fn.substr(0, newline);
-				return fn;
-			}
-			else
-				return std::string();
-		}
-		else
-			return std::string();
-	}
-
 	unsigned int SITiffHeader::getSizePerDir(TIFF * m_tif, unsigned int dirnum)
 	{
 		if ( m_tif )
@@ -355,8 +336,8 @@ namespace twophoton {
 			std::string imdescTag = headerdata->getImageDescTag(m_tif, dirnum);
 			std::string frameN;
 			std::string ts;
-			frameN = headerdata->grabStr(imdescTag, frameNumberString);
-			ts = headerdata->grabStr(imdescTag, frameTimeStampString);
+			frameN = grabStr(imdescTag, frameNumberString);
+			ts = grabStr(imdescTag, frameTimeStampString);
 			framenum = std::stoi(frameN);
 			timestamp = std::stof(ts);
 		}
@@ -634,6 +615,20 @@ namespace twophoton {
 			( TIFFSetField(m_tif, TIFFTAG_SOFTWARE, _swTag) > 0 ) )
 			return true;
 		return false;
+	}
+
+	void SITiffWriter::modifyChannel(std::string & src_str, const unsigned int chan2keep) {
+		auto chan = std::to_string(chan2keep);
+		std::string target = "SI.hChannels.channelSave = ";
+		std::string replace_with = target + "[" + chan + "]";
+		std::string whole_target = grabStr(src_str, target);
+
+		auto loc = src_str.find(target);
+		if ( loc != std::string::npos ) {
+			src_str.replace(
+				src_str.begin()+loc, src_str.begin()+loc+replace_with.size(),
+				replace_with.begin(), replace_with.end());
+		}
 	}
 
 	bool SITiffWriter::write( const cv::Mat& img, const std::vector<int>& params)

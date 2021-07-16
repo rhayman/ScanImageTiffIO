@@ -34,6 +34,22 @@ inline std::vector<std::string> split(const std::string &s, char delim)
 	return elems;
 }
 
+static std::string grabStr(const std::string & source, const std::string & target) {
+	std::size_t start = source.find(target);
+	if ( start != std::string::npos ) {
+		std::string fn = source.substr(start + target.length());
+		std::size_t newline = fn.find('\n');
+		if ( newline != std::string::npos ) {
+			fn = fn.substr(0, newline);
+			return fn;
+		}
+		else
+			return std::string();
+	}
+	else
+		return std::string();
+}
+
 namespace twophoton {
 	class SITiffReader;
 
@@ -93,7 +109,6 @@ namespace twophoton {
 			return stream;
 		}
 		void printHeader(TIFF * m_tif, int framenum);
-		std::string grabStr(const std::string & source, const std::string & target);
 		unsigned int getSizePerDir(TIFF * m_tif, unsigned int dirnum=0);
 		std::vector<double> getTimeStamps() { return m_timestamps; }
 		int countDirectories(TIFF *, int &);
@@ -227,11 +242,9 @@ namespace twophoton {
 		virtual bool close();
 		virtual void operator << (cv::Mat& frame);
 		bool writeSIHdr(const std::string swTag, const std::string imDescTag);
+		void modifyChannel(std::string &, const unsigned int);
 
 	protected:
-		// void  writeTag( cv::WLByteStream& strm, TiffTag tag,
-		//                 TiffFieldType fieldType,
-		//                 int count, int value );
 		bool writeLibTiff( const cv::Mat& img, const std::vector<int>& params );
 		bool writeHdr( const cv::Mat& img );
 		std::string type2str(int type);
