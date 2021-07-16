@@ -625,9 +625,7 @@ namespace twophoton {
 
 		auto loc = src_str.find(target);
 		if ( loc != std::string::npos ) {
-			src_str.replace(
-				src_str.begin()+loc, src_str.begin()+loc+replace_with.size(),
-				replace_with.begin(), replace_with.end());
+			src_str.replace(loc, replace_with.size(), replace_with);
 		}
 	}
 
