@@ -10,6 +10,8 @@
 #include <opencv2/imgproc.hpp>
 #include <opencv2/imgproc.hpp>
 
+#include <armadillo>
+
 #include <vector>
 #include <sstream>
 
@@ -172,6 +174,7 @@ namespace twophoton {
 		bool isOpen() { return isopened; }
 		bool readheader();
 		cv::Mat readframe(int framedir=0);
+		arma::mat readArmaFrame(int framedir=0);
 		bool close();
 		bool release();
 		int getVersion() const { return headerdata->getVersion(); }
@@ -242,7 +245,7 @@ namespace twophoton {
 		virtual bool close();
 		virtual void operator << (cv::Mat& frame);
 		bool writeSIHdr(const std::string swTag, const std::string imDescTag);
-		void modifyChannel(std::string &, const unsigned int);
+		std::string modifyChannel(std::string &, const unsigned int);
 
 	protected:
 		bool writeLibTiff( const cv::Mat& img, const std::vector<int>& params );

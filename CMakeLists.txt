@@ -12,6 +12,11 @@ find_package(TIFF REQUIRED)
 find_package (Python3 REQUIRED COMPONENTS Interpreter Development NumPy)
 # ---------- pybind11 -----------
 find_package(pybind11 CONFIG REQUIRED)
+# --------- armadillo -----------
+find_package( Armadillo REQUIRED )
+if ( ARMADILLO_FOUND )
+	include_directories( ${ARMADILLO_INCLUDE_DIRS} )
+endif()
 
 # ---------- includes -----------
 include_directories( ${CMAKE_CURRENT_SOURCE_DIR} )
@@ -39,7 +44,7 @@ target_link_libraries(scanimagetiffio ${OpenCV_LIBS} ${TIFF_LIBRARIES} ${Python3
 SET_TARGET_PROPERTIES(scanimagetiffio PROPERTIES PREFIX "")
 
 add_library(ScanImageTiff SHARED src/ScanImageTiff.cpp)
-target_link_libraries(ScanImageTiff ${OpenCV_LIBS} ${TIFF_LIBRARIES} ${Python3_LIBRARIES})
+target_link_libraries(ScanImageTiff ${OpenCV_LIBS} ${TIFF_LIBRARIES} ${Python3_LIBRARIES} ${ARMADILLO_LIBRARIES} )
 
 set_target_properties(ScanImageTiff PROPERTIES
     VERSION ${PROJECT_VERSION}
