@@ -397,7 +397,7 @@ namespace twophoton {
 					(!is_tiled && tile_height0 == std::numeric_limits<uint32>::max()) )
 						tile_height0 = m_imageheight;
 
-					const size_t buffer_size = bpp * ncn * tile_height0 * tile_width0;
+					const size_t buffer_size = bpp * ncn * tile_height0 * tile_width0; // 65536
 
 					cv::AutoBuffer<uchar> _buffer( buffer_size );
 					uchar* buffer = _buffer;
@@ -415,14 +415,14 @@ namespace twophoton {
 					{
 						unsigned int tile_height = tile_height0;
 
-
 						if( y + tile_height > m_imageheight )
 							tile_height = m_imageheight - y;
 						// tile_height is always equal to 8
 
 						for(unsigned int x = 0; x < m_imagewidth; x += tile_width0, tileidx++)
 						{
-							unsigned int tile_width = tile_width0, ok;
+							std::cout << "tileidx: " << tileidx << std::endl;
+							unsigned int tile_width = tile_width0, ok; // 512
 
 							if( x + tile_width > m_imagewidth )
 								tile_width = m_imagewidth - x;
@@ -450,102 +450,100 @@ namespace twophoton {
 		return cv::Mat();
 	}
 
-	arma::mat SITiffReader::readArmaFrame(int framedir) {
-		if ( m_tif ) {
-			arma::mat frame;
-			int framenum = framedir;
-			/*
-			From the man pages for TIFFSetDirectory:
+	// arma::mat SITiffReader::readArmaFrame(int framedir) {
+	// 	if ( m_tif ) {
+	// 		arma::mat frame;
+	// 		int framenum = framedir;
+	// 		/*
+	// 		From the man pages for TIFFSetDirectory:
 
-			TIFFSetDirectory changes the current directory and reads its contents with TIFFReadDirectory.
-			The parameter dirnum specifies the subfile/directory as an integer number, with the first directory numbered zero.
+	// 		TIFFSetDirectory changes the current directory and reads its contents with TIFFReadDirectory.
+	// 		The parameter dirnum specifies the subfile/directory as an integer number, with the first directory numbered zero.
 
-			NB This differs from the 1-based indexing for framenumbers that ScanImage uses (fucking Matlab)
-			*/
-			TIFFSetDirectory(m_tif, framenum);
-			uint32 w = 0, h = 0;
-			uint16 photometric = 0;
-			if( TIFFGetField( m_tif, TIFFTAG_IMAGEWIDTH, &w ) && // normally = 512
-				TIFFGetField( m_tif, TIFFTAG_IMAGELENGTH, &h ) && // normally = 512
-				TIFFGetField( m_tif, TIFFTAG_PHOTOMETRIC, &photometric )) // photometric = 1 (min-is-black)
-			{
-				m_imagewidth = w;
-				m_imageheight = h;
+	// 		NB This differs from the 1-based indexing for framenumbers that ScanImage uses (fucking Matlab)
+	// 		*/
+	// 		TIFFSetDirectory(m_tif, framenum);
+	// 		uint32 w = 0, h = 0;
+	// 		uint16 photometric = 0;
+	// 		if( TIFFGetField( m_tif, TIFFTAG_IMAGEWIDTH, &w ) && // normally = 512
+	// 			TIFFGetField( m_tif, TIFFTAG_IMAGELENGTH, &h ) && // normally = 512
+	// 			TIFFGetField( m_tif, TIFFTAG_PHOTOMETRIC, &photometric )) // photometric = 1 (min-is-black)
+	// 		{
+	// 			m_imagewidth = w;
+	// 			m_imageheight = h;
 
-				uint16 bpp=8, ncn = photometric > 1 ? 3 : 1;
-				TIFFGetField( m_tif, TIFFTAG_BITSPERSAMPLE, &bpp ); // = 16
-				TIFFGetField( m_tif, TIFFTAG_SAMPLESPERPIXEL, &ncn ); // = 1
-				int is_tiled = TIFFIsTiled(m_tif); // 0 ie false, which means the data is organised in strips
-				uint32 tile_height0 = 0, tile_width0 = m_imagewidth;
-				TIFFGetField(m_tif, TIFFTAG_ROWSPERSTRIP, &tile_height0);
+	// 			uint16 bpp=8, ncn = photometric > 1 ? 3 : 1;
+	// 			TIFFGetField( m_tif, TIFFTAG_BITSPERSAMPLE, &bpp ); // = 16
+	// 			TIFFGetField( m_tif, TIFFTAG_SAMPLESPERPIXEL, &ncn ); // = 1
+	// 			int is_tiled = TIFFIsTiled(m_tif); // 0 ie false, which means the data is organised in strips
+	// 			uint32 tile_height0 = 0, tile_width0 = m_imagewidth;
+	// 			TIFFGetField(m_tif, TIFFTAG_ROWSPERSTRIP, &tile_height0);
 
-				if( (!is_tiled) ||
-					(is_tiled &&
-					TIFFGetField( m_tif, TIFFTAG_TILEWIDTH, &tile_width0) &&
-					TIFFGetField( m_tif, TIFFTAG_TILELENGTH, &tile_height0 )))
-				{
-					if(!is_tiled)
-						TIFFGetField( m_tif, TIFFTAG_ROWSPERSTRIP, &tile_height0 );
+	// 			if( (!is_tiled) ||
+	// 				(is_tiled &&
+	// 				TIFFGetField( m_tif, TIFFTAG_TILEWIDTH, &tile_width0) &&
+	// 				TIFFGetField( m_tif, TIFFTAG_TILELENGTH, &tile_height0 )))
+	// 			{
+	// 				if(!is_tiled)
+	// 					TIFFGetField( m_tif, TIFFTAG_ROWSPERSTRIP, &tile_height0 );
 
-					if( tile_width0 <= 0 )
-						tile_width0 = m_imagewidth;
+	// 				if( tile_width0 <= 0 )
+	// 					tile_width0 = m_imagewidth;
 
-					if( tile_height0 <= 0 ||
-					(!is_tiled && tile_height0 == std::numeric_limits<uint32>::max()) )
-						tile_height0 = m_imageheight;
+	// 				if( tile_height0 <= 0 ||
+	// 				(!is_tiled && tile_height0 == std::numeric_limits<uint32>::max()) )
+	// 					tile_height0 = m_imageheight;
 
-					const size_t buffer_size = bpp * ncn * tile_height0 * tile_width0;
+	// 				const size_t buffer_size = bpp * ncn * tile_height0 * tile_width0;
 
-					std::array<uchar, buffer_size> _buffer{};
-					uchar* buffer = _buffer;
-					ushort* buffer16 = (ushort*)buffer;
-					int tileidx = 0;
+	// 				std::array<uchar, buffer_size> _buffer{};
+	// 				uchar* buffer = _buffer;
+	// 				ushort* buffer16 = (ushort*)buffer;
+	// 				int tileidx = 0;
 
+	// 				// ********* return frame created here ***********
 
+	// 				frame = arma::mat(h, w, int16_t);
+	// 				uchar * data = frame.memptr();
 
-					// ********* return frame created here ***********
-
-					frame = arma::mat(h, w, int16_t);
-					uchar * data = frame.memptr();
-
-					for (unsigned int y = 0; y < m_imageheight; y+=tile_height0, data += frame.step*tile_height0)
-					{
-						unsigned int tile_height = tile_height0;
+	// 				for (unsigned int y = 0; y < m_imageheight; y+=tile_height0, data += frame.step*tile_height0)
+	// 				{
+	// 					unsigned int tile_height = tile_height0;
 
 
-						if( y + tile_height > m_imageheight )
-							tile_height = m_imageheight - y;
-						// tile_height is always equal to 8
+	// 					if( y + tile_height > m_imageheight )
+	// 						tile_height = m_imageheight - y;
+	// 					// tile_height is always equal to 8
 
-						for(unsigned int x = 0; x < m_imagewidth; x += tile_width0, tileidx++)
-						{
-							unsigned int tile_width = tile_width0, ok;
+	// 					for(unsigned int x = 0; x < m_imagewidth; x += tile_width0, tileidx++)
+	// 					{
+	// 						unsigned int tile_width = tile_width0, ok;
 
-							if( x + tile_width > m_imagewidth )
-								tile_width = m_imagewidth - x;
-							// I've cut out lots of bpp testing etc here
-							// tileidx goes from 0 to 63
-							ok = (int)TIFFReadEncodedStrip(m_tif, tileidx, (uint32*)buffer, buffer_size ) >= 0;
-							if ( !ok )
-							{
-								close();
-								return cv::Mat();
-							}
-							for(unsigned int i = 0; i < tile_height; ++i)
-							{
-								std::memcpy((ushort*)(data + frame.step*i)+x,
-											buffer16 + i*tile_width0*ncn,
-											tile_width*sizeof(buffer16[0]));
-							}
-						}
-					}
+	// 						if( x + tile_width > m_imagewidth )
+	// 							tile_width = m_imagewidth - x;
+	// 						// I've cut out lots of bpp testing etc here
+	// 						// tileidx goes from 0 to 63
+	// 						ok = (int)TIFFReadEncodedStrip(m_tif, tileidx, (uint32*)buffer, buffer_size ) >= 0;
+	// 						if ( !ok )
+	// 						{
+	// 							close();
+	// 							return cv::Mat();
+	// 						}
+	// 						for(unsigned int i = 0; i < tile_height; ++i)
+	// 						{
+	// 							std::memcpy((ushort*)(data + frame.step*i)+x,
+	// 										buffer16 + i*tile_width0*ncn,
+	// 										tile_width*sizeof(buffer16[0]));
+	// 						}
+	// 					}
+	// 				}
 
-				}
-			}
-			return frame;
-		}
-		return cv::Mat();
-	}
+	// 			}
+	// 		}
+	// 		return frame;
+	// 	}
+	// 	return cv::Mat();
+	// }
 
 	bool SITiffReader::close() {
 		TIFFClose(m_tif);

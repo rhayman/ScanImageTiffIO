@@ -174,7 +174,7 @@ namespace twophoton {
 		bool isOpen() { return isopened; }
 		bool readheader();
 		cv::Mat readframe(int framedir=0);
-		arma::mat readArmaFrame(int framedir=0);
+		// arma::mat readArmaFrame(int framedir=0);
 		bool close();
 		bool release();
 		int getVersion() const { return headerdata->getVersion(); }
