@@ -15,8 +15,9 @@
 #include <vector>
 #include <sstream>
 
-#include "LogFileLoader.h"
 #include "TransformContainer.hpp"
+#include "LogFileLoader.h"
+
 // Some string utilities
 // Split a string given a delimiter and either return in a
 // pre-constructed vector (#1) or returns a new one (#2)
@@ -174,7 +175,7 @@ namespace twophoton {
 		bool isOpen() { return isopened; }
 		bool readheader();
 		cv::Mat readframe(int framedir=0);
-		// arma::mat readArmaFrame(int framedir=0);
+		arma::umat readArmaFrame(int framedir=0);
 		bool close();
 		bool release();
 		int getVersion() const { return headerdata->getVersion(); }
