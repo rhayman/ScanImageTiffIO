@@ -1,7 +1,7 @@
 #include <numeric>
 #include <cmath>
 #include <algorithm>
-#include "../include/LogFileLoader.h"
+#include "../include/ScanImageTiff.h"
 // #include "../include/helper_fcns.hpp"
 
 namespace twophoton

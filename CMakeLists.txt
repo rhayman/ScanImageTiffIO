@@ -17,6 +17,12 @@ find_package( Armadillo REQUIRED )
 if ( ARMADILLO_FOUND )
 	include_directories( ${ARMADILLO_INCLUDE_DIRS} )
 endif()
+# ----------- boost -------------
+find_package( Boost REQUIRED system filesystem regex date_time )
+if( Boost_FOUND )
+	include_directories( ${Boost_INCLUDE_DIRS} )
+endif()
+
 
 # ---------- includes -----------
 include_directories( ${CMAKE_CURRENT_SOURCE_DIR} )
@@ -39,7 +45,7 @@ add_library(scanimagetiffio SHARED
     src/TransformContainer.cpp 
     src/ndarray_converter.cpp)
 
-target_link_libraries(scanimagetiffio ${OpenCV_LIBS} ${TIFF_LIBRARIES} ${Python3_LIBRARIES})
+target_link_libraries(scanimagetiffio ${OpenCV_LIBS} ${TIFF_LIBRARIES} ${Python3_LIBRARIES} ${Boost_LIBRARIES} )
 # remove the "lib" from start of the library name
 SET_TARGET_PROPERTIES(scanimagetiffio PROPERTIES PREFIX "")
 
@@ -48,7 +54,7 @@ add_library(ScanImageTiff SHARED src/ScanImageTiff.cpp
     src/TransformContainer.cpp 
     src/ndarray_converter.cpp)
     
-target_link_libraries(ScanImageTiff ${OpenCV_LIBS} ${TIFF_LIBRARIES} ${Python3_LIBRARIES} ${ARMADILLO_LIBRARIES} )
+target_link_libraries(ScanImageTiff ${OpenCV_LIBS} ${TIFF_LIBRARIES} ${Python3_LIBRARIES} ${ARMADILLO_LIBRARIES} ${Boost_LIBRARIES} )
 
 set_target_properties(ScanImageTiff PROPERTIES
     VERSION ${PROJECT_VERSION}
@@ -63,5 +69,3 @@ install(TARGETS ScanImageTiff
     PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 install(FILES ${CMAKE_BINARY_DIR}/ScanImageTiff.pc
     DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/pkgconfig)
-
-

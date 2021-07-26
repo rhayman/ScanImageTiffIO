@@ -1,6 +1,6 @@
-#include "../include/TransformContainer.hpp"
+#include "../include/ScanImageTiff.h"
 
-// namespace twophoton {
+namespace twophoton {
     void TransformContainer::write(cv::FileStorage & fs) const {
         fs << "{" << "Frame" << m_framenumber <<
         "Timestamp" << m_timestamp <<
@@ -80,5 +80,4 @@
         }
 
     }
-
-// } // namespace twophoton
+} // namespace twophoton

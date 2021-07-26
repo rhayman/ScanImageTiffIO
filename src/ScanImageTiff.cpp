@@ -453,9 +453,9 @@ namespace twophoton {
 		return cv::Mat();
 	}
 
-	arma::umat SITiffReader::readArmaFrame(int framedir) {
+	arma::Mat<int16_t> SITiffReader::readArmaFrame(int framedir) {
 		if ( m_tif ) {
-			arma::umat frame;
+			arma::Mat<int16_t> frame;
 			int framenum = framedir;
 			/*
 			From the man pages for TIFFSetDirectory:
@@ -466,6 +466,8 @@ namespace twophoton {
 			NB This differs from the 1-based indexing for framenumbers that ScanImage uses (fucking Matlab)
 			*/
 			TIFFSetDirectory(m_tif, framenum);
+			int ssize = TIFFStripSize(m_tif);
+			std::cout << "ssize = " << ssize << std::endl;
 			uint32 w = 0, h = 0;
 			uint16 photometric = 0;
 			if( TIFFGetField( m_tif, TIFFTAG_IMAGEWIDTH, &w ) && // normally = 512
@@ -504,8 +506,8 @@ namespace twophoton {
 
 					// ********* return frame created here ***********
 
-					frame = arma::umat(h, w);
-					auto * data = frame.memptr();
+					frame = arma::Mat<int16_t>(h, w);
+					auto data = frame.memptr();
 
 					for (unsigned int y = 0; y < m_imageheight; y+=tile_height0, data += 1024*tile_height0)
 					{
@@ -528,12 +530,12 @@ namespace twophoton {
 							if ( !ok )
 							{
 								close();
-								return arma::umat();
+								return arma::Mat<int16_t>();
 							}
 							for(unsigned int i = 0; i < tile_height; ++i)
 							{
-								std::memcpy((ushort*)(data + 1024*i)+x,
-											buffer.get() + i*tile_width0*ncn,
+								std::memcpy((data + 1024*i)+x,
+											buffer.get(),
 											1024);
 							}
 						}
@@ -543,7 +545,7 @@ namespace twophoton {
 			}
 			return frame;
 		}
-		return arma::umat();
+		return arma::Mat<int16_t>();
 	}
 
 	bool SITiffReader::close() {
