@@ -404,13 +404,11 @@ namespace twophoton {
 					uchar* buffer = _buffer;
 					ushort* buffer16 = (ushort*)buffer;
 					int tileidx = 0; // 0 -> 63
-					std::cout << "sizeof(buffer16[0]): " << sizeof(buffer16[0]) << std::endl;
 
 
 					// ********* return frame created here ***********
 
 					frame = cv::Mat(h, w, cv_matrix_type);
-					std::cout << "frame.step: " << frame.step << std::endl;
 					uchar * data = frame.ptr();
 
 					for (unsigned int y = 0; y < m_imageheight; y+=tile_height0, data += frame.step*tile_height0)
@@ -424,7 +422,6 @@ namespace twophoton {
 						for(unsigned int x = 0; x < m_imagewidth; x += tile_width0, tileidx++)//x stays at 0
 						{
 							unsigned int tile_width = tile_width0, ok; // tile_width = 512
-							std::cout << "x: " << x << std::endl;
 
 							if( x + tile_width > m_imagewidth )
 								tile_width = m_imagewidth - x;
@@ -444,7 +441,6 @@ namespace twophoton {
 							}
 						}
 					}
-					std::cout << "sizeof(buffer16[0]): " << sizeof(buffer16[0]) << std::endl;
 
 				}
 			}
@@ -466,8 +462,6 @@ namespace twophoton {
 			NB This differs from the 1-based indexing for framenumbers that ScanImage uses (fucking Matlab)
 			*/
 			TIFFSetDirectory(m_tif, framenum);
-			int ssize = TIFFStripSize(m_tif);
-			std::cout << "ssize = " << ssize << std::endl;
 			uint32 w = 0, h = 0;
 			uint16 photometric = 0;
 			if( TIFFGetField( m_tif, TIFFTAG_IMAGEWIDTH, &w ) && // normally = 512
@@ -507,9 +501,9 @@ namespace twophoton {
 					// ********* return frame created here ***********
 
 					frame = arma::Mat<int16_t>(h, w);
-					auto data = frame.memptr();
+					int16_t* data = frame.memptr();
 
-					for (unsigned int y = 0; y < m_imageheight; y+=tile_height0, data += 1024*tile_height0)
+					for (unsigned int y = 0; y < m_imageheight; y+=tile_height0)
 					{
 						unsigned int tile_height = tile_height0;
 
@@ -526,18 +520,16 @@ namespace twophoton {
 								tile_width = m_imagewidth - x;
 							// I've cut out lots of bpp testing etc here
 							// tileidx goes from 0 to 63
+							// buffer has 4096 int16's in
 							ok = (int)TIFFReadEncodedStrip(m_tif, tileidx, buffer.get(), buffer_size ) >= 0;
 							if ( !ok )
 							{
 								close();
 								return arma::Mat<int16_t>();
 							}
-							for(unsigned int i = 0; i < tile_height; ++i)
-							{
-								std::memcpy((data + 1024*i)+x,
-											buffer.get(),
-											1024);
-							}
+							std::memcpy(data + tileidx*(tile_height*tile_width),
+										buffer.get(),
+										(tile_height*tile_width)*sizeof(buffer.get()));
 						}
 					}
 
