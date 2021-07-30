@@ -1,4 +1,5 @@
 #include "../include/ScanImageTiff.h"
+#include "../include/rapidxml.hpp"
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #include <pybind11/operators.h>
@@ -11,6 +12,7 @@
 #include <limits>
 #include <tuple>
 #include <memory>
+#include <algorithm>
 
 namespace twophoton {
 
@@ -666,13 +668,40 @@ namespace twophoton {
 	}
 
 	bool SITiffIO::openXML(std::string fname) {
-		cv::FileStorage storage(fname, cv::FileStorage::READ);
-		cv::FileNode node = storage["Transformations"];
-		cv::FileNodeIterator iter = node.begin(), iter_end = node.end();
 		if ( m_all_transforms == nullptr )
 			m_all_transforms = std::make_shared<std::map<unsigned int, TransformContainer>>();
 		else
 			m_all_transforms->clear();
+
+		xml_document<> doc;
+		xml_node<> * root_node;
+		xml_node<> * summary_node;
+		xml_node<> * transform_node;
+
+		std::ifstream ifs(fname);
+		std::vector<char> buffer((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
+		buffer.push_back('\0');
+		doc.parse<0>(&buffer[0]);
+		root_node = doc.first_node("opencv_storage");
+		summary_node = root_node->first_node("Summary");
+		transform_node = summary_node->next_sibling();
+
+		for (xml_node<> * underscore_node = transform_node->first_node("_"); underscore_node != nullptr; underscore_node = underscore_node->next_sibling()) {
+			for( xml_node<> * frame_node = underscore_node->first_node("Frame"); frame_node != nullptr; frame_node = frame_node->next_sibling()) {
+				std::cout << frame_node->name() << ": " << frame_node->value() << std::endl;
+				if ( std::find(possible_transforms.begin(), possible_transforms.end(), frame_node->name()) != possible_transforms.end() ) {
+					// found one of the possible transforms, calculate the size of the mat to fit the values in
+					int n_rows = std::stoi(frame_node->first_node("rows")->value());
+					int n_cols = std::stoi(frame_node->first_node("cols")->value());
+					
+
+				}
+			}
+		}
+		cv::FileStorage storage(fname, cv::FileStorage::READ);
+		cv::FileNode node = storage["Transformations"];
+		cv::FileNodeIterator iter = node.begin(), iter_end = node.end();
+		
 		for(; iter != iter_end; ++iter) {
 			TransformContainer tc_node;
 			*iter >> tc_node;

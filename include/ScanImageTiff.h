@@ -371,11 +371,20 @@ namespace twophoton {
     kHaimanPieceWiseMapping,
 	};
 
+	std::vector<std::string> possible_transforms{
+		"InitialRotation",
+		"TrackerTranslation",
+		"MultiTrackerTranslation",
+		"HaimanFFTTranslation",
+		"LogPolarRotation",
+		"OpticalFlow",
+		"PieceWiseMapping"
+	};
 
 	class TransformContainer
     {
 	private:
-		using TransformMap = std::map<TransformType, cv::Mat>;
+		using TransformMap = std::map<TransformType, arma::mat>;
 		TransformMap m_transforms;
 	public:
 		double m_timestamp = 0;
@@ -401,7 +410,7 @@ namespace twophoton {
 		};
 		// Push a transform type and its contents onto the top of the container
 		const TransformMap getTransforms() const { return m_transforms; }
-		void addTransform(const TransformType & T, cv::Mat M) { m_transforms[T] = M; }
+		void addTransform(const TransformType & T, arma::mat M) { m_transforms[T] = M; }
 		bool hasTransform(const TransformType & T) {
 			auto search = m_transforms.find(T);
 			if ( search != m_transforms.end() )
@@ -410,14 +419,14 @@ namespace twophoton {
 				return false;
 		};
 		// Grab a transform type and its contents
-		cv::Mat getTransform(const TransformType & T) { 
+		arma::mat getTransform(const TransformType & T) { 
 			auto search = m_transforms.find(T);
 			if ( search != m_transforms.end() )
 				return m_transforms[T];
 			else
-				return cv::Mat();
+				return arma::mat();
 		};
-		void updateTransform(const TransformType & T, cv::Mat M) {
+		void updateTransform(const TransformType & T, arma::mat M) {
 			auto search = m_transforms.find(T);
 			if ( search != m_transforms.end() ) {
 				if ( T == TransformType::kTrackerTranslation )
@@ -430,49 +439,49 @@ namespace twophoton {
 			}
 		};
 		// I/O methods for when serializing using cv::FileStorage
-		void write(cv::FileStorage & fs) const;
-		void read(const cv::FileNode & node);
+		// void write(cv::FileStorage & fs) const;
+		// void read(const cv::FileNode & node);
 	};
 
-	static void write(cv::FileStorage & fs, const std::string &, const TransformContainer & T) {
-		T.write(fs);
-	}
+	// static void write(cv::FileStorage & fs, const std::string &, const TransformContainer & T) {
+	// 	T.write(fs);
+	// }
 
-	static void read(cv::FileNode & node, TransformContainer & T, const TransformContainer & default_value = TransformContainer()) {
-		if ( node.empty() )
-			T = default_value;
-		else
-			T.read(node);
-	}
+	// static void read(cv::FileNode & node, TransformContainer & T, const TransformContainer & default_value = TransformContainer()) {
+	// 	if ( node.empty() )
+	// 		T = default_value;
+	// 	else
+	// 		T.read(node);
+	// }
 
 	// "read" method
-	static void operator>>(const cv::FileNode & node, TransformContainer & T) {
-		T.m_framenumber = (int)node["Frame"];
-		T.m_timestamp = (double)node["Timestamp"];
-		T.m_x = (double)node["X"];
-		T.m_z = (double)node["Z"];
-		T.m_r = (double)node["R"];
-		// the transformations
-		cv::FileNodeIterator iter = node.begin();
-		for(; iter != node.end(); ++iter) {
-			cv::FileNode n = *iter;
-			std::string name = n.name();
-			if ( name.compare("InitialRotation") == 0 )
-				T.addTransform(TransformType::kInitialRotation, n.mat());
-			if ( name.compare("TrackerTranslation") == 0 )
-				T.addTransform(TransformType::kTrackerTranslation, n.mat());
-			if ( name.compare("MultiTrackerTranslation") == 0 )
-				T.addTransform(TransformType::kMultiTrackerTranslation, n.mat());
-			if ( name.compare("HaimanFFTTranslation") == 0 )
-				T.addTransform(TransformType::kHaimanFFTTranslation, n.mat());
-			if ( name.compare("LogPolarRotation") == 0 )
-				T.addTransform(TransformType::kLogPolarRotation, n.mat());
-			if ( name.compare("OpticalFlow") == 0 )
-				T.addTransform(TransformType::kOpticalFlow, n.mat());
-			if ( name.compare("PieceWiseMapping") == 0 )
-				T.addTransform(TransformType::kHaimanPieceWiseMapping, n.mat());
-		}
-	}
+	// static void operator>>(const cv::FileNode & node, TransformContainer & T) {
+	// 	T.m_framenumber = (int)node["Frame"];
+	// 	T.m_timestamp = (double)node["Timestamp"];
+	// 	T.m_x = (double)node["X"];
+	// 	T.m_z = (double)node["Z"];
+	// 	T.m_r = (double)node["R"];
+	// 	// the transformations
+	// 	cv::FileNodeIterator iter = node.begin();
+	// 	for(; iter != node.end(); ++iter) {
+	// 		cv::FileNode n = *iter;
+	// 		std::string name = n.name();
+	// 		if ( name.compare("InitialRotation") == 0 )
+	// 			T.addTransform(TransformType::kInitialRotation, n.mat());
+	// 		if ( name.compare("TrackerTranslation") == 0 )
+	// 			T.addTransform(TransformType::kTrackerTranslation, n.mat());
+	// 		if ( name.compare("MultiTrackerTranslation") == 0 )
+	// 			T.addTransform(TransformType::kMultiTrackerTranslation, n.mat());
+	// 		if ( name.compare("HaimanFFTTranslation") == 0 )
+	// 			T.addTransform(TransformType::kHaimanFFTTranslation, n.mat());
+	// 		if ( name.compare("LogPolarRotation") == 0 )
+	// 			T.addTransform(TransformType::kLogPolarRotation, n.mat());
+	// 		if ( name.compare("OpticalFlow") == 0 )
+	// 			T.addTransform(TransformType::kOpticalFlow, n.mat());
+	// 		if ( name.compare("PieceWiseMapping") == 0 )
+	// 			T.addTransform(TransformType::kHaimanPieceWiseMapping, n.mat());
+	// 	}
+	// }
 
 	// "write" method
 	static std::ostream& operator<<(std::ostream & out, const TransformContainer & T) {
