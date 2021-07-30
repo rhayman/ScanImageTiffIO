@@ -397,42 +397,42 @@ void LogFileLoader::save(std::string out_name)
 	fs.release();
 }
 
-std::vector<cv::Mat> LogFileLoader::loadRotationMats(std::string filePath) {
-	std::vector<cv::Mat> result;
-	in_file.open(filePath);
-	if (in_file.is_open()) {
-		bool ok;
-		float dummy;
-		std::string line;
-		in_file.seekg(0, in_file.beg);
-		while (std::getline(in_file, line)) {
-			cv::Mat_<float> M(2, 3);//only dealing with rotational transform for now
-			std::istringstream iss(line);
-			iss >> M(0,0) >> M(0,1) >> M(0,2) >>
-					   M(1,0) >> M(1,1) >> M(1,2) >>
-					   dummy >> dummy >> dummy >> ok;
-			result.push_back(M);
-		}
-	}
-	in_file.close();
-	return result;
-}
+// std::vector<cv::Mat> LogFileLoader::loadRotationMats(std::string filePath) {
+// 	std::vector<cv::Mat> result;
+// 	in_file.open(filePath);
+// 	if (in_file.is_open()) {
+// 		bool ok;
+// 		float dummy;
+// 		std::string line;
+// 		in_file.seekg(0, in_file.beg);
+// 		while (std::getline(in_file, line)) {
+// 			cv::Mat_<float> M(2, 3);//only dealing with rotational transform for now
+// 			std::istringstream iss(line);
+// 			iss >> M(0,0) >> M(0,1) >> M(0,2) >>
+// 					   M(1,0) >> M(1,1) >> M(1,2) >>
+// 					   dummy >> dummy >> dummy >> ok;
+// 			result.push_back(M);
+// 		}
+// 	}
+// 	in_file.close();
+// 	return result;
+// }
 
-void LogFileLoader::saveRotationMats(cv::Point centre, std::string outPath) {
-	//should only be run after the interp fcn above has been run
-	//get the rotations calculated as a result of the above fcn
-	auto rot = getRadianRotation(idx);
-	cv::Mat_<float> M;
-	if (!(out_file.is_open()))
-		out_file.open(outPath);
-	if (out_file.is_open()) {
-		M = cv::getRotationMatrix2D(centre, -twophoton::rad2deg(rot), 1.0);
-		out_file << M(0,0) << " " << M(0,1) << " " << M(0,2) << " "
-			  << M(1,0) << " " << M(1,1) << " " << M(1,2) << " "
-			  <<   0.0  << " " <<   0.0  << " " << 1.0 << " " << 1 << std::endl; //last zero for ok
-	}
-	++idx;
-}
+// void LogFileLoader::saveRotationMats(cv::Point centre, std::string outPath) {
+// 	//should only be run after the interp fcn above has been run
+// 	//get the rotations calculated as a result of the above fcn
+// 	auto rot = getRadianRotation(idx);
+// 	cv::Mat_<float> M;
+// 	if (!(out_file.is_open()))
+// 		out_file.open(outPath);
+// 	if (out_file.is_open()) {
+// 		M = cv::getRotationMatrix2D(centre, -twophoton::rad2deg(rot), 1.0);
+// 		out_file << M(0,0) << " " << M(0,1) << " " << M(0,2) << " "
+// 			  << M(1,0) << " " << M(1,1) << " " << M(1,2) << " "
+// 			  <<   0.0  << " " <<   0.0  << " " << 1.0 << " " << 1 << std::endl; //last zero for ok
+// 	}
+// 	++idx;
+// }
 
 void LogFileLoader::saveRaw(std::string fname) {
 	std::ofstream ofs(fname, std::ifstream::out);

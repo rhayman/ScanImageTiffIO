@@ -11,10 +11,6 @@
 #include <boost/date_time.hpp>
 #include <boost/regex.hpp>
 
-#include <opencv2/core.hpp>
-#include <opencv2/imgproc.hpp>
-#include <opencv2/imgproc.hpp>
-
 #include <armadillo>
 
 #include <vector>
@@ -24,8 +20,7 @@
 // Some string utilities
 // Split a string given a delimiter and either return in a
 // pre-constructed vector (#1) or returns a new one (#2)
-inline void split(const std::string &s, char delim, std::vector<std::string> &elems)
-{
+inline void split(const std::string &s, char delim, std::vector<std::string> &elems) {
 	std::stringstream ss;
 	ss.str(s);
 	std::string item;
@@ -33,8 +28,7 @@ inline void split(const std::string &s, char delim, std::vector<std::string> &el
 		elems.push_back(item);
 };
 
-inline std::vector<std::string> split(const std::string &s, char delim)
-{
+inline std::vector<std::string> split(const std::string &s, char delim) {
 	std::vector<std::string> elems;
 	split(s, delim, elems);
 	return elems;
@@ -177,8 +171,7 @@ namespace twophoton {
 		bool open();
 		bool isOpen() { return isopened; }
 		bool readheader();
-		cv::Mat readframe(int framedir=0);
-		arma::Mat<int16_t> readArmaFrame(int framedir=0);
+		arma::Mat<int16_t> readframe(int framedir=0);
 		bool close();
 		bool release();
 		int getVersion() const { return headerdata->getVersion(); }
@@ -232,8 +225,6 @@ namespace twophoton {
 		More values listed here:
 		https://www.awaresystems.be/imaging/tiff/tifftags/photometricinterpretation.html
 		*/
-		int cv_matrix_type = CV_16SC1;
-
 		bool isopened = false;
 	};
 
@@ -241,20 +232,18 @@ namespace twophoton {
 	public:
 		SITiffWriter() {};
 		virtual ~SITiffWriter();
-		bool isFormatSupported( int depth ) const;
-		bool  write( const cv::Mat& img, const std::vector<int>& params );
+		bool  write( const arma::Mat<int16_t>& img, const std::vector<int>& params );
 
 		virtual bool isOpened();
 		virtual bool open(std::string outputPath);
 		virtual bool close();
-		virtual void operator << (cv::Mat& frame);
+		virtual void operator << (arma::Mat<int16_t>& frame);
 		bool writeSIHdr(const std::string swTag, const std::string imDescTag);
 		std::string modifyChannel(std::string &, const unsigned int);
 
 	protected:
-		bool writeLibTiff( const cv::Mat& img, const std::vector<int>& params );
-		bool writeHdr( const cv::Mat& img );
-		std::string type2str(int type);
+		bool writeLibTiff( const arma::Mat<int16_t>& img, const std::vector<int>& params );
+		bool writeHdr( const arma::Mat<int16_t>& img );
 		std::string m_filename;
 		TIFF* m_tif;
 		TIFF* pTiffHandle;
@@ -326,9 +315,9 @@ namespace twophoton {
         */
         int findNearestIdx(double tiffTimestamp);
         //saves rotation matrices to file with centre to file in outPath...
-        void saveRotationMats(cv::Point centre, std::string outPath);
-        //...and this loads them and returns in the vector
-        std::vector<cv::Mat> loadRotationMats(std::string filePath);
+        // void saveRotationMats(cv::Point centre, std::string outPath);
+        // //...and this loads them and returns in the vector
+        // std::vector<cv::Mat> loadRotationMats(std::string filePath);
         void saveRaw(std::string fname);
         bool isloaded = false;
         // findStableFrames: pairs of start and end frames for frames with no head rotation

@@ -354,102 +354,8 @@ namespace twophoton {
 		else
 			return false;
 	}
-	cv::Mat SITiffReader::readframe(int framedir) {
-		if ( m_tif ) {
-			cv::Mat frame;
-			int framenum = framedir;
-			/*
-			From the man pages for TIFFSetDirectory:
 
-			TIFFSetDirectory changes the current directory and reads its contents with TIFFReadDirectory.
-			The parameter dirnum specifies the subfile/directory as an integer number, with the first directory numbered zero.
-
-			NB This differs from the 1-based indexing for framenumbers that ScanImage uses (fucking Matlab)
-			*/
-			TIFFSetDirectory(m_tif, framenum);
-			uint32 w = 0, h = 0;
-			uint16 photometric = 0;
-			if( TIFFGetField( m_tif, TIFFTAG_IMAGEWIDTH, &w ) && // normally = 512
-				TIFFGetField( m_tif, TIFFTAG_IMAGELENGTH, &h ) && // normally = 512
-				TIFFGetField( m_tif, TIFFTAG_PHOTOMETRIC, &photometric )) // photometric = 1 (min-is-black)
-			{
-				m_imagewidth = w;
-				m_imageheight = h;
-
-				uint16 bpp=8, ncn = photometric > 1 ? 3 : 1;
-				TIFFGetField( m_tif, TIFFTAG_BITSPERSAMPLE, &bpp ); // = 16
-				TIFFGetField( m_tif, TIFFTAG_SAMPLESPERPIXEL, &ncn ); // = 1
-				int is_tiled = TIFFIsTiled(m_tif); // 0 ie false, which means the data is organised in strips
-				uint32 tile_height0 = 0, tile_width0 = m_imagewidth;
-				TIFFGetField(m_tif, TIFFTAG_ROWSPERSTRIP, &tile_height0);
-
-				if( (!is_tiled) ||
-					(is_tiled &&
-					TIFFGetField( m_tif, TIFFTAG_TILEWIDTH, &tile_width0) &&
-					TIFFGetField( m_tif, TIFFTAG_TILELENGTH, &tile_height0 )))
-				{
-					if(!is_tiled)
-						TIFFGetField( m_tif, TIFFTAG_ROWSPERSTRIP, &tile_height0 );
-
-					if( tile_width0 <= 0 )
-						tile_width0 = m_imagewidth;
-
-					if( tile_height0 <= 0 ||
-					(!is_tiled && tile_height0 == std::numeric_limits<uint32>::max()) )
-						tile_height0 = m_imageheight;
-
-					const size_t buffer_size = bpp * ncn * tile_height0 * tile_width0; // 65536
-
-					cv::AutoBuffer<uchar> _buffer( buffer_size );
-					uchar* buffer = _buffer;
-					ushort* buffer16 = (ushort*)buffer;
-					int tileidx = 0; // 0 -> 63
-
-
-					// ********* return frame created here ***********
-
-					frame = cv::Mat(h, w, cv_matrix_type);
-					uchar * data = frame.ptr();
-
-					for (unsigned int y = 0; y < m_imageheight; y+=tile_height0, data += frame.step*tile_height0)
-					{
-						unsigned int tile_height = tile_height0;
-
-						if( y + tile_height > m_imageheight )
-							tile_height = m_imageheight - y;
-						// tile_height is always equal to 8
-
-						for(unsigned int x = 0; x < m_imagewidth; x += tile_width0, tileidx++)//x stays at 0
-						{
-							unsigned int tile_width = tile_width0, ok; // tile_width = 512
-
-							if( x + tile_width > m_imagewidth )
-								tile_width = m_imagewidth - x;
-							// I've cut out lots of bpp testing etc here
-							// tileidx goes from 0 to 63
-							ok = (int)TIFFReadEncodedStrip(m_tif, tileidx, (uint32*)buffer, buffer_size ) >= 0;
-							if ( !ok )
-							{
-								close();
-								return cv::Mat();
-							}
-							for(unsigned int i = 0; i < tile_height; ++i) // i goes from 0 -> 7
-							{
-								std::memcpy((ushort*)(data + frame.step*i)+x, // frame.step = 1024
-											buffer16 + i*tile_width0*ncn,
-											tile_width*sizeof(buffer16[0])); // sizeof(buffer16[0]) = 2
-							}
-						}
-					}
-
-				}
-			}
-			return frame;
-		}
-		return cv::Mat();
-	}
-
-	arma::Mat<int16_t> SITiffReader::readArmaFrame(int framedir) {
+	arma::Mat<int16_t> SITiffReader::readframe(int framedir) {
 		if ( m_tif ) {
 			arma::Mat<int16_t> frame;
 			int framenum = framedir;
@@ -565,32 +471,10 @@ namespace twophoton {
 			TIFFClose(m_tif);
 	}
 
-	bool SITiffWriter::isFormatSupported(int depth) const {
-		return depth == CV_8U || depth == CV_16U || depth == CV_16S || depth == CV_32F;
-	}
-
-	bool SITiffWriter::writeLibTiff(const cv::Mat & img, const std::vector<int> & params) {
-		int channels = img.channels();
-		int width = img.cols, height = img.rows;
-		int depth = img.depth();
-		int bitsPerChannel = -1 ;
-		switch (depth) {
-			case CV_8U: {
-				bitsPerChannel = 8; break;
-			}
-			case CV_16U: {
-				bitsPerChannel = 16; break;
-			}
-			case CV_16S: {
-				bitsPerChannel = 16; break;
-			}
-			case CV_32F: {
-				bitsPerChannel = 32; break;
-			}
-			default: {
-				return false;
-			}
-		}
+	bool SITiffWriter::writeLibTiff(const arama::Mat<int16_t> & img, const std::vector<int> & params) {
+		int channels = 1;
+		int width = img.n_cols, height = img.n_rows;
+		int bitsPerChannel = 16 ;
 		const int bitsPerByte = 16;
 		size_t fileStep = (width * channels * bitsPerChannel) / bitsPerByte;// = image_width (with 1 channel)
 
@@ -644,36 +528,40 @@ namespace twophoton {
 			return false;
 		}
 
-		// row buffer, because TIFFWriteScanline modifies the original data!
-		size_t scanlineSize = TIFFScanlineSize(pTiffHandle);
-		const size_t buffer_size = bitsPerChannel * channels * 16 * width;
-
-		cv::AutoBuffer<uchar> _buffer(buffer_size);
-		uchar* buffer = _buffer;
-		uint64 * buffer16 = (uint64*)buffer;//unsigned int16
-		if (!buffer)
+		const size_t buffer_size = bitsPerChannel * channels * rowsPerStrip * width;
+		std::unique_ptr<int16_t[]> buffer = std::make_unique<int16_t[]>(buffer_size);
+		int tileidx = 0;
+		int16_t * data = img.memptr();
+		
+		if (!data)
 		{
 			TIFFClose(pTiffHandle);
 			return false;
 		}
 
-		for (int y = 0; y < height; ++y)
-		{
-			std::memcpy(buffer, img.ptr(y), scanlineSize);
-			int writeResult = TIFFWriteScanline(pTiffHandle, buffer16, y, 0);
-			if (writeResult != 1)
-			{
-				TIFFClose(pTiffHandle);
-				return false;
+		for (unsigned int y = 0; y < height; y += rowsPerStrip) {
+			unsigned int tile_height0 = rowsPerStrip;
+			if ( y + tile_height0 > height )
+				tile_height0 = height - y;
+			for (unsigned int x = 0; x < width; x+= width, tileidx++) {
+				unsigned int tile_width0 = width, ok;
+				if ( x + tile_width0 > width )
+					tile_width0 - width - x;
+				std::memcpy(buffer.get(),
+					data + tileidx*(tile_height0*tile_width0),
+					buffer_size);
+				ok = (int)TIFFWritedEncodedStrip(pTiffHandle, tileidx, buffer.get(), buffer_size) >=0;
+				if ( !ok ) {
+					TIFFClose(pTiffHandle);
+					return false;
+				}
 			}
 		}
 		TIFFWriteDirectory(pTiffHandle); // write into the next directory
 		return true;
 	}
 
-	bool SITiffWriter::writeHdr(const cv::Mat & _img) {
-		cv::Mat img;
-		cv::cvtColor(_img, img, cv::COLOR_BGR2XYZ);
+	bool SITiffWriter::writeHdr(const arma::Mat<int16_t> & img) {
 		// IMPORTANT: Note the "w8" option here - this is what allows writing to the bigTIFF format
 		// possible ('normal' tiff would be just "w")
 		if (!(isOpened()))
@@ -682,19 +570,12 @@ namespace twophoton {
 			return false;
 
 		TIFFWriteDirectory(pTiffHandle);
-		TIFFSetField(m_tif, TIFFTAG_IMAGEWIDTH, img.cols);
-		TIFFSetField(m_tif, TIFFTAG_IMAGELENGTH, img.rows);
-		TIFFSetField(m_tif, TIFFTAG_SAMPLESPERPIXEL, 3);
-		TIFFSetField(m_tif, TIFFTAG_COMPRESSION, COMPRESSION_SGILOG);
-		TIFFSetField(m_tif, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_LOGLUV);
-		TIFFSetField(m_tif, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG);
-		TIFFSetField(m_tif, TIFFTAG_SGILOGDATAFMT, SGILOGDATAFMT_FLOAT);
-		TIFFSetField(m_tif, TIFFTAG_ROWSPERSTRIP, 1);
-		int strip_size = 3 * img.cols;
-		float *ptr = const_cast<float*>(img.ptr<float>());
-		for (int i = 0; i < img.rows; i++, ptr += strip_size)
-			TIFFWriteEncodedStrip(m_tif, i, ptr, strip_size * sizeof(float));
-
+		TIFFSetField(m_tif, TIFFTAG_IMAGEWIDTH, img.n_cols);
+		TIFFSetField(m_tif, TIFFTAG_IMAGELENGTH, img.n_rows);
+		TIFFSetField(m_tif, TIFFTAG_SAMPLESPERPIXEL, 1);
+		TIFFSetField(m_tif, TIFFTAG_COMPRESSION, 1);
+		TIFFSetField(m_tif, TIFFTAG_PHOTOMETRIC, 1);
+		TIFFSetField(m_tif, TIFFTAG_ROWSPERSTRIP, 8);
 		return true;
 	}
 
@@ -721,15 +602,8 @@ namespace twophoton {
 		return whole_target;
 	}
 
-	bool SITiffWriter::write( const cv::Mat& img, const std::vector<int>& params)
+	bool SITiffWriter::write( const arma::Mat<int16_t>& img, const std::vector<int>& params)
 	{
-		int depth = img.depth();
-		if(img.type() == CV_32FC3)
-		{
-			return writeHdr(img);
-		}
-		if (depth != CV_8U && depth != CV_16U && depth != CV_16S)
-			return false;
 		return writeLibTiff(img, params);
 	}
 
@@ -762,7 +636,7 @@ namespace twophoton {
 		return opened;
 	}
 
-	void SITiffWriter::operator << (cv::Mat& frame)
+	void SITiffWriter::operator << (arma::Mat<int16_t>& frame)
 	{
 		if (opened)
 		{
@@ -770,28 +644,9 @@ namespace twophoton {
 			write(frame, params);
 		}
 	}
-	std::string SITiffWriter::type2str(int type)
-	{
-		std::string r;
-		uchar depth = type & CV_MAT_DEPTH_MASK;
-		uchar chans = 1 + (type >> CV_CN_SHIFT);
-
-		switch (depth)
-		{
-			case CV_8U:   r = "8U"; break;
-			case CV_8S:   r = "8S"; break;
-			case CV_16U:  r = "16U"; break;
-			case CV_16S:  r = "16S"; break;
-			case CV_32S:  r = "32S"; break;
-			case CV_32F:  r = "32F"; break;
-			case CV_64F:  r = "64F"; break;
-			default:      r = "User"; break;
-		}
-
-		r += "C";
-		r += (chans+'0');
-		return r;
-	}
+/* ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+/  +++++++++++++++++++++++  SITiffIO  +++++++++++++++++++++++++++++++++++
+ ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ */
 
 	bool SITiffIO::openTiff(std::string fname) {
 		tiff_fname = fname;
