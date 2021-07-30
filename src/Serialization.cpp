@@ -2,8 +2,8 @@
 
 namespace twophoton {
     void TransformContainer::write(cv::FileStorage & fs) const {
-        fs << "{" << "Frame" << m_framenumber <<
-        "Timestamp" << m_timestamp <<
+        fs << "{" << "Frame" << m_framenumber;
+        fs << "Timestamp" << m_timestamp <<
         "X" << m_x <<
         "Z" << m_z <<
         "R" << m_r;
@@ -79,5 +79,71 @@ namespace twophoton {
             }
         }
 
+    }
+
+    void ChanInfo::write(cv::FileStorage & fs) const {
+	fs << "{" << "name" << name <<
+	"lut_lower" << lut_lower <<
+	"lut_upper" << lut_upper << "}";
+    }
+
+    void ChanInfo::read(const cv::FileNode & node) {
+        name = (int)node["name"];
+        lut_lower = (int)node["lut_lower"];
+        lut_upper = (int)node["lut_upper"];
+    }
+
+    // ------------------- FileStorageHeaderData ------------------
+
+    void FileStorageHeaderData::write(cv::FileStorage & fs) const {
+        fs << "{" << "tiff_file" << tiffname <<
+        "log_file" << logname;
+        fs << "Channels" << "{";
+        for ( const auto & channel : channels) {
+            fs << "chan" << channel;
+        }
+        fs << "}";
+        fs << "Image_height" << imageheight <<
+        "Image_width" << imagewidth <<
+        "Output_image_height" << outputimageheight <<
+        "Output_image_width" << outputimagewidth << 
+        "bounding_box_x_centre" << bounding_box_x_centre <<
+        "bounding_box_y_centre" << bounding_box_y_centre;
+        fs << "multiple_bounding_boxes" << "{";
+        unsigned int count = 0;
+        for ( const auto & bbox : multi_bbox_centres) {
+            fs << "bounding_box_centre_" + std::to_string(count) << bbox;
+            ++count;
+        }
+        fs << "}";
+        fs << "}";
+    }
+
+    void FileStorageHeaderData::read(const cv::FileNode & node) {
+        tiffname = (std::string)node["tiff_file"];
+        logname = (std::string)node["log_file"];
+
+        cv::FileNode node1 = node["Channels"];
+        cv::FileNodeIterator iter = node1.begin();
+        for(; iter != node1.end(); ++iter) {
+            cv::FileNode n = *iter;
+            ChanInfo c;
+            n >> c;
+            channels.push_back(c);
+        }
+        
+        imageheight = (int)node["Image_height"];
+        imagewidth = (int)node["Image_width"];
+        outputimageheight = (int)node["Output_image_height"];
+        outputimagewidth = (int)node["Output_image_width"];
+        bounding_box_x_centre = (int)node["bounding_box_x_centre"];
+        bounding_box_y_centre = (int)node["bounding_box_y_centre"];
+        node1 = node["multiple_bounding_boxes"];
+        iter = node1.begin();
+        for(; iter != node1.end(); ++iter) {
+            cv::FileNode n = *iter;
+            auto M = n.mat();
+            multi_bbox_centres.push_back(M);
+        }
     }
 } // namespace twophoton

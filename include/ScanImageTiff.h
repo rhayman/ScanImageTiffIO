@@ -487,7 +487,7 @@ namespace twophoton {
 
 	// "write" method
 	static std::ostream& operator<<(std::ostream & out, const TransformContainer & T) {
-		out << "{ Frame " << T.m_framenumber << ", ";
+		out << "Frame " << T.m_framenumber << ", ";
 		out << "Timestamp " << T.m_timestamp << ", ";
 		out << "X" << T.m_x << ", ";
 		out << "Z" << T.m_z << ", ";
@@ -512,6 +512,144 @@ namespace twophoton {
 			if ( transform_type == TransformType::kHaimanPieceWiseMapping )
 				out << "PieceWiseMapping";
 			out << "{:" << transform_val << "}";
+		}
+		// out << "}";
+		return out;
+	}
+
+	// -------------------------------------------------------------------------------------
+	// ----------------------------- ChanInfo ----------------------------------------------
+	// -------------------------------------------------------------------------------------
+	struct ChanInfo {
+		int name;
+		int lut_lower;
+		int lut_upper;
+		void write(cv::FileStorage & fs) const;
+		void read(const cv::FileNode & node);
+	};
+
+	static void write(cv::FileStorage & fs, const std::string &, const ChanInfo & T) {
+		T.write(fs);
+	}
+
+	static void read(cv::FileNode & node, ChanInfo & T, const ChanInfo & default_value = ChanInfo()) {
+		if ( node.empty() )
+			T = default_value;
+		else
+			T.read(node);
+	}
+
+	static std::ostream & operator << (std::ostream & stream, const ChanInfo & chan) {
+		stream << "{ name " << chan.name << ", ";
+		stream << "lut_lower " << chan.lut_lower << ", ";
+		stream << "lut_upper " << chan.lut_upper << "}";
+		return stream;
+	}
+
+	static void operator>>(const cv::FileNode & node, ChanInfo & T) {
+		T.name = (int)node["name"];
+		T.lut_lower = (int)node["lut_lower"];
+		T.lut_upper = (int)node["lut_upper"];
+	}
+
+
+	// -------------------------------------------------------------------------------------
+	// ----------------------------- FileStorageHeaderData ---------------------------------
+	// -------------------------------------------------------------------------------------
+
+	class FileStorageHeaderData {
+	public:
+		FileStorageHeaderData() {};
+		~FileStorageHeaderData() {};
+		explicit FileStorageHeaderData(int) :
+			tiffname(""), logname("") {};
+		std::string tiffname;
+		std::string logname;
+		// channel info
+		std::vector<ChanInfo> channels;
+
+		int imageheight;
+		int imagewidth;
+		int outputimageheight;
+		int outputimagewidth;
+		// the coordinates of a bounding box tracked using one of openCVs
+		// tracker algorithms - used to set the centre of rotation for rotationally
+		// corrected videos
+		int bounding_box_x_centre;
+		int bounding_box_y_centre;
+		// In the case of multiple trackers being used save all the bounding box centres
+		std::vector<cv::Mat> multi_bbox_centres;
+		void write(cv::FileStorage & fs) const;
+		void read(const cv::FileNode & node);
+		void print() {
+			std::cout << "tiffname " << tiffname << std::endl;
+			std::cout << "logname " << logname << std::endl;
+		}
+		friend bool operator==(const FileStorageHeaderData & A, const FileStorageHeaderData & B) {
+			return (A.tiffname == B.tiffname && A.logname == B.logname && A.imagewidth == B.imagewidth &&
+					A.imageheight == B.imageheight);
+		}
+		friend bool operator!=(const FileStorageHeaderData & A, const FileStorageHeaderData & B) {
+			return !( A==B );
+		}
+	};
+
+	static void write(cv::FileStorage & fs, const std::string &, const FileStorageHeaderData & T) {
+		T.write(fs);
+	}
+
+	static void read(cv::FileNode & node, FileStorageHeaderData & T, const FileStorageHeaderData & default_value = FileStorageHeaderData()) {
+		if ( node.empty() )
+			T = default_value;
+		else
+			T.read(node);
+	}
+
+	static void operator>>(const cv::FileNode & node, FileStorageHeaderData & T) {
+
+		T.tiffname = (std::string)node["tiff_file"];
+		T.logname = (std::string)node["log_file"];
+		cv::FileNode node1 = node["Channels"];
+		cv::FileNodeIterator iter = node1.begin();
+		for(; iter != node1.end(); ++iter) {
+			cv::FileNode n = *iter;
+			ChanInfo c;
+			n >> c;
+			T.channels.push_back(c);
+		}
+		T.imageheight = (int)node["Image_height"];
+		T.imagewidth = (int)node["Image_width"];
+		T.outputimageheight = (int)node["Output_image_height"];
+		T.outputimagewidth = (int)node["Output_image_width"];
+		T.bounding_box_x_centre = (int)node["bounding_box_x_centre"];
+		T.bounding_box_y_centre = (int)node["bounding_box_y_centre"];
+
+		node1 = node["multiple_bounding_boxes"];
+		iter = node1.begin();
+		for(; iter != node1.end(); ++iter) {
+			cv::FileNode n = *iter;
+			auto M = n.mat();
+			T.multi_bbox_centres.push_back(M);
+		}
+	}
+
+	static std::ostream& operator<<(std::ostream & out, const FileStorageHeaderData & T) {
+		out << "{ tiff_file " << T.tiffname << ", ";
+		out << "log_file " << T.logname << ", ";
+		for ( const auto & C : T.channels ) {
+			out << "{:" << "Channel_" << C << "}";
+		}
+		out << "Image_height " << T.imageheight << ", ";
+		out << "Image_width " << T.imagewidth << ",";
+		out << "Output_image_height" << T.outputimageheight;
+		out << "Output_image_width" << T.outputimagewidth;
+		out << "bounding_box_x_centre" << T.bounding_box_x_centre;
+		out << "bounding_box_y_centre" << T.bounding_box_y_centre;
+		out << "multiple_bounding_boxes";
+		unsigned int count = 0;
+		for ( const auto & M : T.multi_bbox_centres ) {
+			out << "{:" << "bounding_box_centre_" + std::to_string(count) << M << "}";
+			++count;
 		}
 		out << "}";
 		return out;

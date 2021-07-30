@@ -42,16 +42,17 @@ LINK_DIRECTORIES(
 add_library(scanimagetiffio SHARED 
     src/ScanImageTiff.cpp 
     src/LogFileLoader.cpp 
-    src/TransformContainer.cpp 
+    src/Serialization.cpp 
     src/ndarray_converter.cpp)
 
 target_link_libraries(scanimagetiffio ${OpenCV_LIBS} ${TIFF_LIBRARIES} ${Python3_LIBRARIES} ${Boost_LIBRARIES} )
 # remove the "lib" from start of the library name
 SET_TARGET_PROPERTIES(scanimagetiffio PROPERTIES PREFIX "")
 
-add_library(ScanImageTiff SHARED src/ScanImageTiff.cpp 
+add_library(ScanImageTiff SHARED
+    src/ScanImageTiff.cpp 
     src/LogFileLoader.cpp 
-    src/TransformContainer.cpp 
+    src/Serialization.cpp 
     src/ndarray_converter.cpp)
     
 target_link_libraries(ScanImageTiff ${OpenCV_LIBS} ${TIFF_LIBRARIES} ${Python3_LIBRARIES} ${ARMADILLO_LIBRARIES} ${Boost_LIBRARIES} )
