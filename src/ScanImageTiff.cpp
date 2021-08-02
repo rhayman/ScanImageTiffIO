@@ -1,11 +1,5 @@
 #include "../include/ScanImageTiff.h"
 #include "../include/rapidxml.hpp"
-#include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
-#include <pybind11/operators.h>
-#include <pybind11/stl_bind.h>
-
-#include "../include/ndarray_converter.h"
 
 #include <stdio.h>
 #include <stdio_ext.h>
@@ -13,6 +7,8 @@
 #include <tuple>
 #include <memory>
 #include <algorithm>
+#include <carma>
+
 
 namespace twophoton {
 
@@ -473,7 +469,7 @@ namespace twophoton {
 			TIFFClose(m_tif);
 	}
 
-	bool SITiffWriter::writeLibTiff(const arama::Mat<int16_t> & img, const std::vector<int> & params) {
+	bool SITiffWriter::writeLibTiff(arma::Mat<int16_t> & img, const std::vector<int> & params) {
 		int channels = 1;
 		int width = img.n_cols, height = img.n_rows;
 		int bitsPerChannel = 16 ;
@@ -552,7 +548,7 @@ namespace twophoton {
 				std::memcpy(buffer.get(),
 					data + tileidx*(tile_height0*tile_width0),
 					buffer_size);
-				ok = (int)TIFFWritedEncodedStrip(pTiffHandle, tileidx, buffer.get(), buffer_size) >=0;
+				ok = (int)TIFFWriteEncodedStrip(pTiffHandle, tileidx, buffer.get(), buffer_size) >=0;
 				if ( !ok ) {
 					TIFFClose(pTiffHandle);
 					return false;
@@ -604,7 +600,7 @@ namespace twophoton {
 		return whole_target;
 	}
 
-	bool SITiffWriter::write( const arma::Mat<int16_t>& img, const std::vector<int>& params)
+	bool SITiffWriter::write(arma::Mat<int16_t>& img, const std::vector<int>& params)
 	{
 		return writeLibTiff(img, params);
 	}
@@ -673,10 +669,10 @@ namespace twophoton {
 		else
 			m_all_transforms->clear();
 
-		xml_document<> doc;
-		xml_node<> * root_node;
-		xml_node<> * summary_node;
-		xml_node<> * transform_node;
+		rapidxml::xml_document<> doc;
+		rapidxml::xml_node<> * root_node;
+		rapidxml::xml_node<> * summary_node;
+		rapidxml::xml_node<> * transform_node;
 
 		std::ifstream ifs(fname);
 		std::vector<char> buffer((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
@@ -686,33 +682,31 @@ namespace twophoton {
 		summary_node = root_node->first_node("Summary");
 		transform_node = summary_node->next_sibling();
 
-		for (xml_node<> * underscore_node = transform_node->first_node("_"); underscore_node != nullptr; underscore_node = underscore_node->next_sibling()) {
-			for( xml_node<> * frame_node = underscore_node->first_node("Frame"); frame_node != nullptr; frame_node = frame_node->next_sibling()) {
+		for (rapidxml::xml_node<> * underscore_node = transform_node->first_node("_"); underscore_node != nullptr; underscore_node = underscore_node->next_sibling()) {
+			for(rapidxml::xml_node<> * frame_node = underscore_node->first_node("Frame"); frame_node != nullptr; frame_node = frame_node->next_sibling()) {
 				std::cout << frame_node->name() << ": " << frame_node->value() << std::endl;
 				if ( std::find(possible_transforms.begin(), possible_transforms.end(), frame_node->name()) != possible_transforms.end() ) {
 					// found one of the possible transforms, calculate the size of the mat to fit the values in
 					int n_rows = std::stoi(frame_node->first_node("rows")->value());
 					int n_cols = std::stoi(frame_node->first_node("cols")->value());
-					
-
+					auto M = str2mat(frame_node->first_node("data")->value(), n_rows, n_cols);
+					TransformContainer tc{std::stoi(frame_node->name()), std::stof(frame_node->value())};
+					m_all_transforms->emplace(std::stoi(frame_node->name()), tc);
 				}
 			}
-		}
-		cv::FileStorage storage(fname, cv::FileStorage::READ);
-		cv::FileNode node = storage["Transformations"];
-		cv::FileNodeIterator iter = node.begin(), iter_end = node.end();
-		
-		for(; iter != iter_end; ++iter) {
-			TransformContainer tc_node;
-			*iter >> tc_node;
-			m_all_transforms->emplace(tc_node.m_framenumber, tc_node);
 		}
 		return true;
 	}
 
-	cv::Mat SITiffIO::readFrame(int frame_num) const {
+	pybind11::array_t<int16_t> SITiffIO::readFrame(int frame_num) const {
 		auto dir_to_read = frame_num * m_nchans - (m_nchans - channel2display);
-		return TiffReader->readframe(dir_to_read);
+		arma::Mat<int16_t> F = TiffReader->readframe(dir_to_read);
+		return carma::mat_to_arr(F);
+	}
+
+	pybind11::array_t<double> SITiffIO::testFunc() {
+		arma::mat A = arma::ones(5,5);
+		return carma::mat_to_arr(A);
 	}
 
 	std::tuple<double, double, double> SITiffIO::getPos(const unsigned int i) const {
@@ -729,9 +723,9 @@ namespace twophoton {
 		auto search = m_all_transforms->find(i);
 		if ( search != m_all_transforms->end() ) {
 			auto transform_container = search->second;
-			cv::Mat T = transform_container.getTransform(TransformType::kTrackerTranslation);
-			double x_move = T.at<double>(0, 0);
-			double y_move = T.at<double>(0, 1);
+			auto T = transform_container.getTransform(TransformType::kTrackerTranslation);
+			double x_move = T.at(0, 0);
+			double y_move = T.at(0, 1);
 			return std::make_tuple(x_move, y_move);
 		}
 	}
@@ -744,8 +738,8 @@ namespace twophoton {
 			auto transform_container = T.second;
 			if ( transform_container.hasTransform(TransformType::kTrackerTranslation) ) {
 				auto M = transform_container.getTransform(TransformType::kTrackerTranslation);
-				_x.push_back(M.at<double>(0, 0));
-				_y.push_back(M.at<double>(0, 1));
+				_x.push_back(M.at(0, 0));
+				_y.push_back(M.at(0, 1));
 			}
 		}
 		return std::make_tuple(_x, _y);
@@ -766,7 +760,6 @@ namespace twophoton {
 		TiffReader->countDirectories(endFrame);
 		std::cout << "Counted " << endFrame << " directories" << std::endl;
 
-		cv::Mat T = cv::Mat::eye(2, 3, CV_64F);
 		double tiff_ts, x, z, r;
 		unsigned int frame_num;
 		int logfile_idx;
@@ -787,7 +780,8 @@ namespace twophoton {
 			tc.m_framenumber = i;
 			tc.m_timestamp = tiff_ts;
 			tc.setPosData(x,z,r);
-			cv::Mat A = (cv::Mat_<double>(1,1) << r);
+			arma::mat A(1,1);
+			A = { r };
 			tc.addTransform(TransformType::kInitialRotation, A);
 			auto transform_map = m_all_transforms.get();
 			transform_map->emplace(frame_num, tc);
@@ -857,10 +851,7 @@ namespace twophoton {
 }
 // ----------------- Python binding ----------------
 
-namespace py = pybind11;
-
 PYBIND11_MODULE(scanimagetiffio, m) {
-	NDArrayConverter::init_numpy();
 
 	py::class_<twophoton::SITiffIO>(m, "SITiffIO")
 		.def(py::init<>())

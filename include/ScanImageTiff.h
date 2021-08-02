@@ -17,6 +17,14 @@
 #include <sstream>
 
 
+// #include "../include/extern/carma/include/carma"
+#include <armadillo>
+#include <pybind11/pybind11.h>
+#include <pybind11/numpy.h>
+#include <pybind11/stl.h>
+#include <pybind11/operators.h>
+#include <pybind11/stl_bind.h>
+
 // Some string utilities
 // Split a string given a delimiter and either return in a
 // pre-constructed vector (#1) or returns a new one (#2)
@@ -48,6 +56,18 @@ static std::string grabStr(const std::string & source, const std::string & targe
 	}
 	else
 		return std::string();
+}
+
+static arma::mat str2mat(const std::string & str, const unsigned int & nrows, const unsigned int & ncols, char delim=' ') {
+	auto data = split(str, delim);
+	std::vector<double> mat;
+	std::transform(data.begin(), data.end(), std::back_inserter(mat),
+						[](const std::string & s){
+							if ( s.size() > 1) // can be lots of leading / trailing whitespace in the string s
+								return std::stof(s);});
+	auto M = arma::mat(mat);
+	arma::mat R = arma::reshape(M, nrows, ncols);
+	return R;
 }
 
 namespace twophoton {
@@ -232,7 +252,7 @@ namespace twophoton {
 	public:
 		SITiffWriter() {};
 		virtual ~SITiffWriter();
-		bool  write( const arma::Mat<int16_t>& img, const std::vector<int>& params );
+		bool  write(arma::Mat<int16_t>& img, const std::vector<int>& params );
 
 		virtual bool isOpened();
 		virtual bool open(std::string outputPath);
@@ -242,7 +262,7 @@ namespace twophoton {
 		std::string modifyChannel(std::string &, const unsigned int);
 
 	protected:
-		bool writeLibTiff( const arma::Mat<int16_t>& img, const std::vector<int>& params );
+		bool writeLibTiff(arma::Mat<int16_t>& img, const std::vector<int>& params );
 		bool writeHdr( const arma::Mat<int16_t>& img );
 		std::string m_filename;
 		TIFF* m_tif;
@@ -371,7 +391,7 @@ namespace twophoton {
     kHaimanPieceWiseMapping,
 	};
 
-	std::vector<std::string> possible_transforms{
+	static std::vector<std::string> possible_transforms{
 		"InitialRotation",
 		"TrackerTranslation",
 		"MultiTrackerTranslation",
@@ -438,50 +458,7 @@ namespace twophoton {
 				addTransform(T, M);
 			}
 		};
-		// I/O methods for when serializing using cv::FileStorage
-		// void write(cv::FileStorage & fs) const;
-		// void read(const cv::FileNode & node);
 	};
-
-	// static void write(cv::FileStorage & fs, const std::string &, const TransformContainer & T) {
-	// 	T.write(fs);
-	// }
-
-	// static void read(cv::FileNode & node, TransformContainer & T, const TransformContainer & default_value = TransformContainer()) {
-	// 	if ( node.empty() )
-	// 		T = default_value;
-	// 	else
-	// 		T.read(node);
-	// }
-
-	// "read" method
-	// static void operator>>(const cv::FileNode & node, TransformContainer & T) {
-	// 	T.m_framenumber = (int)node["Frame"];
-	// 	T.m_timestamp = (double)node["Timestamp"];
-	// 	T.m_x = (double)node["X"];
-	// 	T.m_z = (double)node["Z"];
-	// 	T.m_r = (double)node["R"];
-	// 	// the transformations
-	// 	cv::FileNodeIterator iter = node.begin();
-	// 	for(; iter != node.end(); ++iter) {
-	// 		cv::FileNode n = *iter;
-	// 		std::string name = n.name();
-	// 		if ( name.compare("InitialRotation") == 0 )
-	// 			T.addTransform(TransformType::kInitialRotation, n.mat());
-	// 		if ( name.compare("TrackerTranslation") == 0 )
-	// 			T.addTransform(TransformType::kTrackerTranslation, n.mat());
-	// 		if ( name.compare("MultiTrackerTranslation") == 0 )
-	// 			T.addTransform(TransformType::kMultiTrackerTranslation, n.mat());
-	// 		if ( name.compare("HaimanFFTTranslation") == 0 )
-	// 			T.addTransform(TransformType::kHaimanFFTTranslation, n.mat());
-	// 		if ( name.compare("LogPolarRotation") == 0 )
-	// 			T.addTransform(TransformType::kLogPolarRotation, n.mat());
-	// 		if ( name.compare("OpticalFlow") == 0 )
-	// 			T.addTransform(TransformType::kOpticalFlow, n.mat());
-	// 		if ( name.compare("PieceWiseMapping") == 0 )
-	// 			T.addTransform(TransformType::kHaimanPieceWiseMapping, n.mat());
-	// 	}
-	// }
 
 	// "write" method
 	static std::ostream& operator<<(std::ostream & out, const TransformContainer & T) {
@@ -523,7 +500,8 @@ namespace twophoton {
 			void interpolateIndices();
 			unsigned int getNChannels() { return m_nchans; }
 			void setChannel(unsigned int i) { channel2display = i; }
-			cv::Mat readFrame(int frame_num=0) const;
+			pybind11::array_t<int16_t> readFrame(int frame_num) const;
+			pybind11::array_t<double> testFunc();
 			std::vector<double> getTimeStamps() const;
 			std::vector<double> getX() const;
 			std::vector<double> getZ() const;
