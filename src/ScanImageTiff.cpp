@@ -7,8 +7,6 @@
 #include <tuple>
 #include <memory>
 #include <algorithm>
-#include <carma>
-
 
 namespace twophoton {
 
@@ -64,8 +62,8 @@ namespace twophoton {
 				frameTimeStamp = "frameTimestamps_sec =";
 			}
 
-			uint32 length;
-			uint32 width;
+			uint32_t length;
+			uint32_t width;
 			TIFFGetField(m_tif, TIFFTAG_IMAGELENGTH, &length);
 			TIFFGetField(m_tif, TIFFTAG_IMAGEWIDTH, &width);
 			m_parent->setImageSize(length, width);
@@ -148,8 +146,8 @@ namespace twophoton {
 		if ( m_tif )
 		{
 			TIFFSetDirectory(m_tif, dirnum);
-			uint32 length;
-			uint32 width;
+			uint32_t length;
+			uint32_t width;
 			TIFFGetField(m_tif, TIFFTAG_IMAGELENGTH, &length);
 			TIFFGetField(m_tif, TIFFTAG_IMAGEWIDTH, &width);
 			// hard-code the sample format (signed int) as SI seems to only
@@ -366,8 +364,9 @@ namespace twophoton {
 			NB This differs from the 1-based indexing for framenumbers that ScanImage uses (fucking Matlab)
 			*/
 			TIFFSetDirectory(m_tif, framenum);
-			uint32 w = 0, h = 0;
-			uint16 photometric = 0;
+			uint32_t w = 0, h = 0;
+			uint16_t photometric = 0;
+			auto buffer_size = TIFFStripSize(m_tif);
 			if( TIFFGetField( m_tif, TIFFTAG_IMAGEWIDTH, &w ) && // normally = 512
 				TIFFGetField( m_tif, TIFFTAG_IMAGELENGTH, &h ) && // normally = 512
 				TIFFGetField( m_tif, TIFFTAG_PHOTOMETRIC, &photometric )) // photometric = 1 (min-is-black)
@@ -375,11 +374,11 @@ namespace twophoton {
 				m_imagewidth = w;
 				m_imageheight = h;
 
-				uint16 bpp=8, ncn = photometric > 1 ? 3 : 1;
+				uint16_t bpp=8, ncn = photometric > 1 ? 3 : 1;
 				TIFFGetField( m_tif, TIFFTAG_BITSPERSAMPLE, &bpp ); // = 16
 				TIFFGetField( m_tif, TIFFTAG_SAMPLESPERPIXEL, &ncn ); // = 1
 				int is_tiled = TIFFIsTiled(m_tif); // 0 ie false, which means the data is organised in strips
-				uint32 tile_height0 = 0, tile_width0 = m_imagewidth;
+				uint32_t tile_height0 = 0, tile_width0 = m_imagewidth;
 				TIFFGetField(m_tif, TIFFTAG_ROWSPERSTRIP, &tile_height0);
 
 				if( (!is_tiled) ||
@@ -394,10 +393,8 @@ namespace twophoton {
 						tile_width0 = m_imagewidth;
 
 					if( tile_height0 <= 0 ||
-					(!is_tiled && tile_height0 == std::numeric_limits<uint32>::max()) )
+					(!is_tiled && tile_height0 == std::numeric_limits<uint32_t>::max()) )
 						tile_height0 = m_imageheight;
-
-					const size_t buffer_size = bpp * ncn * tile_height0 * tile_width0;
 
 					std::unique_ptr<int16_t[]> buffer = std::make_unique<int16_t[]>(buffer_size);
 					int tileidx = 0;
@@ -414,26 +411,28 @@ namespace twophoton {
 
 						if( y + tile_height > m_imageheight )
 							tile_height = m_imageheight - y;
-						// tile_height is always equal to 8
-
+						// tile_height = 8
+						// tile_width = 512
+						
 						for(unsigned int x = 0; x < m_imagewidth; x += tile_width0, tileidx++)
 						{
 							unsigned int tile_width = tile_width0, ok;
-
+							
 							if( x + tile_width > m_imagewidth )
 								tile_width = m_imagewidth - x;
 							// I've cut out lots of bpp testing etc here
 							// tileidx goes from 0 to 63
-							// buffer has 4096 int16's in
+							// buffer has 4096 int16_t's in
 							ok = (int)TIFFReadEncodedStrip(m_tif, tileidx, buffer.get(), buffer_size ) >= 0;
 							if ( !ok )
 							{
 								close();
 								return arma::Mat<int16_t>();
 							}
+							
 							std::memcpy(data + tileidx*(tile_height*tile_width),
 										buffer.get(),
-										(tile_height*tile_width)*sizeof(buffer.get()));
+										buffer_size);
 						}
 					}
 
@@ -529,7 +528,7 @@ namespace twophoton {
 		const size_t buffer_size = bitsPerChannel * channels * rowsPerStrip * width;
 		std::unique_ptr<int16_t[]> buffer = std::make_unique<int16_t[]>(buffer_size);
 		int tileidx = 0;
-		int16_t * data = img.memptr();
+		auto data = img.memptr();
 		
 		if (!data)
 		{
@@ -650,8 +649,12 @@ namespace twophoton {
 		tiff_fname = fname;
 		TiffReader = std::make_shared<SITiffReader>(fname);
 		if ( TiffReader->open() ) {
+			TiffReader->getSWTag(0); // ensures num channels are read
 			auto chans = TiffReader->getSavedChans();
-			m_nchans = chans.size();
+			if ( chans.size() == 0 )
+				m_nchans = 1;
+			else
+				m_nchans = chans.size();
 			return true;
 		}
 		return false;
@@ -698,15 +701,10 @@ namespace twophoton {
 		return true;
 	}
 
-	pybind11::array_t<int16_t> SITiffIO::readFrame(int frame_num) const {
+	py::array_t<int16_t> SITiffIO::readFrame(int frame_num) const {
 		auto dir_to_read = frame_num * m_nchans - (m_nchans - channel2display);
-		arma::Mat<int16_t> F = TiffReader->readframe(dir_to_read);
-		return carma::mat_to_arr(F);
-	}
-
-	pybind11::array_t<double> SITiffIO::testFunc() {
-		arma::mat A = arma::ones(5,5);
-		return carma::mat_to_arr(A);
+		auto F = TiffReader->readframe(dir_to_read);
+		return carma::mat_to_arr(F, true);
 	}
 
 	std::tuple<double, double, double> SITiffIO::getPos(const unsigned int i) const {
@@ -848,6 +846,11 @@ namespace twophoton {
 		}
 		return result;
 	}
+
+	std::tuple<unsigned int> SITiffIO::getNChannels() const {
+		return m_nchans;
+	}
+
 }
 // ----------------- Python binding ----------------
 
@@ -859,6 +862,8 @@ PYBIND11_MODULE(scanimagetiffio, m) {
 		.def("open_log_file", &twophoton::SITiffIO::openLog, "Open a log file")
 		.def("open_xml_file", &twophoton::SITiffIO::openXML, "Open an xml file")
 		.def("set_channel", &twophoton::SITiffIO::setChannel, "Sets the channel to take frames from")
+		.def_readonly("get_n_channels", &twophoton::SITiffIO::m_nchans, "Get the number of channels")
+		.def_readonly("get_display_channel", &twophoton::SITiffIO::channel2display, "Get the channel to display")
 		.def("interp_times", &twophoton::SITiffIO::interpolateIndices, "Interpolate the times in the tiff frames to events (position and time) in the log file")
 		.def("get_pos", &twophoton::SITiffIO::getPos, "Gets a 3-tuple of X, Z and theta for the given frame")
 		.def("get_tracker", &twophoton::SITiffIO::getTrackerTranslation, "Get the x and y translation for a tracked bounding box")
