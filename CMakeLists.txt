@@ -47,7 +47,7 @@ LINK_DIRECTORIES(
 
 # target_link_libraries(scanimagetiffio ${OpenCV_LIBS} ${TIFF_LIBRARIES} ${Python3_LIBRARIES} ${Boost_LIBRARIES} )
 # remove the "lib" from start of the library name
-# SET_TARGET_PROPERTIES(scanimagetiffio PROPERTIES PREFIX "")
+SET_TARGET_PROPERTIES(ScanImageTiff PROPERTIES PREFIX "")
 
 add_library(ScanImageTiff SHARED
     src/ScanImageTiff.cpp 
@@ -62,7 +62,11 @@ set_target_properties(ScanImageTiff PROPERTIES
     SOVERSION 1
     PUBLIC_HEADER "include/ScanImageTiff.h" )
 configure_file(ScanImageTiff.pc.in ScanImageTiff.pc @ONLY)
-target_include_directories(ScanImageTiff PUBLIC .)
+target_include_directories(ScanImageTiff PUBLIC
+    $<INSTALL_INTERFACE:include> # <prefix>/include/carma
+    # path of the headers before installation
+    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+)
 
 # install
 # install(TARGETS ScanImageTiff
