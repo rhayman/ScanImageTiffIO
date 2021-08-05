@@ -2,7 +2,6 @@
 #include <cmath>
 #include <algorithm>
 #include "../include/ScanImageTiff.h"
-// #include "../include/helper_fcns.hpp"
 
 namespace twophoton
 {

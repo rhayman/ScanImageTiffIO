@@ -7,15 +7,11 @@
 #include <map>
 #include <memory>
 
-#include <boost/filesystem.hpp>
 #include <boost/date_time.hpp>
-#include <boost/regex.hpp>
 
 #include <opencv2/core.hpp>
 #include <opencv2/imgproc.hpp>
 #include <opencv2/imgproc.hpp>
-
-#include <armadillo>
 
 #include <vector>
 #include <sstream>
@@ -178,7 +174,6 @@ namespace twophoton {
 		bool isOpen() { return isopened; }
 		bool readheader();
 		cv::Mat readframe(int framedir=0);
-		arma::Mat<int16_t> readArmaFrame(int framedir=0);
 		bool close();
 		bool release();
 		int getVersion() const { return headerdata->getVersion(); }

@@ -3,36 +3,54 @@ Synopsis
 
 A shared library written in C/C++ to load data recorded using ScanImage (http://scanimage.vidriotechnologies.com/). Also contains a Python interface.
 
+Installation
+============
+
+There are two branches of the repo, master and armadillo, the main difference being the libraries used to present the tiff data to the user. The master branch uses openCV whereas armadillo uses armadillo. The other big difference is that the armadillo branch installs a shared library primarily meant as a Python API so the data can be inspected etc from Python. The shared library is installed into a platform dependent installation directory so that you can import the library into Python from anywhere.
+
+The armadillo branch has the following dependencies:
 
 Dependencies
 ============
 
-- opencv (https://opencv.org/)
+Armadillo branch
+-----------------
 
 - libtiff (http://www.libtiff.org/)
 
+- boost (https://www.boost.org/)
+
 - Python 3 (and NumPy)
 
-- pybind11 (see below)
 
-Installation
-============
-
-For opencv and pybind11 you can clone from their respective github repos.
-
-To install pybind11 do:
+To install the armadillo branch:
 
 ```
-git clone https://github.com/pybind/pybind11.git
-cd pybind11
+git clone https://github.com/rhayman/ScanImageTiffIO.git
+cd ScanImageTiffIO
+git checkout armadillo
 mkdir build
 cd build
 cmake ..
-make check -j 8
+make
 sudo make install
 ```
 
-There are a bunch of extra things you can install to speed up openCV including
+The last install step will put a shared library called scanimagetiffio into the correct platform dependent installation directory so you should now be able to do this from any directory:
+
+```python
+from scanimagetiffio.scanimagetiffio import SITiffIO
+S = SITiffIO()
+S.open_tiff_file(<path_to_tif_file>)
+S.open_log_file(<path_to_log_file>)
+S.interp_times() # might take a while...
+frame_0 = S.get_frame(0) # returns a numpy int16 array
+```
+
+Master branch
+-------------
+
+There are a bunch of extra things you can install to speed up openCV before actually installing it including
 things like Eigen, Lapack, openBLAS and so on. If you want to see more details,
 take a look at the output from the cmake step show below, i.e. before typing
 make.
@@ -51,13 +69,12 @@ make -j8
 sudo make install
 ```
 
-I'm assuming Python3 is already installed and working (as is NumPy).
-
-Finally, to get this library working do the following:
+To install the master branch:
 
 ```
 git clone https://github.com/rhayman/ScanImageTiffIO.git
 cd ScanImageTiffIO
+git checkout master
 mkdir build
 cd build
 cmake ..
@@ -77,18 +94,8 @@ The header file will be:
 /usr/local/include/ScanImageTiff.h
 `
 
-In the directory you built the library in ('build' if you followed the above instructions), 
-there should now be a file called scanimagetiffio.so. This is the library that you will 
-import into Python.
+You should now be able to include the library in a C++ project:
 
-Whilst in the build directory you can start an iPython session and import and use like so:
-
-```python
-import scanimagetiffio
-data = scanimagetiffio.SITiffIO()
-data.open_tiff_file("/path/to/file.tif")
-data.open_log_file("/path/to/log.txt")
-data.interp_times()
-frame_zero = data.get_frame(0)
-x,y,theta = data.get_pos(0)
+```c++
+#include <ScanImageTiff.h>
 ```

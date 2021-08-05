@@ -4,8 +4,6 @@
 #include <pybind11/operators.h>
 #include <pybind11/stl_bind.h>
 
-#include "../include/ndarray_converter.h"
-
 #include <stdio.h>
 #include <stdio_ext.h>
 #include <limits>
@@ -449,97 +447,6 @@ namespace twophoton {
 		return cv::Mat();
 	}
 
-	arma::Mat<int16_t> SITiffReader::readArmaFrame(int framedir) {
-		if ( m_tif ) {
-			arma::Mat<int16_t> frame;
-			int framenum = framedir;
-			/*
-			From the man pages for TIFFSetDirectory:
-
-			TIFFSetDirectory changes the current directory and reads its contents with TIFFReadDirectory.
-			The parameter dirnum specifies the subfile/directory as an integer number, with the first directory numbered zero.
-
-			NB This differs from the 1-based indexing for framenumbers that ScanImage uses (fucking Matlab)
-			*/
-			TIFFSetDirectory(m_tif, framenum);
-			uint32 w = 0, h = 0;
-			uint16 photometric = 0;
-			if( TIFFGetField( m_tif, TIFFTAG_IMAGEWIDTH, &w ) && // normally = 512
-				TIFFGetField( m_tif, TIFFTAG_IMAGELENGTH, &h ) && // normally = 512
-				TIFFGetField( m_tif, TIFFTAG_PHOTOMETRIC, &photometric )) // photometric = 1 (min-is-black)
-			{
-				m_imagewidth = w;
-				m_imageheight = h;
-
-				uint16 bpp=8, ncn = photometric > 1 ? 3 : 1;
-				TIFFGetField( m_tif, TIFFTAG_BITSPERSAMPLE, &bpp ); // = 16
-				TIFFGetField( m_tif, TIFFTAG_SAMPLESPERPIXEL, &ncn ); // = 1
-				int is_tiled = TIFFIsTiled(m_tif); // 0 ie false, which means the data is organised in strips
-				uint32 tile_height0 = 0, tile_width0 = m_imagewidth;
-				TIFFGetField(m_tif, TIFFTAG_ROWSPERSTRIP, &tile_height0);
-
-				if( (!is_tiled) ||
-					(is_tiled &&
-					TIFFGetField( m_tif, TIFFTAG_TILEWIDTH, &tile_width0) &&
-					TIFFGetField( m_tif, TIFFTAG_TILELENGTH, &tile_height0 )))
-				{
-					if(!is_tiled)
-						TIFFGetField( m_tif, TIFFTAG_ROWSPERSTRIP, &tile_height0 );
-
-					if( tile_width0 <= 0 )
-						tile_width0 = m_imagewidth;
-
-					if( tile_height0 <= 0 ||
-					(!is_tiled && tile_height0 == std::numeric_limits<uint32>::max()) )
-						tile_height0 = m_imageheight;
-
-					const size_t buffer_size = bpp * ncn * tile_height0 * tile_width0;
-
-					std::unique_ptr<int16_t[]> buffer = std::make_unique<int16_t[]>(buffer_size);
-					int tileidx = 0;
-
-					// ********* return frame created here ***********
-
-					frame = arma::Mat<int16_t>(h, w);
-					int16_t* data = frame.memptr();
-
-					for (unsigned int y = 0; y < m_imageheight; y+=tile_height0)
-					{
-						unsigned int tile_height = tile_height0;
-
-
-						if( y + tile_height > m_imageheight )
-							tile_height = m_imageheight - y;
-						// tile_height is always equal to 8
-
-						for(unsigned int x = 0; x < m_imagewidth; x += tile_width0, tileidx++)
-						{
-							unsigned int tile_width = tile_width0, ok;
-
-							if( x + tile_width > m_imagewidth )
-								tile_width = m_imagewidth - x;
-							// I've cut out lots of bpp testing etc here
-							// tileidx goes from 0 to 63
-							// buffer has 4096 int16's in
-							ok = (int)TIFFReadEncodedStrip(m_tif, tileidx, buffer.get(), buffer_size ) >= 0;
-							if ( !ok )
-							{
-								close();
-								return arma::Mat<int16_t>();
-							}
-							std::memcpy(data + tileidx*(tile_height*tile_width),
-										buffer.get(),
-										(tile_height*tile_width)*sizeof(buffer.get()));
-						}
-					}
-
-				}
-			}
-			return frame;
-		}
-		return arma::Mat<int16_t>();
-	}
-
 	bool SITiffReader::close() {
 		TIFFClose(m_tif);
 		isopened = false;
@@ -975,28 +882,4 @@ namespace twophoton {
 		}
 		return result;
 	}
-}
-// ----------------- Python binding ----------------
-
-namespace py = pybind11;
-
-PYBIND11_MODULE(scanimagetiffio, m) {
-	NDArrayConverter::init_numpy();
-
-	py::class_<twophoton::SITiffIO>(m, "SITiffIO")
-		.def(py::init<>())
-		.def("open_tiff_file", &twophoton::SITiffIO::openTiff, "Open a tiff file")
-		.def("open_log_file", &twophoton::SITiffIO::openLog, "Open a log file")
-		.def("open_xml_file", &twophoton::SITiffIO::openXML, "Open an xml file")
-		.def("set_channel", &twophoton::SITiffIO::setChannel, "Sets the channel to take frames from")
-		.def("interp_times", &twophoton::SITiffIO::interpolateIndices, "Interpolate the times in the tiff frames to events (position and time) in the log file")
-		.def("get_pos", &twophoton::SITiffIO::getPos, "Gets a 3-tuple of X, Z and theta for the given frame")
-		.def("get_tracker", &twophoton::SITiffIO::getTrackerTranslation, "Get the x and y translation for a tracked bounding box")
-		.def("get_all_tracker", &twophoton::SITiffIO::getAllTrackerTranslation, "Get all the x and y translations for a tracked bounding box")
-		.def("get_frame", &twophoton::SITiffIO::readFrame, "Gets the data/ image for the given frame")
-		.def("get_all_x", &twophoton::SITiffIO::getX, "Gets all the X values")
-		.def("get_all_z", &twophoton::SITiffIO::getZ, "Gets all the Z values")
-		.def("get_all_theta", &twophoton::SITiffIO::getTheta, "Gets all the rotational values")
-		.def("get_frame_numbers", &twophoton::SITiffIO::getFrameNumbers, "Gets all the rotational values")
-		.def("get_all_timestamps", &twophoton::SITiffIO::getTimeStamps, "Gets all the timestamps");
 }
