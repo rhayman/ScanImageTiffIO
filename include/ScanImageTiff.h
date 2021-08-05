@@ -7,9 +7,7 @@
 #include <map>
 #include <memory>
 
-#include <boost/filesystem.hpp>
 #include <boost/date_time.hpp>
-#include <boost/regex.hpp>
 
 #include <vector>
 #include <sstream>
@@ -300,17 +298,16 @@ namespace twophoton {
     {
     public:
         LogFileLoader() {};
-        LogFileLoader(std::string);
+        LogFileLoader(const std::string &);
         ~LogFileLoader();
-        void setFilename(std::string);
+        void setFilename(const std::string &);
         std::string getFilename() { return filename; }
         bool load();
-        void save(std::string);
-        int getRotation(int);
-        double getRadianRotation(int);
-        double getXTranslation(int);
-        double getZTranslation(int);
-        double getTime(int);
+        int getRotation(const int &);
+        double getRadianRotation(const int &);
+        double getXTranslation(const int &);
+        double getZTranslation(const int &);
+        double getTime(const int &);
         std::vector<double> getX();
         std::vector<double> getZ();
         std::vector<double> getTheta();
@@ -330,12 +327,12 @@ namespace twophoton {
         /* given a tiff file timestamp returns the nearest index in the logfile
         that matches that timestamp
         */
-        int findNearestIdx(double tiffTimestamp);
+        int findNearestIdx(const double &);
         //saves rotation matrices to file with centre to file in outPath...
         // void saveRotationMats(cv::Point centre, std::string outPath);
         // //...and this loads them and returns in the vector
         // std::vector<cv::Mat> loadRotationMats(std::string filePath);
-        void saveRaw(std::string fname);
+        void saveRaw(const std::string &);
         bool isloaded = false;
         // findStableFrames: pairs of start and end frames for frames with no head rotation
         std::vector<std::pair<int, int>> findStableFrames(const unsigned int minFrames, const double minAngle=1e-3);

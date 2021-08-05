@@ -58,7 +58,7 @@ namespace twophoton {
 		return std::distance(std::begin(vec), it);
 	}
 
-	LogFileLoader::LogFileLoader(std::string fname) {
+	LogFileLoader::LogFileLoader(const std::string & fname) {
 		filename = fname;
 	}
 	LogFileLoader::~LogFileLoader() {
@@ -66,19 +66,19 @@ namespace twophoton {
 			out_file.close();
 	}
 
-	void LogFileLoader::setFilename(std::string f) {
+	void LogFileLoader::setFilename(const std::string & f) {
 		filename = f;
 	}
 
-	int LogFileLoader::getRotation(int idx) {
+	int LogFileLoader::getRotation(const int & idx) {
 		return rotation[idx];
 	}
 
-	double LogFileLoader::getXTranslation(int idx) {
+	double LogFileLoader::getXTranslation(const int & idx) {
 		return x_translation[idx];
 	}
 
-	double LogFileLoader::getZTranslation(int idx) {
+	double LogFileLoader::getZTranslation(const int & idx) {
 		return z_translation[idx];
 	}
 
@@ -98,11 +98,11 @@ namespace twophoton {
 		return logfile_line_numbers;
 	}
 
-	double LogFileLoader::getRadianRotation(int idx) {
+	double LogFileLoader::getRadianRotation(const int & idx) {
 		return rotation_in_rads[idx];
 	}
 
-	double LogFileLoader::getTime(int idx) {
+	double LogFileLoader::getTime(const int & idx) {
 		return times[idx];
 	}
 
@@ -231,7 +231,7 @@ namespace twophoton {
 			return false;
 	}
 
-	int LogFileLoader::findNearestIdx(double tiffTimestamp) {
+	int LogFileLoader::findNearestIdx(const double & tiffTimestamp) {
 		if (!(times.empty())) {
 			std::vector<double>::iterator low;
 			low = std::lower_bound(times.begin(), times.end(), tiffTimestamp);
@@ -379,7 +379,7 @@ namespace twophoton {
 		return stableFrames;
 	}
 
-	void LogFileLoader::saveRaw(std::string fname) {
+	void LogFileLoader::saveRaw(const std::string & fname) {
 		std::ofstream ofs(fname, std::ifstream::out);
 
 		ofs << "X\t" << "Z\t" << "Rotation\t" << "Time\n";
