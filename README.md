@@ -16,6 +16,8 @@ Dependencies
 Armadillo branch
 -----------------
 
+- cmake (https://cmake.org/)
+
 - libtiff (http://www.libtiff.org/)
 
 - boost (https://www.boost.org/)
