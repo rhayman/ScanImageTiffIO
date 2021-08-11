@@ -40,7 +40,6 @@ target_link_libraries(ScanImageTiff
     ${OpenCV_LIBS}
     ${TIFF_LIBRARIES}
     ${Python3_LIBRARIES}
-    ${ARMADILLO_LIBRARIES}
     ${Boost_LIBRARIES}
 )
 
@@ -50,7 +49,6 @@ set_target_properties(ScanImageTiff PROPERTIES
     PUBLIC_HEADER "include/ScanImageTiff.h"
 )
 
-
 target_include_directories(ScanImageTiff PUBLIC
     $<INSTALL_INTERFACE:include>
     # path of the headers before installation
@@ -58,10 +56,11 @@ target_include_directories(ScanImageTiff PUBLIC
 )
 
 # install
-install(TARGETS ScanImageTiff
+install(TARGETS ScanImageTiff EXPORT ScanImageTiffTargets
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )
+
 # pkfconfig file
 configure_file(ScanImageTiff.pc.in ScanImageTiff.pc @ONLY)
 install(FILES ${CMAKE_BINARY_DIR}/ScanImageTiff.pc
@@ -71,12 +70,26 @@ install(FILES ${CMAKE_BINARY_DIR}/ScanImageTiff.pc
 include(CMakePackageConfigHelpers)
 set(INCLUDE_INSTALL_DIR ${CMAKE_INSTALL_INCLUDEDIR})
 set(LIBRARY_INSTALL_DIR ${CMAKE_INSTALL_LIBDIR})
-configure_package_config_file(ScanImageTiffConfig.cmake.in ScanImageTiffConfig.cmake
+
+configure_package_config_file(
+    ScanImageTiffConfig.cmake.in ScanImageTiffConfig.cmake
     INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/ScanImageTiff
     PATH_VARS LIBRARY_INSTALL_DIR INCLUDE_INSTALL_DIR
     NO_SET_AND_CHECK_MACRO
     NO_CHECK_REQUIRED_COMPONENTS_MACRO
 )
+
+export (TARGETS ScanImageTiff FILE ScanImageTiffTargets.cmake)
+
+export (PACKAGE ScanImageTiff)
+
+install(FILES include/ScanImageTiff.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+
+install (EXPORT ScanImageTiffTargets 
+        FILE ScanImageTiffTargets.cmake
+        NAMESPACE ScanImageTiff::
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/ScanImageTiff)
+
 install(FILES
     "${CMAKE_CURRENT_BINARY_DIR}/ScanImageTiffConfig.cmake"
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/ScanImageTiff
