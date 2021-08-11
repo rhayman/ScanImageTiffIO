@@ -59,7 +59,9 @@ target_include_directories(ScanImageTiff PUBLIC
 
 # install
 install(TARGETS ScanImageTiff
+    RUNTIME_DESTINATION ${CMAKE_INSTALL_BINDIR}
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    ARCHIVE_DESTINATION ${CMAKE_INSTALL_LIBDIR}
     PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )
 # pkfconfig file
@@ -68,4 +70,10 @@ install(FILES ${CMAKE_BINARY_DIR}/ScanImageTiff.pc
     DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/pkgconfig)
 
 # cmake file
-configure_file(ScanImageTiffIOConfig.cmake.in ScanImageTiffIOConfig.cmake @ONLY)
+configure_package_config_file(ScanImageTiffConfig.cmake.in ScanImageTiffConfig.cmake
+    INSTALL_DESINATION ${CMAKE_INSTALL_LIBDIR}/cmake/ScanImageTiff
+)
+install(FILES
+    "${CMAKE_CURRENT_BINARY_DIR}/ScanImageTiffConfig.cmake"
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/ScanImageTiff
+)
