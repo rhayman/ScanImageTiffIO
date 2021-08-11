@@ -10,8 +10,6 @@ include(GNUInstallDirs)
 find_package( OpenCV REQUIRED core imgproc )
 # ---------- libtiff -----------
 find_package(TIFF REQUIRED)
-# ---------- python ------------
-find_package (Python3 REQUIRED COMPONENTS Interpreter Development NumPy)
 # ----------- boost -------------
 find_package( Boost REQUIRED date_time )
 
@@ -20,8 +18,6 @@ include_directories( ${CMAKE_CURRENT_SOURCE_DIR} )
 include_directories( ${OpenCV_INCLUDE_DIRS} )
 include_directories( ${OpenCV_INCLUDE_DIRS}/opencv4 )
 include_directories( ${TIFF_INCLUDE_DIRS} )
-include_directories( ${Python3_INCLUDE_DIRS} )
-include_directories(( ${Python3_NumPy_INCLUDE_DIRS}))
 include_directories( ${Boost_INCLUDE_DIRS} )
 
 LINK_DIRECTORIES(
@@ -37,10 +33,9 @@ add_library(ScanImageTiff SHARED
 SET_TARGET_PROPERTIES(ScanImageTiff PROPERTIES PREFIX "")    
 
 target_link_libraries(ScanImageTiff
+    ${Boost_LIBRARIES}    
     ${OpenCV_LIBS}
     ${TIFF_LIBRARIES}
-    ${Python3_LIBRARIES}
-    ${Boost_LIBRARIES}
 )
 
 set_target_properties(ScanImageTiff PROPERTIES
@@ -68,13 +63,10 @@ install(FILES ${CMAKE_BINARY_DIR}/ScanImageTiff.pc
 
 # cmake file
 include(CMakePackageConfigHelpers)
-set(INCLUDE_INSTALL_DIR ${CMAKE_INSTALL_INCLUDEDIR})
-set(LIBRARY_INSTALL_DIR ${CMAKE_INSTALL_LIBDIR})
 
 configure_package_config_file(
     ScanImageTiffConfig.cmake.in ScanImageTiffConfig.cmake
     INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/ScanImageTiff
-    PATH_VARS LIBRARY_INSTALL_DIR INCLUDE_INSTALL_DIR
     NO_SET_AND_CHECK_MACRO
     NO_CHECK_REQUIRED_COMPONENTS_MACRO
 )
