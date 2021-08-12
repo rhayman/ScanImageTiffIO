@@ -32,10 +32,10 @@ add_library(ScanImageTiff SHARED
     
 SET_TARGET_PROPERTIES(ScanImageTiff PROPERTIES PREFIX "")    
 
-target_link_libraries(ScanImageTiff
-    ${Boost_LIBRARIES}    
+target_link_libraries(ScanImageTiff PUBLIC
+    ${TIFF_LIBRARIES}    
     ${OpenCV_LIBS}
-    ${TIFF_LIBRARIES}
+    ${Boost_LIBRARIES}    
 )
 
 set_target_properties(ScanImageTiff PROPERTIES
@@ -46,6 +46,9 @@ set_target_properties(ScanImageTiff PROPERTIES
 
 target_include_directories(ScanImageTiff PUBLIC
     $<INSTALL_INTERFACE:include>
+    ${OpenCV_INCLUDE_DIRS}
+    ${Boost_INCLUDE_DIRS}
+    ${TIFF_INCLUDE_DIRS}
     # path of the headers before installation
     $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
 )
@@ -68,18 +71,14 @@ configure_package_config_file(
     ScanImageTiffConfig.cmake.in ScanImageTiffConfig.cmake
     INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/ScanImageTiff
     NO_SET_AND_CHECK_MACRO
-    NO_CHECK_REQUIRED_COMPONENTS_MACRO
 )
 
 export (TARGETS ScanImageTiff FILE ScanImageTiffTargets.cmake)
-
-export (PACKAGE ScanImageTiff)
 
 install(FILES include/ScanImageTiff.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 
 install (EXPORT ScanImageTiffTargets 
         FILE ScanImageTiffTargets.cmake
-        NAMESPACE ScanImageTiff::
         DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/ScanImageTiff)
 
 install(FILES
