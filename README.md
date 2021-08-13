@@ -28,7 +28,7 @@ Armadillo branch
 To install the armadillo branch:
 
 ```
-git clone https://github.com/rhayman/ScanImageTiffIO.git
+git clone https://github.com/rhayman/ScanImageTiffIO.git --recurse-submodules
 cd ScanImageTiffIO
 git checkout armadillo
 mkdir build
