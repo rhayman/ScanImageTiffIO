@@ -23,7 +23,7 @@ jobs:
     
     # install dependencies
     - name: boost
-      run: sudo apt-get update && sudo apt-get install -yq libboost1.65-dev
+      run: sudo apt-get update && sudo apt-get install -yq libboost-all-dev
     - name: opencv
       run: sudo apt-get update && sudo apt-get install -yq libopencv-dev
 
