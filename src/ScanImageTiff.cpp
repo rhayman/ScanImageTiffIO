@@ -706,6 +706,8 @@ namespace twophoton {
 		if ( TiffReader->open() ) {
 			auto chans = TiffReader->getSavedChans();
 			m_nchans = chans.size();
+			if ( m_nchans == 0 )
+				m_nchans = 1;
 			return true;
 		}
 		return false;
