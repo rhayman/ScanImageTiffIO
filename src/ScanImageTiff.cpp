@@ -743,6 +743,16 @@ namespace twophoton {
 		return std::make_tuple(_x, _y);
 	}
 
+	unsigned int SITiffIO::countDirectories() {
+		if ( TiffReader != nullptr ) {
+			int endFrame = 0;
+			TiffReader->countDirectories(endFrame);
+			std::cout << "Counted " << endFrame << " directories" << std::endl;
+			return endFrame;
+		}
+		return 0;
+	}
+
 	void SITiffIO::interpolateIndices() {
 		if ( TiffReader == nullptr ) {
 			// return some kind of error
@@ -861,6 +871,7 @@ PYBIND11_MODULE(scanimagetiffio, m) {
 		.def("open_tiff_file", &twophoton::SITiffIO::openTiff, "Open a tiff file")
 		.def("open_log_file", &twophoton::SITiffIO::openLog, "Open a log file")
 		.def("open_xml_file", &twophoton::SITiffIO::openXML, "Open an xml file")
+		.def("get_n_frames", &twophoton::SITiffIO::countDirectories, "Count the number of frames")
 		.def("set_channel", &twophoton::SITiffIO::setChannel, "Sets the channel to take frames from")
 		.def_readonly("get_n_channels", &twophoton::SITiffIO::m_nchans, "Get the number of channels")
 		.def_readonly("get_display_channel", &twophoton::SITiffIO::channel2display, "Get the channel to display")

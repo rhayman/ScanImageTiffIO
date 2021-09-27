@@ -491,6 +491,7 @@ namespace twophoton {
 			bool openTiff (std::string fname);
 			bool openLog (std::string fname);
 			bool openXML(std::string fname);
+			unsigned int countDirectories();
 			void interpolateIndices();
 			std::tuple<unsigned int> getNChannels() const;
 			void setChannel(unsigned int i) { channel2display = i; }
