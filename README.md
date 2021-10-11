@@ -31,6 +31,7 @@ To install the armadillo branch:
 git clone --recurse-submodules https://github.com/rhayman/ScanImageTiffIO.git
 cd ScanImageTiffIO
 git checkout armadillo
+git submodule update --init --recursive
 mkdir build
 cd build
 cmake ..
