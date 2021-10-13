@@ -519,6 +519,7 @@ namespace twophoton {
 		int name;
 		int lut_lower;
 		int lut_upper;
+		int offset;
 		void write(cv::FileStorage & fs) const;
 		void read(const cv::FileNode & node);
 	};
@@ -537,7 +538,8 @@ namespace twophoton {
 	static std::ostream & operator << (std::ostream & stream, const ChanInfo & chan) {
 		stream << "{ name " << chan.name << ", ";
 		stream << "lut_lower " << chan.lut_lower << ", ";
-		stream << "lut_upper " << chan.lut_upper << "}";
+		stream << "lut_upper " << chan.lut_upper << ", ";
+		stream << "offset " << chan.offset << "}";
 		return stream;
 	}
 
@@ -545,6 +547,7 @@ namespace twophoton {
 		T.name = (int)node["name"];
 		T.lut_lower = (int)node["lut_lower"];
 		T.lut_upper = (int)node["lut_upper"];
+		T.offset = (int)node["offset"];
 	}
 
 
