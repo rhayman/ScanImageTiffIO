@@ -84,13 +84,15 @@ namespace twophoton {
     void ChanInfo::write(cv::FileStorage & fs) const {
 	fs << "{" << "name" << name <<
 	"lut_lower" << lut_lower <<
-	"lut_upper" << lut_upper << "}";
+    "lut_upper" << lut_upper <<
+	"offset" << offset << "}";
     }
 
     void ChanInfo::read(const cv::FileNode & node) {
         name = (int)node["name"];
         lut_lower = (int)node["lut_lower"];
         lut_upper = (int)node["lut_upper"];
+        offset = (int)node["offset"];
     }
 
     // ------------------- FileStorageHeaderData ------------------
