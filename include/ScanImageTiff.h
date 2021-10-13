@@ -188,7 +188,7 @@ namespace twophoton {
 		TODO: rename sensibly and fill out all vectors etc
 		*/
 		int scrapeHeaders(int & count) const { return headerdata->scrapeHeaders(m_tif, count); }
-		int countDirectories(int & count) const { return headerdata->countDirectories(m_tif, count); }
+		int countDirectories(int & count) const;
 		unsigned int getSizePerDir(int dirnum=0) const { return headerdata->getSizePerDir(m_tif, dirnum); }
 		std::map<int, std::pair<int, int>> getChanLut() const { return headerdata->getChanLut(); }
 		std::map<unsigned int, unsigned int> getSavedChans() const { return headerdata->getChanSaved(); }

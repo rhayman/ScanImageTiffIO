@@ -307,6 +307,14 @@ namespace twophoton {
 		return false;
 	}
 
+	int SITiffReader::countDirectories(int & count) const {
+		if ( m_tif ) {
+			headerdata->countDirectories(m_tif, count);
+			return 1;
+		}
+		return 0;
+	}
+
 	std::vector<double> SITiffReader::getAllTimeStamps() const {
 		if ( m_tif ) {
 			std::cout << "Starting scraping timestamps..." << std::endl;
