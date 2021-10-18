@@ -32,6 +32,9 @@ namespace twophoton {
             if ( transform_type == TransformType::kHaimanPieceWiseMapping ) {
                 fs << "PieceWiseMapping";
             }
+            if ( transform_type == TransformType::kLogPolarPieceWiseMapping ) {
+                fs << "LogPolarPieceWiseMapping";
+            }
 
             fs << transform_val;
         }
@@ -76,6 +79,10 @@ namespace twophoton {
             if ( name.compare("PieceWiseMapping") == 0 ) {
                 M = n.mat();
                 addTransform(TransformType::kHaimanPieceWiseMapping, M);
+            }
+            if ( name.compare("LogPolarPieceWiseMapping") == 0 ) {
+                M = n.mat();
+                addTransform(TransformType::kLogPolarPieceWiseMapping, M);
             }
         }
 
