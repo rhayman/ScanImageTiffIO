@@ -35,7 +35,12 @@ namespace twophoton {
             if ( transform_type == TransformType::kLogPolarPieceWiseMapping ) {
                 fs << "LogPolarPieceWiseMapping";
             }
-
+            if ( transform_type == TransformType::kFFTTranslation ) {
+                fs << "FFTTranslation";
+            }
+            if ( transform_type == TransformType::kFFTTranslationPieceWise ) {
+                fs << "FFTTranslationPieceWise";
+            }
             fs << transform_val;
         }
         fs << "}";
@@ -83,6 +88,14 @@ namespace twophoton {
             if ( name.compare("LogPolarPieceWiseMapping") == 0 ) {
                 M = n.mat();
                 addTransform(TransformType::kLogPolarPieceWiseMapping, M);
+            }
+            if ( name.compare("FFTTranslation") == 0 ) {
+                M = n.mat();
+                addTransform(TransformType::kFFTTranslation, M);
+            }
+            if ( name.compare("FFTTranslationPieceWise") == 0 ) {
+                M = n.mat();
+                addTransform(TransformType::kFFTTranslationPieceWise, M);
             }
         }
 

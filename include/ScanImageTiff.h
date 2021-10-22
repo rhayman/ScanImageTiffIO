@@ -376,6 +376,8 @@ namespace twophoton {
     kOpticalFlow,
     kHaimanPieceWiseMapping,
 	kLogPolarPieceWiseMapping,
+	kFFTTranslation,
+	kFFTTranslationPieceWise,
 	};
 
 
@@ -480,6 +482,10 @@ namespace twophoton {
 				T.addTransform(TransformType::kHaimanPieceWiseMapping, n.mat());
 			if ( name.compare("LogPolarPieceWiseMapping") == 0 )
 				T.addTransform(TransformType::kLogPolarPieceWiseMapping, n.mat());
+			if ( name.compare("FFTTranslation") == 0 )
+				T.addTransform(TransformType::kFFTTranslation, n.mat());
+			if ( name.compare("FFTTranslationPieceWise") == 0 )
+				T.addTransform(TransformType::kFFTTranslationPieceWise, n.mat());
 		}
 	}
 
@@ -511,6 +517,11 @@ namespace twophoton {
 				out << "PieceWiseMapping";
 			if ( transform_type == TransformType::kLogPolarPieceWiseMapping )
 				out << "LogPolarPieceWiseMapping";
+			if ( transform_type == TransformType::kFFTTranslation )
+				out << "FFTTranslation";
+			if ( transform_type == TransformType::kFFTTranslationPieceWise )
+				out << "FFTTranslationPieceWise";
+			
 			out << "{:" << transform_val << "}";
 		}
 		// out << "}";
