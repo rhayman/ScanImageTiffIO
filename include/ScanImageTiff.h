@@ -307,8 +307,8 @@ namespace twophoton {
         std::vector<double> getTimes();
         int findIndexOfNearestDuration(double /* frame acquisition time in fractional seconds - a key in the tiff header*/);
         int getTriggerIndex();
-        boost::posix_time::ptime getTriggerTime();
-        std::vector<boost::posix_time::ptime> getPTimes();
+        std::chrono::system_clock getTriggerTime();
+        std::vector<std::chrono::system_clock> getPTimes();
         bool containsAcquisition();
         bool interpTiffData(std::vector<double> /*timestamps from tiff headers*/);
         /*
@@ -340,7 +340,7 @@ namespace twophoton {
         std::vector<double> x_translation;
         std::vector<double> z_translation;
         std::vector<double> rotation_in_rads;
-        std::vector<boost::posix_time::ptime> ptimes;
+        std::vector<std::chrono::system_clock> ptimes;
         std::vector<double> times;
         int trigger_index = 0;
         std::ofstream out_file;
@@ -348,7 +348,7 @@ namespace twophoton {
         int idx = 0;//index for location into various vectors
         int init_rotation = 0;
         bool hasAcquisition = false;
-        boost::posix_time::ptime trigger_ptime;
+        std::chrono::system_clock trigger_ptime;
         void setTriggerIndex(int);
     };
 

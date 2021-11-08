@@ -1,6 +1,7 @@
 #include <numeric>
 #include <cmath>
 #include <algorithm>
+#include <chrono>
 #include "../include/ScanImageTiff.h"
 
 namespace twophoton
@@ -115,11 +116,11 @@ bool LogFileLoader::containsAcquisition() {
 	return hasAcquisition;
 }
 
-boost::posix_time::ptime LogFileLoader::getTriggerTime() {
+std::chrono::system_clock LogFileLoader::getTriggerTime() {
 	return trigger_ptime;
 }
 
-std::vector<boost::posix_time::ptime> LogFileLoader::getPTimes() {
+std::vector<std::chrono::system_clock> LogFileLoader::getPTimes() {
 	return ptimes;
 }
 
@@ -143,7 +144,7 @@ void LogFileLoader::interpolatePositionData(std::vector<double> tiffTimestamps) 
 			std::vector<double> interpZ;
 			std::vector<double> interpTimes;
 			std::vector<int> interpLineNumbers;
-			std::vector<boost::posix_time::ptime> interpPTimes;
+			std::vector<std::chrono::system_clock> interpPTimes;
 			for (std::vector<double>::iterator i = tiffTimestamps.begin(); i != tiffTimestamps.end(); ++i) {
 				low = std::lower_bound(times.begin(), times.end(), *i);
 				auto interpIdx = low - times.begin();
@@ -196,7 +197,7 @@ bool LogFileLoader::calculateDurationsAndRotations() {
 		std::cout << "Calculating rotations and times from log file data..." << std::endl;
 		auto first_time = getTriggerTime();
 		unsigned int count = 0;
-		for (std::vector<boost::posix_time::ptime>::iterator i = ptimes.begin(); i != ptimes.end(); ++i) {
+		for (std::vector<std::chrono::system_clock>::iterator i = ptimes.begin(); i != ptimes.end(); ++i) {
 			auto duration = *i - first_time;
 			times.push_back((float)duration.total_milliseconds() / 1000.0);
 			auto raw_rotation = 2 * M_PI * (double(rotation[count]) / (double)rotary_encoder_units_per_turn);
@@ -245,11 +246,11 @@ bool LogFileLoader::load() {
 	std::ifstream ifs(filename, std::ifstream::in);
 	ifs.unsetf(std::ios_base::skipws);
 	std::string line, old_line, s1;
-	boost::posix_time::ptime pt;
-	boost::posix_time::ptime old_time;//(boost::gregorian::date(2002,1,10),boost::posix_time::time_duration(1,2,3));// old line is our "memory" - see comment in while loop below and header file
+	std::chrono::system_clock pt;
+	std::chrono::system_clock old_time;//(boost::gregorian::date(2002,1,10),boost::posix_time::time_duration(1,2,3));// old line is our "memory" - see comment in while loop below and header file
 	 //see comment before loop that sets trigger index below (after the next while statement)
 	// to understand why this temporary is used
-	boost::posix_time::ptime tmp_trigger_ptime;
+	std::chrono::system_clock tmp_trigger_ptime;
 	std::size_t pos, posZ;
 	double x_trans, z_trans;
 	unsigned int trig_index = 0;
@@ -279,8 +280,7 @@ bool LogFileLoader::load() {
         	pos = line.find(X_token);
         	s1 = line.substr(0, pos);
         	std::istringstream is(s1);
-        	is.imbue(tformat);
-        	is >> pt;
+        	std::chrono::from_stream(is, pt);
         	if ( old_time != pt ) {
         		// get the line number first
         		logfile_line_numbers.push_back(line_index);
