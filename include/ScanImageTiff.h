@@ -7,8 +7,6 @@
 #include <map>
 #include <memory>
 
-#include <boost/date_time.hpp>
-
 #include <opencv2/core.hpp>
 #include <opencv2/imgproc.hpp>
 #include <opencv2/imgproc.hpp>
@@ -290,7 +288,7 @@ namespace twophoton {
     public:
         LogFileLoader() {};
         LogFileLoader(std::string);
-        ~LogFileLoader();
+        ~LogFileLoader() {};
         void setFilename(std::string);
         std::string getFilename() { return filename; }
         bool load();
@@ -304,11 +302,11 @@ namespace twophoton {
         std::vector<double> getZ();
         std::vector<double> getTheta();
         std::vector<int> getLineNums();
-        std::vector<double> getTimes();
+        std::vector<double> getTimes(); // in miliiseconds
         int findIndexOfNearestDuration(double /* frame acquisition time in fractional seconds - a key in the tiff header*/);
         int getTriggerIndex();
-        std::chrono::system_clock getTriggerTime();
-        std::vector<std::chrono::system_clock> getPTimes();
+        std::chrono::system_clock::time_point getTriggerTime();
+        std::vector<std::chrono::system_clock::time_point> getPTimes();
         bool containsAcquisition();
         bool interpTiffData(std::vector<double> /*timestamps from tiff headers*/);
         /*
@@ -320,11 +318,6 @@ namespace twophoton {
         that matches that timestamp
         */
         int findNearestIdx(double tiffTimestamp);
-        //saves rotation matrices to file with centre to file in outPath...
-        void saveRotationMats(cv::Point centre, std::string outPath);
-        //...and this loads them and returns in the vector
-        std::vector<cv::Mat> loadRotationMats(std::string filePath);
-        void saveRaw(std::string fname);
         bool isloaded = false;
         // findStableFrames: pairs of start and end frames for frames with no head rotation
         std::vector<std::pair<int, int>> findStableFrames(const unsigned int minFrames, const double minAngle=1e-3);
@@ -340,15 +333,13 @@ namespace twophoton {
         std::vector<double> x_translation;
         std::vector<double> z_translation;
         std::vector<double> rotation_in_rads;
-        std::vector<std::chrono::system_clock> ptimes;
+        std::vector<std::chrono::system_clock::time_point> ptimes;
         std::vector<double> times;
         int trigger_index = 0;
-        std::ofstream out_file;
-        std::ifstream in_file;
         int idx = 0;//index for location into various vectors
         int init_rotation = 0;
         bool hasAcquisition = false;
-        std::chrono::system_clock trigger_ptime;
+        std::chrono::system_clock::time_point trigger_ptime;
         void setTriggerIndex(int);
     };
 
@@ -691,8 +682,8 @@ namespace twophoton {
 			std::tuple<double, double> getTrackerTranslation(const unsigned int) const;
 			std::tuple<std::vector<double>, std::vector<double>> getAllTrackerTranslation() const;
 		private:
-			std::string tiff_fname;
-			std::string log_fname;
+			std::string tiff_fname = "";
+			std::string log_fname = "";
 			unsigned int m_nchans = 1;
 			unsigned int channel2display = 1;
 			std::shared_ptr<SITiffReader> TiffReader = nullptr;

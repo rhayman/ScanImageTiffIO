@@ -10,15 +10,20 @@ include(GNUInstallDirs)
 find_package( OpenCV REQUIRED core imgproc )
 # ---------- libtiff -----------
 find_package(TIFF REQUIRED)
-# ----------- boost -------------
-find_package( Boost REQUIRED date_time )
+
+
+include( FetchContent )
+FetchContent_Declare( date_src
+GIT_REPOSITORY https://github.com/HowardHinnant/date.git
+GIT_TAG        v3.0.1  # adjust tag/branch/commit as needed
+)
+FetchContent_MakeAvailable(date_src)
 
 # ---------- includes -----------
 include_directories( ${CMAKE_CURRENT_SOURCE_DIR} )
 include_directories( ${OpenCV_INCLUDE_DIRS} )
 include_directories( ${OpenCV_INCLUDE_DIRS}/opencv2 )
 include_directories( ${TIFF_INCLUDE_DIRS} )
-include_directories( ${Boost_INCLUDE_DIRS} )
 
 LINK_DIRECTORIES(
   ${OpenCV_LIB_DIR}
@@ -35,7 +40,8 @@ SET_TARGET_PROPERTIES(ScanImageTiff PROPERTIES PREFIX "")
 target_link_libraries(ScanImageTiff PUBLIC
     ${TIFF_LIBRARIES}    
     ${OpenCV_LIBS}
-    ${Boost_LIBRARIES}    
+    PRIVATE
+    date::date
 )
 
 set_target_properties(ScanImageTiff PROPERTIES
@@ -47,13 +53,12 @@ set_target_properties(ScanImageTiff PROPERTIES
 target_include_directories(ScanImageTiff PUBLIC
     $<INSTALL_INTERFACE:include>
     ${OpenCV_INCLUDE_DIRS}
-    ${Boost_INCLUDE_DIRS}
     ${TIFF_INCLUDE_DIRS}
     # path of the headers before installation
     $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
 )
 
-# install
+# ------------ install --------------------
 install(TARGETS ScanImageTiff EXPORT ScanImageTiffTargets
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}

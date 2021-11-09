@@ -1,7 +1,9 @@
 #include <numeric>
 #include <cmath>
 #include <algorithm>
+#include <fstream>
 #include <chrono>
+#include <date/date.h>
 #include "../include/ScanImageTiff.h"
 
 namespace twophoton
@@ -9,7 +11,8 @@ namespace twophoton
 
 // specify the format of the time data in the logfile so it's parsed
 // correctly later on
-static const std::locale tformat = std::locale(std::locale::classic(), new boost::posix_time::time_input_facet("%Y-%m-%d %H:%M:%S%f"));
+static constexpr char time_fmt[] = "%Y-%m-%d %T";
+using FpMilliseconds = std::chrono::duration<float, std::chrono::milliseconds::period>;
 
 //Convert radians to degrees...
 static inline double rad2deg(double rad){return rad*(180.0/M_PI);}
@@ -63,10 +66,6 @@ int closest(std::vector<double> const & vec, double target) {
 LogFileLoader::LogFileLoader(std::string fname) {
 	filename = fname;
 }
-LogFileLoader::~LogFileLoader() {
-	if (out_file.is_open())
-		out_file.close();
-}
 
 void LogFileLoader::setFilename(std::string f) {
 	filename = f;
@@ -116,11 +115,11 @@ bool LogFileLoader::containsAcquisition() {
 	return hasAcquisition;
 }
 
-std::chrono::system_clock LogFileLoader::getTriggerTime() {
+std::chrono::system_clock::time_point LogFileLoader::getTriggerTime() {
 	return trigger_ptime;
 }
 
-std::vector<std::chrono::system_clock> LogFileLoader::getPTimes() {
+std::vector<std::chrono::system_clock::time_point> LogFileLoader::getPTimes() {
 	return ptimes;
 }
 
@@ -144,7 +143,7 @@ void LogFileLoader::interpolatePositionData(std::vector<double> tiffTimestamps) 
 			std::vector<double> interpZ;
 			std::vector<double> interpTimes;
 			std::vector<int> interpLineNumbers;
-			std::vector<std::chrono::system_clock> interpPTimes;
+			std::vector<std::chrono::system_clock::time_point> interpPTimes;
 			for (std::vector<double>::iterator i = tiffTimestamps.begin(); i != tiffTimestamps.end(); ++i) {
 				low = std::lower_bound(times.begin(), times.end(), *i);
 				auto interpIdx = low - times.begin();
@@ -197,9 +196,9 @@ bool LogFileLoader::calculateDurationsAndRotations() {
 		std::cout << "Calculating rotations and times from log file data..." << std::endl;
 		auto first_time = getTriggerTime();
 		unsigned int count = 0;
-		for (std::vector<std::chrono::system_clock>::iterator i = ptimes.begin(); i != ptimes.end(); ++i) {
+		for (std::vector<std::chrono::system_clock::time_point>::iterator i = ptimes.begin(); i != ptimes.end(); ++i) {
 			auto duration = *i - first_time;
-			times.push_back((float)duration.total_milliseconds() / 1000.0);
+			times.push_back(FpMilliseconds(duration).count()/1000.0);
 			auto raw_rotation = 2 * M_PI * (double(rotation[count]) / (double)rotary_encoder_units_per_turn);
 			rotation_in_rads.push_back(constrainAngleToPi(raw_rotation));
 			++count;
@@ -246,11 +245,11 @@ bool LogFileLoader::load() {
 	std::ifstream ifs(filename, std::ifstream::in);
 	ifs.unsetf(std::ios_base::skipws);
 	std::string line, old_line, s1;
-	std::chrono::system_clock pt;
-	std::chrono::system_clock old_time;//(boost::gregorian::date(2002,1,10),boost::posix_time::time_duration(1,2,3));// old line is our "memory" - see comment in while loop below and header file
+	std::chrono::system_clock::time_point pt;
+	std::chrono::system_clock::time_point old_time;//(boost::gregorian::date(2002,1,10),boost::posix_time::time_duration(1,2,3));// old line is our "memory" - see comment in while loop below and header file
 	 //see comment before loop that sets trigger index below (after the next while statement)
 	// to understand why this temporary is used
-	std::chrono::system_clock tmp_trigger_ptime;
+	std::chrono::system_clock::time_point tmp_trigger_ptime;
 	std::size_t pos, posZ;
 	double x_trans, z_trans;
 	unsigned int trig_index = 0;
@@ -280,7 +279,7 @@ bool LogFileLoader::load() {
         	pos = line.find(X_token);
         	s1 = line.substr(0, pos);
         	std::istringstream is(s1);
-        	std::chrono::from_stream(is, pt);
+        	is >> date::parse(time_fmt, pt);
         	if ( old_time != pt ) {
         		// get the line number first
         		logfile_line_numbers.push_back(line_index);
@@ -380,8 +379,7 @@ std::vector<std::pair<int, int>> LogFileLoader::findStableFrames(const unsigned 
 	return stableFrames;
 }
 
-void LogFileLoader::save(std::string out_name)
-{
+void LogFileLoader::save(std::string out_name) {
 	std::cout << "Saving log file summary to " << out_name << std::endl;
 	cv::FileStorage fs(out_name, cv::FileStorage::WRITE);
 	fs << "Frames" << "[";
@@ -395,56 +393,4 @@ void LogFileLoader::save(std::string out_name)
 	fs <<  "]";
 	fs.release();
 }
-
-std::vector<cv::Mat> LogFileLoader::loadRotationMats(std::string filePath) {
-	std::vector<cv::Mat> result;
-	in_file.open(filePath);
-	if (in_file.is_open()) {
-		bool ok;
-		float dummy;
-		std::string line;
-		in_file.seekg(0, in_file.beg);
-		while (std::getline(in_file, line)) {
-			cv::Mat_<float> M(2, 3);//only dealing with rotational transform for now
-			std::istringstream iss(line);
-			iss >> M(0,0) >> M(0,1) >> M(0,2) >>
-					   M(1,0) >> M(1,1) >> M(1,2) >>
-					   dummy >> dummy >> dummy >> ok;
-			result.push_back(M);
-		}
-	}
-	in_file.close();
-	return result;
-}
-
-void LogFileLoader::saveRotationMats(cv::Point centre, std::string outPath) {
-	//should only be run after the interp fcn above has been run
-	//get the rotations calculated as a result of the above fcn
-	auto rot = getRadianRotation(idx);
-	cv::Mat_<float> M;
-	if (!(out_file.is_open()))
-		out_file.open(outPath);
-	if (out_file.is_open()) {
-		M = cv::getRotationMatrix2D(centre, -twophoton::rad2deg(rot), 1.0);
-		out_file << M(0,0) << " " << M(0,1) << " " << M(0,2) << " "
-			  << M(1,0) << " " << M(1,1) << " " << M(1,2) << " "
-			  <<   0.0  << " " <<   0.0  << " " << 1.0 << " " << 1 << std::endl; //last zero for ok
-	}
-	++idx;
-}
-
-void LogFileLoader::saveRaw(std::string fname) {
-	std::ofstream ofs(fname, std::ifstream::out);
-
-	ofs << "X\t" << "Z\t" << "Rotation\t" << "Time\n";
-	for (unsigned int i = 0; i < z_translation.size(); ++i)
-	{
-		ofs << x_translation[i] << "\t";
-		ofs << z_translation[i] << "\t";
-		ofs << rotation_in_rads[i] << "\t";
-		ofs << times[i] << std::endl;
-	}
-	ofs.close();
-}
-
 } // namespace twophoton
