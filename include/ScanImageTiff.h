@@ -666,26 +666,35 @@ namespace twophoton {
 			bool openLog (std::string fname);
 			bool openXML(std::string fname);
 			void interpolateIndices();
+			std::pair<unsigned int, unsigned int> getImageSize();
+			unsigned int getNDirectories() { return m_nDirectories; }
 			unsigned int getNChannels() { return m_nchans; }
+			auto getSavedChannels() { return TiffReader->getSavedChans(); }
 			void setChannel(unsigned int i) { channel2display = i; }
+			auto getChannelOffsets() { return TiffReader->getChanOffsets(); }
+			auto getChannelLuts() { return TiffReader->getChanLut(); }
 			cv::Mat readFrame(int frame_num=0) const;
 			std::vector<double> getTimeStamps() const;
 			std::vector<double> getX() const;
 			std::vector<double> getZ() const;
 			std::vector<double> getTheta() const;
 			std::vector<double> getFrameNumbers() const;
-			// double getTimeStamp(const int) const;
-			// double getX(const unsigned int) const;
-			// double getZ(const unsigned int) const;
-			// double getTheta(const int) const;
 			std::tuple<double, double, double> getPos(const unsigned int) const;
 			std::tuple<double, double> getTrackerTranslation(const unsigned int) const;
 			std::tuple<std::vector<double>, std::vector<double>> getAllTrackerTranslation() const;
+			auto getTiffReader() { return TiffReader; }
+			auto getLogLoader() { return LogLoader; }
+			auto getAllTransforms() { return m_all_transforms; }
+			auto getTiffName() { return tiff_fname; }
+			auto getLogName() { return log_fname; }
+			auto getSWTag(const unsigned int i) { return TiffReader->getSWTag(i); }
+			auto getImDescTag(const unsigned int i) { return TiffReader->getImDescTag(i); }
 		private:
 			std::string tiff_fname = "";
 			std::string log_fname = "";
 			unsigned int m_nchans = 1;
 			unsigned int channel2display = 1;
+			unsigned int m_nDirectories = 1;
 			std::shared_ptr<SITiffReader> TiffReader = nullptr;
 			std::shared_ptr<LogFileLoader> LogLoader = nullptr;
 			std::shared_ptr<std::map<unsigned int, TransformContainer>> m_all_transforms = nullptr;

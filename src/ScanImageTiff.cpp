@@ -729,7 +729,13 @@ namespace twophoton {
 
 	bool SITiffIO::openXML(std::string fname) {
 		cv::FileStorage storage(fname, cv::FileStorage::READ);
-		cv::FileNode node = storage["Transformations"];
+		cv::FileNode node = storage["Summary"];
+		FileStorageHeaderData header;
+    	node >> header;
+		// open the files to be sure we can retrieve info from them
+		openTiff(header.tiffname);
+		openLog(header.logname);
+		node = storage["Transformations"];
 		cv::FileNodeIterator iter = node.begin(), iter_end = node.end();
 		if ( m_all_transforms == nullptr )
 			m_all_transforms = std::make_shared<std::map<unsigned int, TransformContainer>>();
@@ -798,6 +804,9 @@ namespace twophoton {
 		int endFrame = 0;
 		TiffReader->countDirectories(endFrame);
 		std::cout << "Counted " << endFrame << " directories" << std::endl;
+		TiffReader->readheader();
+		auto nchans = TiffReader->getSavedChans().size();
+		m_nDirectories = endFrame / nchans;
 
 		cv::Mat T = cv::Mat::eye(2, 3, CV_64F);
 		double tiff_ts, x, z, r;
@@ -825,6 +834,12 @@ namespace twophoton {
 			auto transform_map = m_all_transforms.get();
 			transform_map->emplace(frame_num, tc);
 		}
+	}
+
+	std::pair<unsigned int, unsigned int> SITiffIO::getImageSize() {
+		unsigned int h, w;
+		TiffReader->getImageSize(h, w);
+		return std::make_pair(h, w);
 	}
 
 	std::vector<double> SITiffIO::getTimeStamps() const {
