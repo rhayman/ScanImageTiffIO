@@ -7,14 +7,18 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 find_package(TIFF REQUIRED)
 # ---------- python ------------
 find_package (Python3 REQUIRED COMPONENTS Interpreter Development NumPy)
-# ----------- boost -------------
-find_package( Boost REQUIRED date_time )
+
+include( FetchContent )
+FetchContent_Declare( date_src
+GIT_REPOSITORY https://github.com/HowardHinnant/date.git
+GIT_TAG        v3.0.1  # adjust tag/branch/commit as needed
+)
+FetchContent_MakeAvailable(date_src)
 
 # ---------- includes -----------
 include_directories( ${TIFF_INCLUDE_DIRS} )
 include_directories( ${Python3_INCLUDE_DIRS} )
 include_directories(( ${Python3_NumPy_INCLUDE_DIRS}))
-include_directories( ${Boost_INCLUDE_DIRS} )
 
 add_library(scanimagetiffio SHARED 
     src/ScanImageTiff.cpp 
@@ -27,7 +31,7 @@ target_link_libraries(scanimagetiffio
     PUBLIC
     ${TIFF_LIBRARIES}
     ${Python3_LIBRARIES}
-    ${Boost_LIBRARIES}
+    date::date
 )
 # # remove the "lib" from start of the library name
 set_target_properties(scanimagetiffio PROPERTIES PREFIX "")

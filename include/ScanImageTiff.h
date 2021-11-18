@@ -265,7 +265,7 @@ namespace twophoton {
 		bool opened = false;
 	};
 
-	 /* 
+	/* 
 	************************* LOG FILE LOADING STUFF *************************
 	 
 	 In newer iterations of the logfile there's a value near the top
@@ -298,25 +298,26 @@ namespace twophoton {
     {
     public:
         LogFileLoader() {};
-        LogFileLoader(const std::string &);
-        ~LogFileLoader();
-        void setFilename(const std::string &);
+        LogFileLoader(std::string);
+        ~LogFileLoader() {};
+        void setFilename(std::string);
         std::string getFilename() { return filename; }
         bool load();
-        int getRotation(const int &);
-        double getRadianRotation(const int &);
-        double getXTranslation(const int &);
-        double getZTranslation(const int &);
-        double getTime(const int &);
+        void save(std::string);
+        int getRotation(int);
+        double getRadianRotation(int);
+        double getXTranslation(int);
+        double getZTranslation(int);
+        double getTime(int);
         std::vector<double> getX();
         std::vector<double> getZ();
         std::vector<double> getTheta();
         std::vector<int> getLineNums();
-        std::vector<double> getTimes();
+        std::vector<double> getTimes(); // in miliiseconds
         int findIndexOfNearestDuration(double /* frame acquisition time in fractional seconds - a key in the tiff header*/);
         int getTriggerIndex();
-        boost::posix_time::ptime getTriggerTime();
-        std::vector<boost::posix_time::ptime> getPTimes();
+        std::chrono::system_clock::time_point getTriggerTime();
+        std::vector<std::chrono::system_clock::time_point> getPTimes();
         bool containsAcquisition();
         bool interpTiffData(std::vector<double> /*timestamps from tiff headers*/);
         /*
@@ -327,12 +328,7 @@ namespace twophoton {
         /* given a tiff file timestamp returns the nearest index in the logfile
         that matches that timestamp
         */
-        int findNearestIdx(const double &);
-        //saves rotation matrices to file with centre to file in outPath...
-        // void saveRotationMats(cv::Point centre, std::string outPath);
-        // //...and this loads them and returns in the vector
-        // std::vector<cv::Mat> loadRotationMats(std::string filePath);
-        void saveRaw(const std::string &);
+        int findNearestIdx(double tiffTimestamp);
         bool isloaded = false;
         // findStableFrames: pairs of start and end frames for frames with no head rotation
         std::vector<std::pair<int, int>> findStableFrames(const unsigned int minFrames, const double minAngle=1e-3);
@@ -348,18 +344,16 @@ namespace twophoton {
         std::vector<double> x_translation;
         std::vector<double> z_translation;
         std::vector<double> rotation_in_rads;
-        std::vector<boost::posix_time::ptime> ptimes;
+        std::vector<std::chrono::system_clock::time_point> ptimes;
         std::vector<double> times;
         int trigger_index = 0;
-        std::ofstream out_file;
-        std::ifstream in_file;
         int idx = 0;//index for location into various vectors
         int init_rotation = 0;
         bool hasAcquisition = false;
-        boost::posix_time::ptime trigger_ptime;
+        std::chrono::system_clock::time_point trigger_ptime;
         void setTriggerIndex(int);
     };
-
+	
 	/*
 	This class holds the transformations that are to be applied to the images in a 2-photon (2P)
 	video file (a .tiff file) recorded from a rig that allows the animal to rotate using a bearing
