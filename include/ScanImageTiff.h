@@ -502,6 +502,7 @@ namespace twophoton {
 			std::tuple<double, double, double> getPos(const unsigned int) const;
 			std::tuple<double, double> getTrackerTranslation(const unsigned int) const;
 			std::tuple<std::vector<double>, std::vector<double>> getAllTrackerTranslation() const;
+			auto getAllTransforms() { return m_all_transforms; }
 			unsigned int m_nchans = 1;
 			unsigned int channel2display = 1;
 		private:
