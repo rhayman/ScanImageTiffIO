@@ -359,18 +359,17 @@ namespace twophoton {
 	*/
 
 	enum class TransformType : int {
-    kInitialRotation,
-    kTrackerTranslation,
-    kMultiTrackerTranslation,
-    kLogPolarRotation,
-    kHaimanFFTTranslation,
-    kOpticalFlow,
-    kHaimanPieceWiseMapping,
-	kLogPolarPieceWiseMapping,
-	kFFTTranslation,
-	kFFTTranslationPieceWise,
+		kInitialRotation,
+		kTrackerTranslation,
+		kMultiTrackerTranslation,
+		kLogPolarRotation,
+		kHaimanFFTTranslation,
+		kOpticalFlow,
+		kHaimanPieceWiseMapping,
+		kLogPolarPieceWiseMapping,
+		kFFTTranslation,
+		kFFTTranslationPieceWise,
 	};
-
 
 	class TransformContainer
     {
