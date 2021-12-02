@@ -819,7 +819,7 @@ namespace twophoton {
 		else
 			m_all_transforms->clear();
 
-		for (int i = startFrame; i < endFrame; ++i) {
+		for (int i = 0; i < endFrame; i+=nchans) {
 			TiffReader->getFrameNumAndTimeStamp(i, frame_num, tiff_ts);
 			logfile_idx = LogLoader->findNearestIdx(tiff_ts);
 			r = LogLoader->getRadianRotation(logfile_idx);
