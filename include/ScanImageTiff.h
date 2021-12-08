@@ -684,6 +684,9 @@ namespace twophoton {
 			auto getTiffReader() { return TiffReader; }
 			auto getLogLoader() { return LogLoader; }
 			auto getAllTransforms() { return m_all_transforms; }
+			void setAllTransforms(std::shared_ptr<std::map<unsigned int, TransformContainer>> T) {
+				m_all_transforms = T;
+			}
 			auto getTiffName() { return tiff_fname; }
 			auto getLogName() { return log_fname; }
 			auto getSWTag(const unsigned int i) { return TiffReader->getSWTag(i); }
