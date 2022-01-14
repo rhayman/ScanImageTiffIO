@@ -379,18 +379,4 @@ std::vector<std::pair<int, int>> LogFileLoader::findStableFrames(const unsigned 
 	return stableFrames;
 }
 
-void LogFileLoader::save(std::string out_name) {
-	std::cout << "Saving log file summary to " << out_name << std::endl;
-	cv::FileStorage fs(out_name, cv::FileStorage::WRITE);
-	fs << "Frames" << "[";
-	for (unsigned int i = 0; i < x_translation.size(); ++i)
-	{
-		fs << "{:" << "line" << logfile_line_numbers[i];
-		fs << "x" << x_translation[i];
-		fs << "z" << z_translation[i];
-		fs << "angle" << rotation_in_rads[i] << "}";
-	}
-	fs <<  "]";
-	fs.release();
-}
 } // namespace twophoton

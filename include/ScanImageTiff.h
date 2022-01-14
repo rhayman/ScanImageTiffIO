@@ -303,7 +303,6 @@ namespace twophoton {
         void setFilename(std::string);
         std::string getFilename() { return filename; }
         bool load();
-        void save(std::string);
         int getRotation(int);
         double getRadianRotation(int);
         double getXTranslation(int);
