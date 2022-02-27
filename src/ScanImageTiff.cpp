@@ -767,6 +767,8 @@ namespace twophoton {
 		int endFrame = 0;
 		TiffReader->countDirectories(endFrame);
 		std::cout << "Counted " << endFrame << " directories" << std::endl;
+		TiffReader->readheader(); // to get the number of channels...
+		auto nchans = TiffReader->getSavedChans().size();
 
 		double tiff_ts, x, z, r;
 		unsigned int frame_num;
@@ -778,14 +780,14 @@ namespace twophoton {
 		else
 			m_all_transforms->clear();
 
-		for (int i = startFrame; i < endFrame; ++i) {
+		for (int i = startFrame; i < endFrame; i+=nchans) {
 			TiffReader->getFrameNumAndTimeStamp(i, frame_num, tiff_ts);
 			logfile_idx = LogLoader->findNearestIdx(tiff_ts);
 			r = LogLoader->getRadianRotation(logfile_idx);
 			x = LogLoader->getXTranslation(logfile_idx);
 			z = LogLoader->getZTranslation(logfile_idx);
 
-			tc.m_framenumber = i;
+			tc.m_framenumber = (int)(i/nchans);
 			tc.m_timestamp = tiff_ts;
 			tc.setPosData(x,z,r);
 			arma::mat A(1,1);
