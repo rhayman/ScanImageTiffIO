@@ -826,7 +826,7 @@ namespace twophoton {
 			x = LogLoader->getXTranslation(logfile_idx);
 			z = LogLoader->getZTranslation(logfile_idx);
 
-			tc.m_framenumber = i;
+			tc.m_framenumber = (int)(i/nchans);
 			tc.m_timestamp = tiff_ts;
 			tc.setPosData(x,z,r);
 			cv::Mat A = (cv::Mat_<double>(1,1) << r);
