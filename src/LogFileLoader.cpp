@@ -27,16 +27,6 @@ static double constrainAngleToPi(double x) {
 	return x;
 };
 
-// zeroRotations used in interpTiffData to subtract first element
-// from all others
-struct zeroRotations {
-	double val;
-	zeroRotations(double v) : val(v) {};
-	void operator()(double &elem) const {
-		elem -= val;
-	}
-};
-
 // normalizes each value to lie between 0 and 1 - used in processData() below
 struct normalize {
 	double minval, maxval;
@@ -211,31 +201,10 @@ bool LogFileLoader::calculateDurationsAndRotations() {
 	}
 };
 
-bool LogFileLoader::interpTiffData(std::vector<double> tiffTimestamps) {
-	if (!(times.empty()))
-	{
-		std::cout << "\nInterpolating logfile data from .tiff file timestamps..." << std::endl;
-		std::vector<double>::iterator low;
-		std::vector<double> interpRotations;
-		for (std::vector<double>::iterator i = tiffTimestamps.begin(); i != tiffTimestamps.end(); ++i)
-		{
-			low = std::lower_bound(times.begin(), times.end(), *i);
-			interpRotations.push_back(rotation_in_rads[low - times.begin()]);
-		}
-		rotation_in_rads.resize(interpRotations.size());
-		rotation_in_rads.shrink_to_fit();
-		rotation_in_rads = interpRotations;
-		std::cout << "\nFinished interpolating logfile data." << std::endl;
-		return true;
-	}
-	else
-		return false;
-}
-
 int LogFileLoader::findNearestIdx(double tiffTimestamp) {
 	if (!(times.empty())) {
 		std::vector<double>::iterator low;
-		low = std::lower_bound(times.begin(), times.end(), tiffTimestamp);
+		low = std::upper_bound(times.begin(), times.end(), tiffTimestamp);
 		auto time_idx = low - times.begin();
 		return time_idx;
 	}

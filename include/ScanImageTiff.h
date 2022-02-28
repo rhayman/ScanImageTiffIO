@@ -308,7 +308,6 @@ namespace twophoton {
         std::chrono::system_clock::time_point getTriggerTime();
         std::vector<std::chrono::system_clock::time_point> getPTimes();
         bool containsAcquisition();
-        bool interpTiffData(std::vector<double> /*timestamps from tiff headers*/);
         /*
         Interpolate x, z, and theta based on tiff header
         timestamps (taken from acquisition time of frame from scanimage)
