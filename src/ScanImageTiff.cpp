@@ -898,7 +898,7 @@ PYBIND11_MODULE(scanimagetiffio, m) {
 		.def("get_all_x", &twophoton::SITiffIO::getX, "Gets all the X values")
 		.def("get_all_z", &twophoton::SITiffIO::getZ, "Gets all the Z values")
 		.def("get_all_theta", &twophoton::SITiffIO::getTheta, "Gets all the rotational values")
-		.def("get_frame_numbers", &twophoton::SITiffIO::getFrameNumbers, "Gets all the rotational values")
+		.def("get_frame_numbers", &twophoton::SITiffIO::getFrameNumbers, "Gets all the frame numbers from the interpolated data")
 		.def("get_all_timestamps", &twophoton::SITiffIO::getTimeStamps, "Gets all the timestamps")
 		.def("get_channel_LUT", &twophoton::SITiffIO::getChannelLUT, "Gets the channel LUTs");
 }

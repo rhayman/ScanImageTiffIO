@@ -47,8 +47,49 @@ S = SITiffIO()
 S.open_tiff_file(<path_to_tif_file>)
 S.open_log_file(<path_to_log_file>)
 S.interp_times() # might take a while...
-frame_0 = S.get_frame(0) # returns a numpy int16 array
+frame_0 = S.get_frame(1) # 1-indexed, returns a numpy int16 array
 ```
+
+Here is a brief description of some of the functions exposed by the Python API:
+
+
+* open_tiff_file - Open a tiff file
+* open_log_file - Open a log file
+* open_xml_file - Open an xml file - ignore
+* get_n_frames - Count the total number of frames in the tiff file
+* get_frame - Gets the data/ image for the given frame
+* set_channel - Sets the channel to take frames from (see below)
+* interp_times - Interpolate the times in the tiff frames to events (position and time in the log file)
+
+The following functions require the interp_times() function to have been called as this interpolates between the timestamps in the tiff and log files to calculate which positions from the log file relate to which directories in the tiff file:
+
+* get_pos - Gets a 3-tuple of X, Z and theta for the given frame
+* get_tracker - Get the x and y translation for a tracked bounding box
+* get_all_tracker - Get all the x and y translations for a tracked bounding box
+* get_all_x - Gets all the X values
+* get_all_z - Gets all the Z values
+* get_all_theta - Gets all the rotational values
+* get_frame_numbers - Gets all the frame numbers from the interpolated data
+* get_all_timestamps - Gets all the timestamps
+* get_channel_LUT - Gets the channel LUTs
+
+NB A distinction should be made between "frames" and "directories". Frames can be thought of as slices in time whereas there can be >1 directory for a given slice of time. Less abstractly, you can think of a directory as an inidividual image in a multi-page tiff file and a frame as a single timestamps worth of acquisition data from the microscope. So, if 2 channels (red and green say) have been recorded from the microscope there will be 2 directories per frame.
+
+The indexing in the Python API takes account of this and uses frames as the index to retrieve directories, correctly taking account of the number of channels recorded from. If you want to examine the first frame of data for channel 1 you can call do:
+
+```python
+set_channel(1)
+S.get_frame(1)
+```
+
+Similarly, for channel 2:
+
+```python
+set_channel(2)
+S.get_frame(1)
+```
+
+In the first example this is retrieving tiff directory 0 (libtiff is 0-indexed) and in the second directory 1. If you ask for a frame > than the total number of frames then an empty array is returned.
 
 Master branch
 -------------
