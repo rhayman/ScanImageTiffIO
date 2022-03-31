@@ -239,6 +239,7 @@ int LogFileLoader::findNearestIdx(double tiffTimestamp) {
 		auto time_idx = low - times.begin();
 		return time_idx;
 	}
+	return -1;
 }
 
 bool LogFileLoader::load() {

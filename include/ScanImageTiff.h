@@ -53,18 +53,6 @@ static std::string grabStr(const std::string & source, const std::string & targe
 		return std::string();
 }
 
-static arma::mat str2mat(const std::string & str, const unsigned int & nrows, const unsigned int & ncols, char delim=' ') {
-	auto data = split(str, delim);
-	std::vector<double> mat;
-	std::transform(data.begin(), data.end(), std::back_inserter(mat),
-						[](const std::string & s){
-							if ( s.size() > 1) // can be lots of leading / trailing whitespace in the string s
-								return std::stof(s);});
-	auto M = arma::mat(mat);
-	arma::mat R = arma::reshape(M, nrows, ncols);
-	return R;
-}
-
 namespace twophoton {
 	class SITiffReader;
 
@@ -113,7 +101,6 @@ namespace twophoton {
 		its frame-numbers
 		*/
 		std::string getImageDescTag(TIFF * m_tif, unsigned int dirnum=0);
-		int getNumFrames(TIFF * m_tif, int idx, int & count);
 		int scrapeHeaders(TIFF * m_tif, int & count);
 		std::map<int, std::pair<int, int>> getChanLut() { return chanLUT; }
 		std::map<int, int> getChanOffsets() { return chanOffs; }
@@ -126,7 +113,7 @@ namespace twophoton {
 		void printHeader(TIFF * m_tif, int framenum);
 		unsigned int getSizePerDir(TIFF * m_tif, unsigned int dirnum=0);
 		std::vector<double> getTimeStamps() { return m_timestamps; }
-		int countDirectories(TIFF *, int &);
+		int countDirectories(TIFF *);
 		const std::string getFrameNumberString() { return frameString; }
 		const std::string getFrameTimeStampString() { return frameTimeStamp; }
 
@@ -157,8 +144,7 @@ namespace twophoton {
 		std::vector<double> m_timestamps;
 
 		/*
-		Note quite sure what these LUT's are for but they might be so you
-		can restrict the range of values (once scaled using the offsets?)
+		LUTs used to restrict the range of values (once scaled using the offsets?)
 		to look at before doing the remapping of values to uint8's (e.g RGB)
 		*/
 		std::map<int, std::pair<int, int>> chanLUT;
@@ -192,16 +178,9 @@ namespace twophoton {
 		int getVersion() const { return headerdata->getVersion(); }
 
 		std::string getfilename() const { return m_filename; }
-		int getNumFrames(int idx, int & count) const { return headerdata->getNumFrames(m_tif, idx, count); }
 		std::vector<double> getAllTimeStamps() const;
-		/*
-		quickGetNumFrames - called when a tif file is opened and counts the number of
-		directories in a tif file. should scrape the tiff headers for all pertinent information
-		so this operation is done only once at load time
-		TODO: rename sensibly and fill out all vectors etc
-		*/
 		int scrapeHeaders(int & count) const { return headerdata->scrapeHeaders(m_tif, count); }
-		int countDirectories(int & count) const { return headerdata->countDirectories(m_tif, count); }
+		int countDirectories() const { return headerdata->countDirectories(m_tif); }
 		unsigned int getSizePerDir(int dirnum=0) const { return headerdata->getSizePerDir(m_tif, dirnum); }
 		std::map<int, std::pair<int, int>> getChanLut() const { return headerdata->getChanLut(); }
 		std::map<unsigned int, unsigned int> getSavedChans() const { return headerdata->getChanSaved(); }
@@ -227,8 +206,8 @@ namespace twophoton {
 		std::string m_filename;
 		TIFF * m_tif = NULL;
 		// some values to do with frame size, byte values etc
-		unsigned int m_imagewidth;
-		unsigned int m_imageheight;
+		unsigned int m_imagewidth = 512;
+		unsigned int m_imageheight = 512;
 		/* created based on bpp (bytes per pixel), ncn (samples per pixel)
 		and photometric (min-is-black etc). Basically this is fixed as
 		scanimage uses 16 bpp, 1 sample per pixel and the check for
@@ -494,6 +473,7 @@ namespace twophoton {
 			std::vector<double> getZ() const;
 			std::vector<double> getTheta() const;
 			std::vector<double> getFrameNumbers() const;
+			std::pair<int, int> getChannelLUT();
 			// double getTimeStamp(const int) const;
 			// double getX(const unsigned int) const;
 			// double getZ(const unsigned int) const;
