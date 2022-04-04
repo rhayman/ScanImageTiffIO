@@ -42,31 +42,35 @@ namespace twophoton {
 		if ( m_tif )
 		{
 			m_imdesc = getImageDescTag(m_tif, 0);
-			if ( ! grabStr(m_imdesc, "Frame Number =").empty() ) // old
-			{
-				version = 0;
-				channelSaved = "scanimage.SI5.channelsSave =";
-				channelLUT = "scanimage.SI5.chan1LUT =";
-				channelOffsets = "scanimage.SI5.channelOffsets =";
-				frameString = "Frame Number =";
-				frameTimeStamp = "Frame Timestamp(s) =";
-			}
-			else if ( ! grabStr(m_imdesc, "frameNumbers =").empty() ) // new
-			{
-				version = 1;
-				channelSaved = "SI.hChannels.channelSave =";
-				channelLUT = "SI.hChannels.channelLUT =";
-				channelOffsets = "SI.hChannels.channelOffset =";
-				channelNames = "SI.hChannels.channelName =";
-				frameString = "frameNumbers =";
-				frameTimeStamp = "frameTimestamps_sec =";
-			}
+			if(! imdesc.empty()) {
+				if ( ! grabStr(m_imdesc, "Frame Number =").empty() ) // old
+				{
+					version = 0;
+					channelSaved = "scanimage.SI5.channelsSave =";
+					channelLUT = "scanimage.SI5.chan1LUT =";
+					channelOffsets = "scanimage.SI5.channelOffsets =";
+					frameString = "Frame Number =";
+					frameTimeStamp = "Frame Timestamp(s) =";
+				}
+				else if ( ! grabStr(m_imdesc, "frameNumbers =").empty() ) // new
+				{
+					version = 1;
+					channelSaved = "SI.hChannels.channelSave =";
+					channelLUT = "SI.hChannels.channelLUT =";
+					channelOffsets = "SI.hChannels.channelOffset =";
+					channelNames = "SI.hChannels.channelName =";
+					frameString = "frameNumbers =";
+					frameTimeStamp = "frameTimestamps_sec =";
+				}
 
-			uint32_t length;
-			uint32_t width;
-			TIFFGetField(m_tif, TIFFTAG_IMAGELENGTH, &length);
-			TIFFGetField(m_tif, TIFFTAG_IMAGEWIDTH, &width);
-			m_parent->setImageSize(length, width);
+				uint32_t length;
+				uint32_t width;
+				TIFFGetField(m_tif, TIFFTAG_IMAGELENGTH, &length);
+				TIFFGetField(m_tif, TIFFTAG_IMAGEWIDTH, &width);
+				m_parent->setImageSize(length, width);
+			}
+			else
+				m_parent->setImageSize(512, 512);
 		}
 	}
 
@@ -645,7 +649,7 @@ namespace twophoton {
 		if ( TiffReader->open() ) {
 			TiffReader->getSWTag(0); // ensures num channels are read
 			auto chans = TiffReader->getSavedChans();
-			if ( chans.size() == 0 )
+			if ( chans.empty || chans.size() == 0 )
 				m_nchans = 1;
 			else
 				m_nchans = chans.size();
