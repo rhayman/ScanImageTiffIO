@@ -460,7 +460,8 @@ namespace twophoton {
 
 	class SITiffIO {
 		public:
-			bool openTiff (std::string fname);
+			bool openTiff (const std::string & fname);
+			bool writeToTiff(const std::string & dst_fname);
 			bool openLog (std::string fname);
 			bool openXML(std::string fname);
 			unsigned int countDirectories();
@@ -468,16 +469,13 @@ namespace twophoton {
 			std::tuple<unsigned int> getNChannels() const;
 			void setChannel(unsigned int i) { channel2display = i; }
 			py::array_t<int16_t> readFrame(int frame_num) const;
+			void writeFrame(py::array_t<int16_t>, unsigned int frame_num) const;
 			std::vector<double> getTimeStamps() const;
 			std::vector<double> getX() const;
 			std::vector<double> getZ() const;
 			std::vector<double> getTheta() const;
 			std::vector<double> getFrameNumbers() const;
 			std::pair<int, int> getChannelLUT();
-			// double getTimeStamp(const int) const;
-			// double getX(const unsigned int) const;
-			// double getZ(const unsigned int) const;
-			// double getTheta(const int) const;
 			std::tuple<double, double, double> getPos(const unsigned int) const;
 			std::tuple<double, double> getTrackerTranslation(const unsigned int) const;
 			std::tuple<std::vector<double>, std::vector<double>> getAllTrackerTranslation() const;
@@ -488,6 +486,7 @@ namespace twophoton {
 			std::string tiff_fname;
 			std::string log_fname;
 			std::shared_ptr<SITiffReader> TiffReader = nullptr;
+			std::shared_ptr<SITiffWriter> TiffWriter = nullptr;
 			std::shared_ptr<LogFileLoader> LogLoader = nullptr;
 			std::shared_ptr<std::map<unsigned int, TransformContainer>> m_all_transforms = nullptr;
 

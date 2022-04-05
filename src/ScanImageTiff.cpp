@@ -42,7 +42,7 @@ namespace twophoton {
 		if ( m_tif )
 		{
 			m_imdesc = getImageDescTag(m_tif, 0);
-			if(! imdesc.empty()) {
+			if(! m_imdesc.empty()) {
 				if ( ! grabStr(m_imdesc, "Frame Number =").empty() ) // old
 				{
 					version = 0;
@@ -523,6 +523,7 @@ namespace twophoton {
 			return false;
 		}
 
+		size_t scanlineSize = TIFFScanlineSize(pTiffHandle);
 		const size_t buffer_size = bitsPerChannel * channels * rowsPerStrip * width;
 		std::unique_ptr<int16_t[]> buffer = std::make_unique<int16_t[]>(buffer_size);
 		int tileidx = 0;
@@ -534,22 +535,14 @@ namespace twophoton {
 			return false;
 		}
 
-		for (unsigned int y = 0; y < height; y += rowsPerStrip) {
-			unsigned int tile_height0 = rowsPerStrip;
-			if ( y + tile_height0 > height )
-				tile_height0 = height - y;
-			for (unsigned int x = 0; x < width; x+= width, tileidx++) {
-				unsigned int tile_width0 = width, ok;
-				if ( x + tile_width0 > width )
-					tile_width0 - width - x;
-				std::memcpy(buffer.get(),
-					data + tileidx*(tile_height0*tile_width0),
-					buffer_size);
-				ok = (int)TIFFWriteEncodedStrip(pTiffHandle, tileidx, buffer.get(), buffer_size) >=0;
-				if ( !ok ) {
-					TIFFClose(pTiffHandle);
-					return false;
-				}
+		for (int y = 0; y < height; ++y)
+		{
+			std::memcpy(buffer.get(), img.colptr(y), scanlineSize);
+			int writeResult = TIFFWriteScanline(pTiffHandle, buffer.get(), y, 0);
+			if (writeResult != 1)
+			{
+				TIFFClose(pTiffHandle);
+				return false;
 			}
 		}
 		TIFFWriteDirectory(pTiffHandle); // write into the next directory
@@ -643,17 +636,29 @@ namespace twophoton {
 /  +++++++++++++++++++++++  SITiffIO  +++++++++++++++++++++++++++++++++++
  ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ */
 
-	bool SITiffIO::openTiff(std::string fname) {
+	bool SITiffIO::openTiff(const std::string & fname) {
 		tiff_fname = fname;
 		TiffReader = std::make_shared<SITiffReader>(fname);
 		if ( TiffReader->open() ) {
 			TiffReader->getSWTag(0); // ensures num channels are read
 			auto chans = TiffReader->getSavedChans();
-			if ( chans.empty || chans.size() == 0 )
+			if ( chans.empty() || chans.size() == 0 )
 				m_nchans = 1;
 			else
 				m_nchans = chans.size();
 			return true;
+		}
+		return false;
+	}
+
+	bool SITiffIO::writeToTiff(const std::string & dst_fname) {
+		
+		if(TiffReader == nullptr)
+			return false;
+		
+		TiffWriter = std::make_shared<SITiffWriter>();
+		if ( TiffWriter->open(dst_fname)) {
+			return true; 
 		}
 		return false;
 	}
@@ -705,6 +710,18 @@ namespace twophoton {
 			return carma::mat_to_arr(F, true);
 		}
 		return py::array_t<int16_t>();
+	}
+
+	void SITiffIO::writeFrame(py::array_t<int16_t> frame, unsigned int frame_num) const {
+		if(TiffReader != nullptr && TiffWriter != nullptr) {
+			int dir_to_read_write = (frame_num * m_nchans - (m_nchans - channel2display)) - 1;
+			auto swtag = TiffReader->getSWTag(dir_to_read_write);
+			auto imtag = TiffReader->getImDescTag(dir_to_read_write);
+			TiffWriter->modifyChannel(swtag, channel2display);
+			TiffWriter->writeSIHdr(swtag, imtag);
+			arma::Mat<int16_t> write_frame = carma::arr_to_mat(frame, true);
+			*TiffWriter << write_frame;
+		}
 	}
 
 	std::tuple<double, double, double> SITiffIO::getPos(const unsigned int i) const {
@@ -888,6 +905,7 @@ PYBIND11_MODULE(scanimagetiffio, m) {
 	py::class_<twophoton::SITiffIO>(m, "SITiffIO")
 		.def(py::init<>())
 		.def("open_tiff_file", &twophoton::SITiffIO::openTiff, "Open a tiff file")
+		.def("write_to_tiff", &twophoton::SITiffIO::writeToTiff, "Write to tiff file")
 		.def("open_log_file", &twophoton::SITiffIO::openLog, "Open a log file")
 		.def("open_xml_file", &twophoton::SITiffIO::openXML, "Open an xml file")
 		.def("get_n_frames", &twophoton::SITiffIO::countDirectories, "Count the number of frames")
@@ -899,6 +917,7 @@ PYBIND11_MODULE(scanimagetiffio, m) {
 		.def("get_tracker", &twophoton::SITiffIO::getTrackerTranslation, "Get the x and y translation for a tracked bounding box")
 		.def("get_all_tracker", &twophoton::SITiffIO::getAllTrackerTranslation, "Get all the x and y translations for a tracked bounding box")
 		.def("get_frame", &twophoton::SITiffIO::readFrame, "Gets the data/ image for the given frame")
+		.def("write_frame", &twophoton::SITiffIO::writeFrame, "Write frame to file")
 		.def("get_all_x", &twophoton::SITiffIO::getX, "Gets all the X values")
 		.def("get_all_z", &twophoton::SITiffIO::getZ, "Gets all the Z values")
 		.def("get_all_theta", &twophoton::SITiffIO::getTheta, "Gets all the rotational values")

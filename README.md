@@ -54,10 +54,12 @@ Here is a brief description of some of the functions exposed by the Python API:
 
 
 * open_tiff_file(path_to_tifffile: str) - Open a tiff file. Returns True on success
+* write_to_tiff(path_to_tifffile: str) - Open a tiff file for writing. NB Doesn't have to exist before this call. Returns True on success
 * open_log_file(path_to_logfile: str) - Open a log file. Returns True on success
 * open_xml_file(path_to_xmlfile: str) - Open an xml file - ignore
 * get_n_frames() - Count the total number of frames in the tiff file. Returns int
 * get_frame(n: int) - Gets the data/ image for the given frame. Retuens numpy array
+* write_frame(f: np.array, n: int) - Writes a frame of data to the file supplied in the call to write_to_tiff(). The n argument refers to the frame in the source file (opened with the call to open_tiff_file()) that the headers should be copied from.
 * set_channel(n: int) - Sets the channel to take frames from (see below)
 * interp_times() - Interpolate the times in the tiff frames to events (position and time in the log file)
 
@@ -74,6 +76,8 @@ The following functions require the interp_times() function to have been called 
 * get_channel_LUT() - Gets the channel LUTs. Returns 2-tuple
 
 NB A distinction should be made between "frames" and "directories". Frames can be thought of as slices in time whereas there can be >1 directory for a given slice of time. Less abstractly, you can think of a directory as an inidividual image in a multi-page tiff file and a frame as a single timestamps worth of acquisition data from the microscope. So, if 2 channels (red and green say) have been recorded from the microscope there will be 2 directories per frame.
+
+The write function, write_frame(destination_file, iframe), should be called with the same instance as the file you opened with open_tiff_file(source_file). This is because there is potentially important header information in the source file that should be copied to the destination file. The call to write_frame() therefore also needs a frame number to know which header to copy from the src to the dst tiff file.
 
 The indexing in the Python API takes account of this and uses frames as the index to retrieve directories, correctly taking account of the number of channels recorded from. If you want to examine the first frame of data for channel 1 you can call do:
 
