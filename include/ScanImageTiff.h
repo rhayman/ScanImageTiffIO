@@ -688,8 +688,8 @@ namespace twophoton {
 			}
 			auto getTiffName() { return tiff_fname; }
 			auto getLogName() { return log_fname; }
-			auto getSWTag(const unsigned int i) { return TiffReader->getSWTag(i); }
-			auto getImDescTag(const unsigned int i) { return TiffReader->getImDescTag(i); }
+			std::string getSWTag(const unsigned int i);
+			std::string getImDescTag(const unsigned int i);
 		private:
 			std::string tiff_fname = "";
 			std::string log_fname = "";

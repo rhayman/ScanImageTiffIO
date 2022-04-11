@@ -749,6 +749,16 @@ namespace twophoton {
 		return true;
 	}
 
+	std::string SITiffIO::getSWTag(const unsigned int i) {
+		auto dir_to_read = i * m_nchans - (m_nchans - channel2display);
+		return TiffReader->getSWTag(dir_to_read);
+	}
+
+	std::string SITiffIO::getImDescTag(const unsigned int i) {
+		auto dir_to_read = i * m_nchans - (m_nchans - channel2display);
+		return TiffReader->getImDescTag(dir_to_read);
+	}
+
 	cv::Mat SITiffIO::readFrame(int frame_num) const {
 		auto dir_to_read = frame_num * m_nchans - (m_nchans - channel2display);
 		return TiffReader->readframe(dir_to_read);
