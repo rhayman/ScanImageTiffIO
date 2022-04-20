@@ -236,14 +236,13 @@ namespace twophoton {
 		virtual ~SITiffWriter();
 		bool isFormatSupported( int depth ) const;
 		bool  write( const cv::Mat& img, const std::vector<int>& params );
-
 		virtual bool isOpened();
 		virtual bool open(std::string outputPath);
 		virtual bool close();
 		virtual void operator << (cv::Mat& frame);
 		bool writeSIHdr(const std::string swTag, const std::string imDescTag);
 		std::string modifyChannel(std::string &, const unsigned int);
-
+		std::string modifyChannels(std::string &, const std::map<unsigned int, bool> &);
 	protected:
 		bool writeLibTiff( const cv::Mat& img, const std::vector<int>& params );
 		bool writeHdr( const cv::Mat& img );
@@ -252,6 +251,8 @@ namespace twophoton {
 		TIFF* m_tif;
 		TIFF* pTiffHandle;
 		bool opened = false;
+	private:
+		std::string replaceHeaderValue(std::string &, std::string, std::string);
 	};
 
 	 /* 
@@ -668,6 +669,7 @@ namespace twophoton {
 			unsigned int getNDirectories() { return m_nDirectories; }
 			unsigned int getNChannels() { return m_nchans; }
 			auto getSavedChannels() { return TiffReader->getSavedChans(); }
+			void setChannels2Save(const std::map<unsigned int, bool> &);
 			void setChannel(unsigned int i) { channel2display = i; }
 			auto getChannelOffsets() { return TiffReader->getChanOffsets(); }
 			auto getChannelLuts() { return TiffReader->getChanLut(); }

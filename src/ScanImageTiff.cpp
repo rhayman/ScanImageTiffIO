@@ -4,6 +4,7 @@
 #include <limits>
 #include <tuple>
 #include <memory>
+#include <experimental/iterator>
 
 namespace twophoton {
 
@@ -291,6 +292,7 @@ namespace twophoton {
 		{
 			headerdata = new SITiffHeader{this};
 			headerdata->versionCheck(m_tif);
+			headerdata->getSoftwareTag(m_tif);
 			isopened = true;
 			return true;
 		}
@@ -617,18 +619,56 @@ namespace twophoton {
 		return false;
 	}
 
-	std::string SITiffWriter::modifyChannel(std::string & src_str, const unsigned int chan2keep) {
-		auto chan = std::to_string(chan2keep);
-		std::string target = "SI.hChannels.channelSave = ";
-		std::string replace_with = target + chan;
-		std::string whole_target = grabStr(src_str, target);
-		whole_target = target + whole_target;
+	std::string SITiffWriter::replaceHeaderValue(std::string & headerTag, std::string targetKey, std::string replaceKeyWith) {
+		std::string replace_with = targetKey + replaceKeyWith;
+		std::string whole_target = grabStr(headerTag, targetKey);
+		whole_target = targetKey + whole_target;
 
-		auto loc = src_str.find(target);
+		auto loc = headerTag.find(targetKey);
 		if ( loc != std::string::npos ) {
-			src_str.replace(loc, whole_target.size(), replace_with);
+			headerTag.replace(loc, whole_target.size(), replace_with);
 		}
 		return whole_target;
+	}
+
+	std::string SITiffWriter::modifyChannel(std::string & src_str, const unsigned int chan2keep) {
+		auto chan = std::to_string(chan2keep);
+		std::string replaceStr = "[" + chan + "]";
+		std::vector<std::string> targets{"SI.hChannels.channelSave = ", "SI.hChannels.channelDisplay = ", "SI.hChannels.channelsActive = "};
+		for(auto target : targets) {
+			replaceHeaderValue(src_str, target, replaceStr);
+		}
+		return replaceStr;
+	}
+
+	std::string SITiffWriter::modifyChannels(std::string & src_str, const std::map<unsigned int, bool> & chans2keep) {
+		// count how many channels to save
+		// if 1, call modifyChannels, if more construct string and replace
+		int nchans2keep = std::count_if(chans2keep.begin(), chans2keep.end(), [](auto kv){return kv.second;});
+		if(chans2keep.size() == 1 || nchans2keep == 1) {
+			unsigned int chan = 1;
+			for(const auto [c, keep] : chans2keep) {
+				if(keep)
+					chan = c;
+			}
+			return modifyChannel(src_str, chan);
+		}
+		else if (nchans2keep > 1) {
+			std::stringstream ss;
+			std::vector<unsigned int> keys;
+			for(const auto [key, val] : chans2keep)
+				keys.push_back(key);
+			std::copy(keys.begin(), keys.end(), std::experimental::make_ostream_joiner(ss, ";"));
+			// now the stringstream looks like 1,2
+			auto replaceStr = "[" + ss.str() + "]";
+			std::vector<std::string> targets{"SI.hChannels.channelSave = ", "SI.hChannels.channelDisplay = ", "SI.hChannels.channelsActive = "};
+			for(auto target : targets) {
+				replaceHeaderValue(src_str, target, replaceStr);
+			}
+			return replaceStr;
+		}
+		else
+			return std::string();
 	}
 
 	bool SITiffWriter::write( const cv::Mat& img, const std::vector<int>& params)
@@ -750,39 +790,44 @@ namespace twophoton {
 	}
 
 	std::string SITiffIO::getSWTag(const unsigned int i) {
-		auto dir_to_read = i * m_nchans - (m_nchans - channel2display);
+		auto dir_to_read = (i * m_nchans - (m_nchans - channel2display - 1));
 		return TiffReader->getSWTag(dir_to_read);
 	}
 
 	std::string SITiffIO::getImDescTag(const unsigned int i) {
-		auto dir_to_read = i * m_nchans - (m_nchans - channel2display);
+		auto dir_to_read = (i * m_nchans - (m_nchans - channel2display - 1));
 		return TiffReader->getImDescTag(dir_to_read);
 	}
 
+	void SITiffIO::setChannels2Save(const std::map<unsigned int, bool> & chans2save) {
+		// TiffReader->
+	}
+
 	cv::Mat SITiffIO::readFrame(int frame_num) const {
-		auto dir_to_read = frame_num * m_nchans - (m_nchans - channel2display);
+		int dir_to_read = (frame_num * m_nchans - (m_nchans - channel2display - 1));
 		return TiffReader->readframe(dir_to_read);
 	}
 
 	std::tuple<double, double, double> SITiffIO::getPos(const unsigned int i) const {
+		double x, z, r;
 		auto search = m_all_transforms->find(i);
 		if ( search != m_all_transforms->end() ) {
 			auto transform_container = search->second;
-			double x, z, r;
 			transform_container.getPosData(x, z, r);
-			return std::make_tuple(x, z, r);
 		}
+		return std::make_tuple(x, z, r);
 	}
 
 	std::tuple<double, double> SITiffIO::getTrackerTranslation(const unsigned int i) const {
+		double x_move, y_move;
 		auto search = m_all_transforms->find(i);
 		if ( search != m_all_transforms->end() ) {
 			auto transform_container = search->second;
 			cv::Mat T = transform_container.getTransform(TransformType::kTrackerTranslation);
-			double x_move = T.at<double>(0, 0);
-			double y_move = T.at<double>(0, 1);
-			return std::make_tuple(x_move, y_move);
+			x_move = T.at<double>(0, 0);
+			y_move = T.at<double>(0, 1);
 		}
+		return std::make_tuple(x_move, y_move);
 	}
 
 	std::tuple<std::vector<double>, std::vector<double>> SITiffIO::getAllTrackerTranslation() const {
