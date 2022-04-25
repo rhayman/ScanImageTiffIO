@@ -266,8 +266,9 @@ namespace twophoton {
     static constexpr char mouse_move_token[] = "MouseMove";
     static constexpr char X_token[] = "X=";
     static constexpr char Z_token[] = "Z=";
-	static constexpr char MX_token[] = "MX=";
-    static constexpr char MZ_token[] = "MZ=";
+	static constexpr char MX_token[] = " MX=";
+    static constexpr char MY_token[] = " MY=";
+    static constexpr char GainX_token[] = "GainX=";
     static constexpr char space_token[] = " ";
 
     // The rotary encoder might (and has) change so the number of units

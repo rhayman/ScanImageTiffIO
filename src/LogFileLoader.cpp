@@ -288,18 +288,20 @@ bool LogFileLoader::load() {
 	        	ptimes.push_back(pt);
 
 	        	//get the translation...
-	        	s1 = line.substr(pos, pos+1);
-	        	posZ = s1.find(space_token);
-	        	s1 = s1.substr(2,posZ-2);
-	        	x_trans = std::stof(s1);
+				auto pos_MX = line.find(X_token);
+				auto pos_MY = line.find(Z_token);
+				auto pos_Rot = line.find(rot_token);
+				
+				s1 = line.substr(pos_MX, pos_MY-pos_MX);
+				auto tmp_pos = s1.find(equal_token);
+				auto s2 = s1.substr(tmp_pos+1);
+				x_trans = std::stof(s2);
 	        	x_translation.push_back(x_trans);
 
-	        	posZ = line.find(Z_token);
-	        	pos = line.find(rot_token);
-	        	s1 = line.substr(posZ+3, pos);
-	        	pos = s1.find(space_token);
-	        	s1 = s1.substr(0,pos);
-	        	z_trans = std::stof(s1);
+				s1 = line.substr(pos_MY, pos_Rot-pos_MY);
+				tmp_pos = s1.find(equal_token);
+				s2 = s1.substr(tmp_pos+1);
+	        	z_trans = std::stof(s2);
 	        	z_translation.push_back(z_trans);
 
 	        	//grab the amount of rotation...
