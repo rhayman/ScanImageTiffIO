@@ -202,12 +202,13 @@ bool LogFileLoader::calculateDurationsAndRotations() {
 };
 
 int LogFileLoader::findNearestIdx(double tiffTimestamp) {
+	int time_idx = 0;
 	if (!(times.empty())) {
 		std::vector<double>::iterator low;
 		low = std::upper_bound(times.begin(), times.end(), tiffTimestamp);
 		auto time_idx = low - times.begin();
-		return time_idx;
 	}
+	return time_idx;
 }
 
 bool LogFileLoader::load() {
