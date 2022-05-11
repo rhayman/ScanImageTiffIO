@@ -1,0 +1,18 @@
+@PACKAGE_INIT@
+include(CMakeFindDependencyMacro)
+find_dependency(Boost COMPONENTS date_time REQUIRED)
+find_dependency(OpenCV COMPONENTS core imgproc REQUIRED)
+find_dependency(TIFF REQUIRED)
+
+set(ScanImageTiff_INCLUDE_DIR "${PACKAGE_PREFIX_DIR}/@CMAKE_INSTALL_INCLUDEDIR@")
+set(ScanImageTiff_LIBRARY "${PACKAGE_PREFIX_DIR}/@CMAKE_INSTALL_LIBDIR@/ScanImageTiff.so")
+
+include ("${CMAKE_CURRENT_LIST_DIR}/ScanImageTiffTargets.cmake")
+if(NOT SCANIMAGETIFF_FIND_QUIETLY)
+  message(
+    STATUS
+      "Found ScanImageTiff"
+  )
+endif()
+set(ScanImageTiff_LIBRARIES ScanImageTiff)
+check_required_components(ScanImageTiff)
