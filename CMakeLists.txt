@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.2)
 project(ScanImageTiff VERSION 1.0.1 DESCRIPTION "tiff file io for tiffs written with scanImage" LANGUAGES CXX)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
@@ -54,7 +54,7 @@ set_target_properties(ScanImageTiff PROPERTIES
 )
 
     
-set_target_properties(ScanImageTiff PROPERTIES PREFIX "")    
+# set_target_properties(ScanImageTiff PROPERTIES PREFIX "")    
 
 target_link_libraries(ScanImageTiff PUBLIC
     ${TIFF_LIBRARIES}    
@@ -87,18 +87,12 @@ install(TARGETS ScanImageTiff
     PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )
 
-# install(DIRECTORY ${CMAKE_SOURCE_DIR}
-#     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-#     PATTERN "extern" EXCLUDE
-# )
-
 install(EXPORT ScanImageTiffTargets 
         FILE ScanImageTiffTargets.cmake
         NAMESPACE ScanImageTiff::
         DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/ScanImageTiff
 )
 
-# add_library(ScanImageTiff::ScanImageTiff SHARED IMPORTED)
 
 # pkfconfig file
 configure_file(${CMAKE_SOURCE_DIR}/cmake/ScanImageTiff.pc.in
