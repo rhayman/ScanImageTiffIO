@@ -8,19 +8,20 @@
 #include <memory>
 #include <algorithm>
 
-namespace twophoton {
+namespace twophoton
+{
 
-	void SITiffHeader::read(TIFF * m_tif, int dirnum)
+	void SITiffHeader::read(TIFF *m_tif, int dirnum)
 	{
-		if ( m_tif )
+		if (m_tif)
 		{
-			if ( dirnum == -1 )
+			if (dirnum == -1)
 				TIFFSetDirectory(m_tif, dirnum);
 			else
 			{
 				// scrape some big-ish strings out of the header
-				char * imdesc;
-				if ( TIFFGetField(m_tif, TIFFTAG_IMAGEDESCRIPTION, &imdesc) == 1)
+				char *imdesc;
+				if (TIFFGetField(m_tif, TIFFTAG_IMAGEDESCRIPTION, &imdesc) == 1)
 				{
 					m_imdesc = imdesc;
 				}
@@ -37,13 +38,14 @@ namespace twophoton {
 		}
 	}
 
-	void SITiffHeader::versionCheck(TIFF * m_tif)
+	void SITiffHeader::versionCheck(TIFF *m_tif)
 	{
-		if ( m_tif )
+		if (m_tif)
 		{
 			m_imdesc = getImageDescTag(m_tif, 0);
-			if(! m_imdesc.empty()) {
-				if ( ! grabStr(m_imdesc, "Frame Number =").empty() ) // old
+			if (!m_imdesc.empty())
+			{
+				if (!grabStr(m_imdesc, "Frame Number =").empty()) // old
 				{
 					version = 0;
 					channelSaved = "scanimage.SI5.channelsSave =";
@@ -52,7 +54,7 @@ namespace twophoton {
 					frameString = "Frame Number =";
 					frameTimeStamp = "Frame Timestamp(s) =";
 				}
-				else if ( ! grabStr(m_imdesc, "frameNumbers =").empty() ) // new
+				else if (!grabStr(m_imdesc, "frameNumbers =").empty()) // new
 				{
 					version = 1;
 					channelSaved = "SI.hChannels.channelSave =";
@@ -74,18 +76,18 @@ namespace twophoton {
 		}
 	}
 
-	std::string SITiffHeader::getSoftwareTag(TIFF * m_tif, unsigned int dirnum)
+	std::string SITiffHeader::getSoftwareTag(TIFF *m_tif, unsigned int dirnum)
 	{
-		if ( m_tif )
+		if (m_tif)
 		{
 			TIFFSetDirectory(m_tif, dirnum);
-			if ( version == 0 )
+			if (version == 0)
 			{
 				// with older versions the information for channels live
 				// in a different tag (ImageDescription) and some of that
 				// information doesn't even exist so has to be inferred...
 				std::string imdesc = getImageDescTag(m_tif, dirnum);
-				if ( ! imdesc.empty() )
+				if (!imdesc.empty())
 				{
 					std::string chanSave = grabStr(imdesc, channelSaved);
 					chanSaved[0] = 1;
@@ -99,12 +101,11 @@ namespace twophoton {
 				}
 				else
 					return std::string();
-
 			}
-			else if ( version == 1 )
+			else if (version == 1)
 			{
-				char * swTag;
-				if ( TIFFGetField(m_tif, TIFFTAG_SOFTWARE, & swTag) == 1 )
+				char *swTag;
+				if (TIFFGetField(m_tif, TIFFTAG_SOFTWARE, &swTag) == 1)
 				{
 					m_swTag = swTag;
 					std::string chanNames = grabStr(m_swTag, channelNames);
@@ -125,18 +126,19 @@ namespace twophoton {
 		return std::string();
 	}
 
-	std::string SITiffHeader::getImageDescTag(TIFF * m_tif, unsigned int dirnum)
+	std::string SITiffHeader::getImageDescTag(TIFF *m_tif, unsigned int dirnum)
 	{
-		if ( m_tif )
+		if (m_tif)
 		{
 			TIFFSetDirectory(m_tif, dirnum);
-			char * imdesc;
-			if ( TIFFGetField(m_tif, TIFFTAG_IMAGEDESCRIPTION, &imdesc) == 1)
+			char *imdesc;
+			if (TIFFGetField(m_tif, TIFFTAG_IMAGEDESCRIPTION, &imdesc) == 1)
 			{
 				m_imdesc = imdesc;
 				return imdesc;
 			}
-			else {
+			else
+			{
 				std::cout << "Image description tag empty\n";
 				return std::string();
 			}
@@ -145,9 +147,9 @@ namespace twophoton {
 		return std::string();
 	}
 
-	unsigned int SITiffHeader::getSizePerDir(TIFF * m_tif, unsigned int dirnum)
+	unsigned int SITiffHeader::getSizePerDir(TIFF *m_tif, unsigned int dirnum)
 	{
-		if ( m_tif )
+		if (m_tif)
 		{
 			TIFFSetDirectory(m_tif, dirnum);
 			uint32_t length;
@@ -162,40 +164,41 @@ namespace twophoton {
 			return 0;
 	}
 
-	void SITiffHeader::printHeader(TIFF * m_tif, int framenum)
+	void SITiffHeader::printHeader(TIFF *m_tif, int framenum)
 	{
-		if ( m_tif )
+		if (m_tif)
 		{
 			TIFFSetDirectory(m_tif, framenum);
 			TIFFPrintDirectory(m_tif, stdout, 0);
 		}
 	}
 
-	int SITiffHeader::countDirectories(TIFF * m_tif)
+	int SITiffHeader::countDirectories(TIFF *m_tif)
 	{
 		int count = 0;
-		if ( m_tif ) {
+		if (m_tif)
+		{
 			TIFFSetDirectory(m_tif, count);
-			do {
+			do
+			{
 				++count;
-			}
-			while ( TIFFReadDirectory(m_tif) == 1 );
+			} while (TIFFReadDirectory(m_tif) == 1);
 			return count;
 		}
 		return 0;
 	}
 
-	int SITiffHeader::scrapeHeaders(TIFF * m_tif, int & count)
+	int SITiffHeader::scrapeHeaders(TIFF *m_tif, int &count)
 	{
-		if ( m_tif )
+		if (m_tif)
 		{
-			if ( TIFFReadDirectory(m_tif) == 1 )
+			if (TIFFReadDirectory(m_tif) == 1)
 			{
 				std::string imdescTag = getImageDescTag(m_tif, count);
-				if ( ! imdescTag.empty() )
+				if (!imdescTag.empty())
 				{
 					std::string ts_str = grabStr(imdescTag, frameTimeStamp);
-					if ( ! ts_str.empty() )// sometimes headers are corrupted esp. at EOF
+					if (!ts_str.empty()) // sometimes headers are corrupted esp. at EOF
 					{
 						double ts = std::stof(ts_str);
 						m_timestamps.emplace_back(ts);
@@ -220,7 +223,7 @@ namespace twophoton {
 		LUT.pop_back();
 		LUT = LUT.substr(2);
 		auto LUT_split = split(LUT, ' ');
-		for (auto & x : LUT_split)
+		for (auto &x : LUT_split)
 		{
 			if (x.find('[') != std::string::npos)
 				x = x.substr(1);
@@ -228,9 +231,9 @@ namespace twophoton {
 				x.pop_back();
 		}
 		int count = 1;
-		for (unsigned int i = 0; i < LUT_split.size(); i+=2)
+		for (unsigned int i = 0; i < LUT_split.size(); i += 2)
 		{
-			chanLUT[count] = std::make_pair<int,int>(std::stoi(LUT_split[i]), std::stoi(LUT_split[i+1]));
+			chanLUT[count] = std::make_pair<int, int>(std::stoi(LUT_split[i]), std::stoi(LUT_split[i + 1]));
 			++count;
 		}
 	}
@@ -241,7 +244,7 @@ namespace twophoton {
 		offsets = offsets.substr(2);
 		auto offsets_split = split(offsets, ' ');
 		int count = 1;
-		for ( auto & x : offsets_split)
+		for (auto &x : offsets_split)
 		{
 			if (x.find('[') != std::string::npos)
 				x = x.substr(1);
@@ -255,15 +258,17 @@ namespace twophoton {
 	void SITiffHeader::parseSavedChannels(std::string savedchans)
 	{
 		// in case only a single channel has been saved
-		if ( savedchans.size() == 2 ) {
+		if (savedchans.size() == 2)
+		{
 			chanSaved[0] = std::stoul(savedchans.substr(1));
 		}
-		else {
+		else
+		{
 			savedchans.pop_back();
 			savedchans = savedchans.substr(2);
 			auto savedchans_split = split(savedchans, ';');
 			unsigned int count = 0;
-			for (auto & x: savedchans_split)
+			for (auto &x : savedchans_split)
 			{
 				chanSaved[count] = std::stoul(x);
 				++count;
@@ -276,13 +281,13 @@ namespace twophoton {
 	------------------------------------------------------------*/
 	SITiffReader::~SITiffReader()
 	{
-		if ( headerdata )
+		if (headerdata)
 			delete headerdata;
 	}
 	bool SITiffReader::open()
 	{
 		m_tif = TIFFOpen(m_filename.c_str(), "r");
-		if ( m_tif )
+		if (m_tif)
 		{
 			headerdata = new SITiffHeader{this};
 			headerdata->versionCheck(m_tif);
@@ -294,7 +299,7 @@ namespace twophoton {
 
 	bool SITiffReader::readheader()
 	{
-		if ( m_tif )
+		if (m_tif)
 		{
 			std::string softwareTag = headerdata->getSoftwareTag(m_tif);
 			return true;
@@ -302,22 +307,25 @@ namespace twophoton {
 		return false;
 	}
 
-	std::vector<double> SITiffReader::getAllTimeStamps() const {
-		if ( m_tif ) {
+	std::vector<double> SITiffReader::getAllTimeStamps() const
+	{
+		if (m_tif)
+		{
 			std::cout << "Starting scraping timestamps..." << std::endl;
 			TIFFSetDirectory(m_tif, 0);
 			int count = 0;
-			do {}
-			while ( headerdata->scrapeHeaders(m_tif, count) == 0 );
+			do
+			{
+			} while (headerdata->scrapeHeaders(m_tif, count) == 0);
 			std::cout << "Finished scraping timestamps..." << std::endl;
 			return headerdata->getTimeStamps();
 		}
 		return std::vector<double>();
 	}
 
-	void SITiffReader::getFrameNumAndTimeStamp(const unsigned int dirnum, unsigned int & framenum, double & timestamp) const
+	void SITiffReader::getFrameNumAndTimeStamp(const unsigned int dirnum, unsigned int &framenum, double &timestamp) const
 	{
-		if ( m_tif )
+		if (m_tif)
 		{
 			// strings to grab from the header
 			const std::string frameNumberString = headerdata->getFrameNumberString();
@@ -334,7 +342,7 @@ namespace twophoton {
 
 	bool SITiffReader::release()
 	{
-		if ( m_tif )
+		if (m_tif)
 		{
 			TIFFClose(m_tif);
 			return true;
@@ -343,8 +351,10 @@ namespace twophoton {
 			return false;
 	}
 
-	arma::Mat<int16_t> SITiffReader::readframe(int framedir) {
-		if ( m_tif ) {
+	arma::Mat<int16_t> SITiffReader::readframe(int framedir)
+	{
+		if (m_tif)
+		{
 			arma::Mat<int16_t> frame;
 			int framenum = framedir;
 			/*
@@ -355,39 +365,40 @@ namespace twophoton {
 
 			NB This differs from the 1-based indexing for framenumbers that ScanImage uses (fucking Matlab)
 			*/
-			if(TIFFSetDirectory(m_tif, framenum)==0)
+			if (TIFFSetDirectory(m_tif, framenum) == 0)
 				return frame;
-			else {
+			else
+			{
 				uint32_t w = 0, h = 0;
 				uint16_t photometric = 0;
 				auto buffer_size = TIFFStripSize(m_tif);
-				if( TIFFGetField( m_tif, TIFFTAG_IMAGEWIDTH, &w ) && // normally = 512
-					TIFFGetField( m_tif, TIFFTAG_IMAGELENGTH, &h ) && // normally = 512
-					TIFFGetField( m_tif, TIFFTAG_PHOTOMETRIC, &photometric )) // photometric = 1 (min-is-black)
+				if (TIFFGetField(m_tif, TIFFTAG_IMAGEWIDTH, &w) &&			// normally = 512
+					TIFFGetField(m_tif, TIFFTAG_IMAGELENGTH, &h) &&			// normally = 512
+					TIFFGetField(m_tif, TIFFTAG_PHOTOMETRIC, &photometric)) // photometric = 1 (min-is-black)
 				{
 					m_imagewidth = w;
 					m_imageheight = h;
 
-					uint16_t bpp=8, ncn = photometric > 1 ? 3 : 1;
-					TIFFGetField( m_tif, TIFFTAG_BITSPERSAMPLE, &bpp ); // = 16
-					TIFFGetField( m_tif, TIFFTAG_SAMPLESPERPIXEL, &ncn ); // = 1
-					int is_tiled = TIFFIsTiled(m_tif); // 0 ie false, which means the data is organised in strips
+					uint16_t bpp = 8, ncn = photometric > 1 ? 3 : 1;
+					TIFFGetField(m_tif, TIFFTAG_BITSPERSAMPLE, &bpp);	// = 16
+					TIFFGetField(m_tif, TIFFTAG_SAMPLESPERPIXEL, &ncn); // = 1
+					int is_tiled = TIFFIsTiled(m_tif);					// 0 ie false, which means the data is organised in strips
 					uint32_t tile_height0 = 0, tile_width0 = m_imagewidth;
 					TIFFGetField(m_tif, TIFFTAG_ROWSPERSTRIP, &tile_height0);
 
-					if( (!is_tiled) ||
+					if ((!is_tiled) ||
 						(is_tiled &&
-						TIFFGetField( m_tif, TIFFTAG_TILEWIDTH, &tile_width0) &&
-						TIFFGetField( m_tif, TIFFTAG_TILELENGTH, &tile_height0 )))
+						 TIFFGetField(m_tif, TIFFTAG_TILEWIDTH, &tile_width0) &&
+						 TIFFGetField(m_tif, TIFFTAG_TILELENGTH, &tile_height0)))
 					{
-						if(!is_tiled)
-							TIFFGetField( m_tif, TIFFTAG_ROWSPERSTRIP, &tile_height0 );
+						if (!is_tiled)
+							TIFFGetField(m_tif, TIFFTAG_ROWSPERSTRIP, &tile_height0);
 
-						if( tile_width0 <= 0 )
+						if (tile_width0 <= 0)
 							tile_width0 = m_imagewidth;
 
-						if( tile_height0 <= 0 ||
-						(!is_tiled && tile_height0 == std::numeric_limits<uint32_t>::max()) )
+						if (tile_height0 <= 0 ||
+							(!is_tiled && tile_height0 == std::numeric_limits<uint32_t>::max()))
 							tile_height0 = m_imageheight;
 
 						std::unique_ptr<int16_t[]> buffer = std::make_unique<int16_t[]>(buffer_size);
@@ -396,40 +407,38 @@ namespace twophoton {
 						// ********* return frame created here ***********
 
 						frame = arma::Mat<int16_t>(h, w);
-						int16_t* data = frame.memptr();
+						int16_t *data = frame.memptr();
 
-						for (unsigned int y = 0; y < m_imageheight; y+=tile_height0)
+						for (unsigned int y = 0; y < m_imageheight; y += tile_height0)
 						{
 							unsigned int tile_height = tile_height0;
 
-
-							if( y + tile_height > m_imageheight )
+							if (y + tile_height > m_imageheight)
 								tile_height = m_imageheight - y;
 							// tile_height = 8
 							// tile_width = 512
-							
-							for(unsigned int x = 0; x < m_imagewidth; x += tile_width0, tileidx++)
+
+							for (unsigned int x = 0; x < m_imagewidth; x += tile_width0, tileidx++)
 							{
 								unsigned int tile_width = tile_width0, ok;
-								
-								if( x + tile_width > m_imagewidth )
+
+								if (x + tile_width > m_imagewidth)
 									tile_width = m_imagewidth - x;
 								// I've cut out lots of bpp testing etc here
 								// tileidx goes from 0 to 63
 								// buffer has 4096 int16_t's in
-								ok = (int)TIFFReadEncodedStrip(m_tif, tileidx, buffer.get(), buffer_size ) >= 0;
-								if ( !ok )
+								ok = (int)TIFFReadEncodedStrip(m_tif, tileidx, buffer.get(), buffer_size) >= 0;
+								if (!ok)
 								{
 									close();
 									return arma::Mat<int16_t>();
 								}
-								
-								std::memcpy(data + tileidx*(tile_height*tile_width),
+
+								std::memcpy(data + tileidx * (tile_height * tile_width),
 											buffer.get(),
 											buffer_size);
 							}
 						}
-
 					}
 				}
 			}
@@ -438,11 +447,13 @@ namespace twophoton {
 		return arma::Mat<int16_t>();
 	}
 
-	bool SITiffReader::close() {
-		if ( m_tif ) {
+	bool SITiffReader::close()
+	{
+		if (m_tif)
+		{
 			TIFFClose(m_tif);
 			isopened = false;
-			if ( headerdata )
+			if (headerdata)
 				delete headerdata;
 			return true;
 		}
@@ -452,28 +463,31 @@ namespace twophoton {
 	// ################## Tiff encoder class ################################
 	// ######################################################################
 
-	static void readParam(const std::vector<int>& params, int key, int& value) {
-		for(size_t i = 0; i + 1 < params.size(); i += 2)
-			if(params[i] == key)
+	static void readParam(const std::vector<int> &params, int key, int &value)
+	{
+		for (size_t i = 0; i + 1 < params.size(); i += 2)
+			if (params[i] == key)
 			{
-				value = params[i+1];
+				value = params[i + 1];
 				break;
 			}
 	}
 
-	SITiffWriter::~SITiffWriter() {
-		if ( opened )
+	SITiffWriter::~SITiffWriter()
+	{
+		if (opened)
 			TIFFClose(m_tif);
 	}
 
-	bool SITiffWriter::writeLibTiff(arma::Mat<int16_t> & img, const std::vector<int> & params) {
+	bool SITiffWriter::writeLibTiff(arma::Mat<int16_t> &img, const std::vector<int> &params)
+	{
 		int channels = 1;
 		int width = img.n_cols, height = img.n_rows;
-		int bitsPerChannel = 16 ;
+		int bitsPerChannel = 16;
 		const int bitsPerByte = 16;
-		size_t fileStep = (width * channels * bitsPerChannel) / bitsPerByte;// = image_width (with 1 channel)
+		size_t fileStep = (width * channels * bitsPerChannel) / bitsPerByte; // = image_width (with 1 channel)
 
-		int rowsPerStrip = (int)((1 << 13)/fileStep);
+		int rowsPerStrip = (int)((1 << 13) / fileStep);
 		readParam(params, TIFFTAG_ROWSPERSTRIP, rowsPerStrip);
 		rowsPerStrip = height;
 		if (!(isOpened()))
@@ -484,40 +498,27 @@ namespace twophoton {
 			return false;
 
 		// defaults for now, maybe base them on params in the future
-		int    compression  = COMPRESSION_NONE;
-		int    predictor    = PREDICTOR_HORIZONTAL;
-		int    units        = RESUNIT_INCH;
-		double xres         = 72.0;
-		double yres         = 72.0;
-		int    sampleformat = SAMPLEFORMAT_INT;
-		int    orientation  = ORIENTATION_TOPLEFT;
+		int compression = COMPRESSION_NONE;
+		int predictor = PREDICTOR_HORIZONTAL;
+		int units = RESUNIT_INCH;
+		double xres = 72.0;
+		double yres = 72.0;
+		int sampleformat = SAMPLEFORMAT_INT;
+		int orientation = ORIENTATION_TOPLEFT;
 		int planarConfig = 1;
 
 		readParam(params, TIFFTAG_COMPRESSION, compression);
 		readParam(params, TIFFTAG_PREDICTOR, predictor);
 
-		int   colorspace = channels > 1 ? PHOTOMETRIC_RGB : PHOTOMETRIC_MINISBLACK;
+		int colorspace = channels > 1 ? PHOTOMETRIC_RGB : PHOTOMETRIC_MINISBLACK;
 
-		if ( !TIFFSetField(pTiffHandle, TIFFTAG_IMAGEWIDTH, width)
-		|| !TIFFSetField(pTiffHandle, TIFFTAG_IMAGELENGTH, height)
-		|| !TIFFSetField(pTiffHandle, TIFFTAG_BITSPERSAMPLE, bitsPerChannel)
-		|| !TIFFSetField(pTiffHandle, TIFFTAG_COMPRESSION, compression)
-		|| !TIFFSetField(pTiffHandle, TIFFTAG_PHOTOMETRIC, colorspace)
-		|| !TIFFSetField(pTiffHandle, TIFFTAG_SAMPLESPERPIXEL, channels)
-		|| !TIFFSetField(pTiffHandle, TIFFTAG_PLANARCONFIG, planarConfig)
-		|| !TIFFSetField(pTiffHandle, TIFFTAG_ROWSPERSTRIP, rowsPerStrip)
-		|| !TIFFSetField(pTiffHandle, TIFFTAG_RESOLUTIONUNIT, units)
-		|| !TIFFSetField(pTiffHandle, TIFFTAG_XRESOLUTION, xres)
-		|| !TIFFSetField(pTiffHandle, TIFFTAG_YRESOLUTION, yres)
-		|| !TIFFSetField(pTiffHandle, TIFFTAG_SAMPLEFORMAT, sampleformat)
-		|| !TIFFSetField(pTiffHandle, TIFFTAG_ORIENTATION, orientation)
-		)
+		if (!TIFFSetField(pTiffHandle, TIFFTAG_IMAGEWIDTH, width) || !TIFFSetField(pTiffHandle, TIFFTAG_IMAGELENGTH, height) || !TIFFSetField(pTiffHandle, TIFFTAG_BITSPERSAMPLE, bitsPerChannel) || !TIFFSetField(pTiffHandle, TIFFTAG_COMPRESSION, compression) || !TIFFSetField(pTiffHandle, TIFFTAG_PHOTOMETRIC, colorspace) || !TIFFSetField(pTiffHandle, TIFFTAG_SAMPLESPERPIXEL, channels) || !TIFFSetField(pTiffHandle, TIFFTAG_PLANARCONFIG, planarConfig) || !TIFFSetField(pTiffHandle, TIFFTAG_ROWSPERSTRIP, rowsPerStrip) || !TIFFSetField(pTiffHandle, TIFFTAG_RESOLUTIONUNIT, units) || !TIFFSetField(pTiffHandle, TIFFTAG_XRESOLUTION, xres) || !TIFFSetField(pTiffHandle, TIFFTAG_YRESOLUTION, yres) || !TIFFSetField(pTiffHandle, TIFFTAG_SAMPLEFORMAT, sampleformat) || !TIFFSetField(pTiffHandle, TIFFTAG_ORIENTATION, orientation))
 		{
 			TIFFClose(pTiffHandle);
 			return false;
 		}
 
-		if (compression != COMPRESSION_NONE && !TIFFSetField(pTiffHandle, TIFFTAG_PREDICTOR, predictor) )
+		if (compression != COMPRESSION_NONE && !TIFFSetField(pTiffHandle, TIFFTAG_PREDICTOR, predictor))
 		{
 			TIFFClose(pTiffHandle);
 			return false;
@@ -528,7 +529,7 @@ namespace twophoton {
 		std::unique_ptr<int16_t[]> buffer = std::make_unique<int16_t[]>(buffer_size);
 		int tileidx = 0;
 		auto data = img.memptr();
-		
+
 		if (!data)
 		{
 			TIFFClose(pTiffHandle);
@@ -549,7 +550,8 @@ namespace twophoton {
 		return true;
 	}
 
-	bool SITiffWriter::writeHdr(const arma::Mat<int16_t> & img) {
+	bool SITiffWriter::writeHdr(const arma::Mat<int16_t> &img)
+	{
 		// IMPORTANT: Note the "w8" option here - this is what allows writing to the bigTIFF format
 		// possible ('normal' tiff would be just "w")
 		if (!(isOpened()))
@@ -567,16 +569,18 @@ namespace twophoton {
 		return true;
 	}
 
-	bool SITiffWriter::writeSIHdr(const std::string swTag, const std::string imDescTag) {
+	bool SITiffWriter::writeSIHdr(const std::string swTag, const std::string imDescTag)
+	{
 		auto _swTag = swTag.c_str();
 		auto _imDescTag = imDescTag.c_str();
-		if ( ( TIFFSetField(m_tif, TIFFTAG_IMAGEDESCRIPTION, _imDescTag) > 0 ) &&
-			( TIFFSetField(m_tif, TIFFTAG_SOFTWARE, _swTag) > 0 ) )
+		if ((TIFFSetField(m_tif, TIFFTAG_IMAGEDESCRIPTION, _imDescTag) > 0) &&
+			(TIFFSetField(m_tif, TIFFTAG_SOFTWARE, _swTag) > 0))
 			return true;
 		return false;
 	}
 
-	std::string SITiffWriter::modifyChannel(std::string & src_str, const unsigned int chan2keep) {
+	std::string SITiffWriter::modifyChannel(std::string &src_str, const unsigned int chan2keep)
+	{
 		auto chan = std::to_string(chan2keep);
 		std::string target = "SI.hChannels.channelSave = ";
 		std::string replace_with = target + chan;
@@ -584,13 +588,14 @@ namespace twophoton {
 		whole_target = target + whole_target;
 
 		auto loc = src_str.find(target);
-		if ( loc != std::string::npos ) {
+		if (loc != std::string::npos)
+		{
 			src_str.replace(loc, whole_target.size(), replace_with);
 		}
 		return whole_target;
 	}
 
-	bool SITiffWriter::write(arma::Mat<int16_t>& img, const std::vector<int>& params)
+	bool SITiffWriter::write(arma::Mat<int16_t> &img, const std::vector<int> &params)
 	{
 		return writeLibTiff(img, params);
 	}
@@ -616,15 +621,17 @@ namespace twophoton {
 		return opened;
 	}
 
-	bool SITiffWriter::close() {
-		if ( opened ) {
+	bool SITiffWriter::close()
+	{
+		if (opened)
+		{
 			TIFFClose(m_tif);
 			opened = false;
 		}
 		return opened;
 	}
 
-	void SITiffWriter::operator << (arma::Mat<int16_t>& frame)
+	void SITiffWriter::operator<<(arma::Mat<int16_t> &frame)
 	{
 		if (opened)
 		{
@@ -632,17 +639,19 @@ namespace twophoton {
 			write(frame, params);
 		}
 	}
-/* ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-/  +++++++++++++++++++++++  SITiffIO  +++++++++++++++++++++++++++++++++++
- ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ */
+	/* ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+	/  +++++++++++++++++++++++  SITiffIO  +++++++++++++++++++++++++++++++++++
+	 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ */
 
-	bool SITiffIO::openTiff(const std::string & fname) {
+	bool SITiffIO::openTiff(const std::string &fname)
+	{
 		tiff_fname = fname;
 		TiffReader = std::make_shared<SITiffReader>(fname);
-		if ( TiffReader->open() ) {
+		if (TiffReader->open())
+		{
 			TiffReader->getSWTag(0); // ensures num channels are read
 			auto chans = TiffReader->getSavedChans();
-			if ( chans.empty() || chans.size() == 0 )
+			if (chans.empty() || chans.size() == 0)
 				m_nchans = 1;
 			else
 				m_nchans = chans.size();
@@ -651,34 +660,38 @@ namespace twophoton {
 		return false;
 	}
 
-	bool SITiffIO::writeToTiff(const std::string & dst_fname) {
-		
-		if(TiffReader == nullptr)
+	bool SITiffIO::writeToTiff(const std::string &dst_fname)
+	{
+
+		if (TiffReader == nullptr)
 			return false;
-		
+
 		TiffWriter = std::make_shared<SITiffWriter>();
-		if ( TiffWriter->open(dst_fname)) {
-			return true; 
+		if (TiffWriter->open(dst_fname))
+		{
+			return true;
 		}
 		return false;
 	}
 
-	bool SITiffIO::openLog(std::string fname) {
+	bool SITiffIO::openLog(std::string fname)
+	{
 		log_fname = fname;
 		LogLoader = std::make_shared<LogFileLoader>(fname);
 		return LogLoader->load();
 	}
 
-	bool SITiffIO::openXML(std::string fname) {
-		if ( m_all_transforms == nullptr )
+	bool SITiffIO::openXML(std::string fname)
+	{
+		if (m_all_transforms == nullptr)
 			m_all_transforms = std::make_shared<std::map<unsigned int, TransformContainer>>();
 		else
 			m_all_transforms->clear();
 
 		rapidxml::xml_document<> doc;
-		rapidxml::xml_node<> * root_node;
-		rapidxml::xml_node<> * summary_node;
-		rapidxml::xml_node<> * transform_node;
+		rapidxml::xml_node<> *root_node;
+		rapidxml::xml_node<> *summary_node;
+		rapidxml::xml_node<> *transform_node;
 
 		std::ifstream ifs(fname);
 		std::vector<char> buffer((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
@@ -688,10 +701,13 @@ namespace twophoton {
 		summary_node = root_node->first_node("Summary");
 		transform_node = summary_node->next_sibling();
 
-		for (rapidxml::xml_node<> * underscore_node = transform_node->first_node("_"); underscore_node != nullptr; underscore_node = underscore_node->next_sibling()) {
-			for(rapidxml::xml_node<> * frame_node = underscore_node->first_node("Frame"); frame_node != nullptr; frame_node = frame_node->next_sibling()) {
+		for (rapidxml::xml_node<> *underscore_node = transform_node->first_node("_"); underscore_node != nullptr; underscore_node = underscore_node->next_sibling())
+		{
+			for (rapidxml::xml_node<> *frame_node = underscore_node->first_node("Frame"); frame_node != nullptr; frame_node = frame_node->next_sibling())
+			{
 				std::cout << frame_node->name() << ": " << frame_node->value() << std::endl;
-				if ( std::find(possible_transforms.begin(), possible_transforms.end(), frame_node->name()) != possible_transforms.end() ) {
+				if (std::find(possible_transforms.begin(), possible_transforms.end(), frame_node->name()) != possible_transforms.end())
+				{
 					// found one of the possible transforms, calculate the size of the mat to fit the values in
 					int n_rows = std::stoi(frame_node->first_node("rows")->value());
 					int n_cols = std::stoi(frame_node->first_node("cols")->value());
@@ -703,8 +719,10 @@ namespace twophoton {
 		return true;
 	}
 
-	py::array_t<int16_t> SITiffIO::readFrame(int frame_num) const {
-		if ( TiffReader != nullptr ) {
+	py::array_t<int16_t> SITiffIO::readFrame(int frame_num) const
+	{
+		if (TiffReader != nullptr)
+		{
 			int dir_to_read = (frame_num * m_nchans - (m_nchans - channel2display)) - 1;
 			auto F = TiffReader->readframe(dir_to_read);
 			return carma::mat_to_arr(F, true);
@@ -712,8 +730,10 @@ namespace twophoton {
 		return py::array_t<int16_t>();
 	}
 
-	void SITiffIO::writeFrame(py::array_t<int16_t> frame, unsigned int frame_num) const {
-		if(TiffReader != nullptr && TiffWriter != nullptr) {
+	void SITiffIO::writeFrame(py::array_t<int16_t> frame, unsigned int frame_num) const
+	{
+		if (TiffReader != nullptr && TiffWriter != nullptr)
+		{
 			int dir_to_read_write = (frame_num * m_nchans - (m_nchans - channel2display)) - 1;
 			auto swtag = TiffReader->getSWTag(dir_to_read_write);
 			auto imtag = TiffReader->getImDescTag(dir_to_read_write);
@@ -724,36 +744,43 @@ namespace twophoton {
 		}
 	}
 
-	std::tuple<double, double, double> SITiffIO::getPos(const unsigned int i) const {
+	std::tuple<double, double, double> SITiffIO::getPos(const unsigned int i) const
+	{
 		auto search = m_all_transforms->find(i);
-		if ( search != m_all_transforms->end() ) {
+		if (search != m_all_transforms->end())
+		{
 			auto transform_container = search->second;
 			double x, z, r;
 			transform_container.getPosData(x, z, r);
 			return std::make_tuple(x, z, r);
 		}
-		return std::make_tuple(0,0,0);
+		return std::make_tuple(0, 0, 0);
 	}
 
-	std::tuple<double, double> SITiffIO::getTrackerTranslation(const unsigned int i) const {
+	std::tuple<double, double> SITiffIO::getTrackerTranslation(const unsigned int i) const
+	{
 		auto search = m_all_transforms->find(i);
-		if ( search != m_all_transforms->end() ) {
+		if (search != m_all_transforms->end())
+		{
 			auto transform_container = search->second;
 			auto T = transform_container.getTransform(TransformType::kTrackerTranslation);
 			double x_move = T.at(0, 0);
 			double y_move = T.at(0, 1);
 			return std::make_tuple(x_move, y_move);
 		}
-		return std::make_tuple(0,0);
+		return std::make_tuple(0, 0);
 	}
 
-	std::tuple<std::vector<double>, std::vector<double>> SITiffIO::getAllTrackerTranslation() const {
+	std::tuple<std::vector<double>, std::vector<double>> SITiffIO::getAllTrackerTranslation() const
+	{
 		std::vector<double> _x, _y;
-		if ( ! m_all_transforms )
+		if (!m_all_transforms)
 			return std::make_tuple(_x, _y);
-		for ( auto const & T : *m_all_transforms ) {
+		for (auto const &T : *m_all_transforms)
+		{
 			auto transform_container = T.second;
-			if ( transform_container.hasTransform(TransformType::kTrackerTranslation) ) {
+			if (transform_container.hasTransform(TransformType::kTrackerTranslation))
+			{
 				auto M = transform_container.getTransform(TransformType::kTrackerTranslation);
 				_x.push_back(M.at(0, 0));
 				_y.push_back(M.at(0, 1));
@@ -762,8 +789,10 @@ namespace twophoton {
 		return std::make_tuple(_x, _y);
 	}
 
-	unsigned int SITiffIO::countDirectories() {
-		if ( TiffReader != nullptr ) {
+	unsigned int SITiffIO::countDirectories()
+	{
+		if (TiffReader != nullptr)
+		{
 			int endFrame = TiffReader->countDirectories();
 			endFrame /= m_nchans;
 			return endFrame;
@@ -771,12 +800,15 @@ namespace twophoton {
 		return 0;
 	}
 
-	void SITiffIO::interpolateIndices() {
-		if ( TiffReader == nullptr ) {
+	void SITiffIO::interpolateIndices()
+	{
+		if (TiffReader == nullptr)
+		{
 			// return some kind of error
 			return;
 		}
-		if ( LogLoader == nullptr ) {
+		if (LogLoader == nullptr)
+		{
 			// return some kind of error
 			return;
 		}
@@ -793,33 +825,37 @@ namespace twophoton {
 		int logfile_idx;
 		TransformContainer tc{};
 
-		if ( m_all_transforms == nullptr )
+		if (m_all_transforms == nullptr)
 			m_all_transforms = std::make_shared<std::map<unsigned int, TransformContainer>>();
 		else
 			m_all_transforms->clear();
 
-		for (int i = startFrame; i < endFrame*nchans; i+=nchans) {
+		for (int i = startFrame; i < endFrame * nchans; i += nchans)
+		{
 			TiffReader->getFrameNumAndTimeStamp(i, frame_num, tiff_ts);
 			logfile_idx = LogLoader->findNearestIdx(tiff_ts);
 			r = LogLoader->getRadianRotation(logfile_idx);
 			x = LogLoader->getXTranslation(logfile_idx);
 			z = LogLoader->getZTranslation(logfile_idx);
 
-			tc.m_framenumber = (int)(i/nchans);
+			tc.m_framenumber = (int)(i / nchans);
 			tc.m_timestamp = tiff_ts;
-			tc.setPosData(x,z,r);
-			arma::mat A(1,1);
-			A = { r };
+			tc.setPosData(x, z, r);
+			arma::mat A(1, 1);
+			A = {r};
 			tc.addTransform(TransformType::kInitialRotation, A);
 			auto transform_map = m_all_transforms.get();
 			transform_map->emplace(frame_num, tc);
 		}
 	}
 
-	std::vector<double> SITiffIO::getTimeStamps() const {
+	std::vector<double> SITiffIO::getTimeStamps() const
+	{
 		std::vector<double> result;
-		if ( m_all_transforms != nullptr ) {
-			for( auto it = m_all_transforms->cbegin(); it != m_all_transforms->cend(); ++it) {
+		if (m_all_transforms != nullptr)
+		{
+			for (auto it = m_all_transforms->cbegin(); it != m_all_transforms->cend(); ++it)
+			{
 				auto tc = it->second;
 				result.push_back(tc.m_timestamp);
 			}
@@ -827,11 +863,14 @@ namespace twophoton {
 		return result;
 	}
 
-	std::vector<double> SITiffIO::getX() const {
+	std::vector<double> SITiffIO::getX() const
+	{
 		std::vector<double> result;
-		if ( m_all_transforms != nullptr ) {
+		if (m_all_transforms != nullptr)
+		{
 			double x, z, t;
-			for( auto it = m_all_transforms->cbegin(); it != m_all_transforms->cend(); ++it) {
+			for (auto it = m_all_transforms->cbegin(); it != m_all_transforms->cend(); ++it)
+			{
 				auto tc = it->second;
 				tc.getPosData(x, z, t);
 				result.push_back(x);
@@ -840,11 +879,14 @@ namespace twophoton {
 		return result;
 	}
 
-	std::vector<double> SITiffIO::getZ() const {
+	std::vector<double> SITiffIO::getZ() const
+	{
 		std::vector<double> result;
-		if ( m_all_transforms != nullptr ) {
+		if (m_all_transforms != nullptr)
+		{
 			double x, z, t;
-			for( auto it = m_all_transforms->cbegin(); it != m_all_transforms->cend(); ++it) {
+			for (auto it = m_all_transforms->cbegin(); it != m_all_transforms->cend(); ++it)
+			{
 				auto tc = it->second;
 				tc.getPosData(x, z, t);
 				result.push_back(z);
@@ -853,11 +895,14 @@ namespace twophoton {
 		return result;
 	}
 
-	std::vector<double> SITiffIO::getTheta() const {
+	std::vector<double> SITiffIO::getTheta() const
+	{
 		std::vector<double> result;
-		if ( m_all_transforms != nullptr ) {
+		if (m_all_transforms != nullptr)
+		{
 			double x, z, t;
-			for( auto it = m_all_transforms->cbegin(); it != m_all_transforms->cend(); ++it) {
+			for (auto it = m_all_transforms->cbegin(); it != m_all_transforms->cend(); ++it)
+			{
 				auto tc = it->second;
 				tc.getPosData(x, z, t);
 				result.push_back(t);
@@ -866,10 +911,13 @@ namespace twophoton {
 		return result;
 	}
 
-	std::vector<double> SITiffIO::getFrameNumbers() const {
+	std::vector<double> SITiffIO::getFrameNumbers() const
+	{
 		std::vector<double> result;
-		if ( m_all_transforms != nullptr ) {
-			for( auto it = m_all_transforms->cbegin(); it != m_all_transforms->cend(); ++it) {
+		if (m_all_transforms != nullptr)
+		{
+			for (auto it = m_all_transforms->cbegin(); it != m_all_transforms->cend(); ++it)
+			{
 				auto f = it->first;
 				result.push_back(f);
 			}
@@ -877,30 +925,36 @@ namespace twophoton {
 		return result;
 	}
 
-	std::tuple<unsigned int> SITiffIO::getNChannels() const {
+	std::tuple<unsigned int> SITiffIO::getNChannels() const
+	{
 		return m_nchans;
 	}
 
-	std::pair<int, int> SITiffIO::getChannelLUT() {
-		if ( TiffReader == nullptr ) {
+	std::pair<int, int> SITiffIO::getChannelLUT()
+	{
+		if (TiffReader == nullptr)
+		{
 			std::cout << "Tiff not opened/available" << std::endl;
-			return std::make_pair(0,0);
+			return std::make_pair(0, 0);
 		}
 		std::map<int, std::pair<int, int>> channelLUTs = TiffReader->getChanLut();
 		auto search = channelLUTs.find(channel2display);
-		if(search != channelLUTs.end()) {
+		if (search != channelLUTs.end())
+		{
 			return channelLUTs[channel2display];
 		}
-		else {
+		else
+		{
 			std::cout << "Channel not available" << std::endl;
-			return std::make_pair(0,0);
+			return std::make_pair(0, 0);
 		}
 	}
 
 }
 // ----------------- Python binding ----------------
 
-PYBIND11_MODULE(scanimagetiffio, m) {
+PYBIND11_MODULE(scanimagetiffio, m)
+{
 
 	py::class_<twophoton::SITiffIO>(m, "SITiffIO")
 		.def(py::init<>())
