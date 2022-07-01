@@ -1,8 +1,6 @@
 #include "../include/ScanImageTiff.h"
 #include "../include/rapidxml.hpp"
-
 #include <stdio.h>
-// #include <stdio_ext.h>
 #include <limits>
 #include <tuple>
 #include <memory>
