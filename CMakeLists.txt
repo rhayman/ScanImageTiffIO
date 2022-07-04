@@ -20,7 +20,9 @@ include_directories( ${TIFF_INCLUDE_DIRS} )
 include_directories( ${Python3_INCLUDE_DIRS} )
 include_directories(( ${Python3_NumPy_INCLUDE_DIRS}))
 
-add_library(scanimagetiffio SHARED 
+add_subdirectory(include/extern/carma/extern/pybind11)
+
+pybind11_add_module(scanimagetiffio SHARED 
     src/ScanImageTiff.cpp 
     src/LogFileLoader.cpp
 )
