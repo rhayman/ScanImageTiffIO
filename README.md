@@ -20,10 +20,10 @@ Armadillo branch
 
 - libtiff (http://www.libtiff.org/)
 
-- boost (https://www.boost.org/)
-
 - Python 3 (and NumPy)
 
+Linux
+=====
 
 To install the armadillo branch:
 
@@ -39,7 +39,31 @@ make
 sudo make install
 ```
 
-The last install step will put a shared library called scanimagetiffio into the correct platform dependent installation directory so you should now be able to do this from any directory:
+Windows 
+=======
+
+Clone the repo using git and update all the submodules as above
+
+Use CMake GUI to configure and generate the solution for Visual Studio
+
+Build the project in Visual Studio and then Install it.
+
+Once installed it is necessary to copy the tiff.dll file into the same folder as the 
+.pyd file that results from the install step.
+
+On one of my windows machines the install location was:
+
+C:\User\Robin\AppData\Local\Programs\Python\Python38\Lib\site-packages\scanimagetiffio
+
+which contained
+
+* scanimagetiffio.cp38-win_amd64.pyd
+* scanimagetiffio.lib
+
+You need to find and copy the tiff.dll file into the above folder.
+
+Usage
+=====
 
 ```python
 from scanimagetiffio.scanimagetiffio import SITiffIO
@@ -51,7 +75,6 @@ frame_0 = S.get_frame(1) # 1-indexed, returns a numpy int16 array
 ```
 
 Here is a brief description of some of the functions exposed by the Python API:
-
 
 * open_tiff_file(path_to_tifffile: str) - Open a tiff file. Returns True on success
 * write_to_tiff(path_to_tifffile: str) - Open a tiff file for writing. NB Doesn't have to exist before this call. Returns True on success

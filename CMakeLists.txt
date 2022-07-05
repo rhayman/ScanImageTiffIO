@@ -17,7 +17,6 @@ FetchContent_MakeAvailable(date_src)
 
 # ---------- includes -----------
 include_directories( ${TIFF_INCLUDE_DIRS} )
-message(STATUS "TIFF_LIBRARIES: ${TIFF_LIBRARIES}")
 include_directories( ${Python3_INCLUDE_DIRS} )
 include_directories(( ${Python3_NumPy_INCLUDE_DIRS}))
 
