@@ -15,12 +15,31 @@ GIT_TAG        v3.0.1  # adjust tag/branch/commit as needed
 )
 FetchContent_MakeAvailable(date_src)
 
+FetchContent_Declare(
+    carma
+    GIT_REPOSITORY https://github.com/RUrlus/carma
+    GIT_TAG        v0.6.3
+)
+
+FetchContent_MakeAvailable(carma)
+
+FetchContent_Declare(
+    pybind11
+    GIT_REPOSITORY https://github.com/pybind/pybind11
+    GIT_TAG        v2.10.0
+)
+
+FetchContent_GetProperties(pybind11)
+if(NOT pybind11_POPULATED)
+    FetchContent_Populate(pybind11)
+    add_subdirectory(${pybind11_SOURCE_DIR} ${pybind11_BINARY_DIR})
+endif()
+
 # ---------- includes -----------
 include_directories( ${TIFF_INCLUDE_DIRS} )
 include_directories( ${Python3_INCLUDE_DIRS} )
 include_directories(( ${Python3_NumPy_INCLUDE_DIRS}))
 
-add_subdirectory(include/extern/carma/extern/pybind11)
 
 pybind11_add_module(scanimagetiffio SHARED 
     src/ScanImageTiff.cpp 
@@ -29,7 +48,7 @@ pybind11_add_module(scanimagetiffio SHARED
 
 target_link_libraries(scanimagetiffio
     PRIVATE
-    carma
+    carma::carma
     PUBLIC
     ${TIFF_LIBRARIES}
     ${Python3_LIBRARIES}
@@ -38,9 +57,6 @@ target_link_libraries(scanimagetiffio
 # # remove the "lib" from start of the library name
 set_target_properties(scanimagetiffio PROPERTIES PREFIX "")
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
-
-set(USE_ARMA_VERSION 10.6.x)
-add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/include/extern/carma)
 
 # install
 install(TARGETS scanimagetiffio DESTINATION ${Python3_SITEARCH}/scanimagetiffio)

@@ -615,23 +615,6 @@ namespace twophoton
 		return whole_target;
 	}
 
-
-	std::string SITiffWriter::modifyChannel(std::string &src_str, const unsigned int chan2keep)
-	{
-		auto chan = std::to_string(chan2keep);
-		std::string target = "SI.hChannels.channelSave = ";
-		std::string replace_with = target + chan;
-		std::string whole_target = grabStr(src_str, target);
-		whole_target = target + whole_target;
-
-		auto loc = src_str.find(target);
-		if (loc != std::string::npos)
-		{
-			src_str.replace(loc, whole_target.size(), replace_with);
-		}
-		return whole_target;
-	}
-
 	bool SITiffWriter::write(arma::Mat<int16_t> &img, const std::vector<int> &params)
 	{
 		return writeLibTiff(img, params);
