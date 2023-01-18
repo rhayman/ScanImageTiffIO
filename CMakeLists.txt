@@ -37,6 +37,7 @@ target_link_libraries(scanimagetiffio
 )
 # # remove the "lib" from start of the library name
 set_target_properties(scanimagetiffio PROPERTIES PREFIX "")
+set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 
 set(USE_ARMA_VERSION 10.6.x)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/include/extern/carma)

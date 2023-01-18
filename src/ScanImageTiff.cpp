@@ -353,6 +353,8 @@ namespace twophoton
 	{
 		if (m_tif)
 		{
+					getTags(m_tif);
+
 			arma::Mat<int16_t> frame;
 			int framenum = framedir;
 			/*
@@ -480,13 +482,20 @@ namespace twophoton
 	bool SITiffWriter::writeLibTiff(arma::Mat<int16_t> &img, const std::vector<int> &params)
 	{
 		int channels = 1;
-		int width = img.n_cols, height = img.n_rows;
+		int width = img.n_cols;
+		int height = img.n_rows;
 		int bitsPerChannel = 16;
 		const int bitsPerByte = 16;
 		size_t fileStep = (width * channels * bitsPerChannel) / bitsPerByte; // = image_width (with 1 channel)
 
-		int rowsPerStrip = (int)((1 << 13) / fileStep);
+		int rowsPerStrip = 8;
 		readParam(params, TIFFTAG_ROWSPERSTRIP, rowsPerStrip);
+		std::cout << "fileStep = " << fileStep << std::endl;
+		std::cout << "initial rowsPerStrip = " << rowsPerStrip << std::endl;
+		std::cout << "width = " << width << std::endl;
+		std::cout << "height = " << height << std::endl;
+		std::cout << "img.n_cols = " << img.n_cols << std::endl;
+		std::cout << "img.n_rows = " << img.n_rows << std::endl;
 		rowsPerStrip = height;
 		if (!(isOpened()))
 			pTiffHandle = TIFFOpen(m_filename.c_str(), "w8");
@@ -495,9 +504,10 @@ namespace twophoton
 		if (!pTiffHandle)
 			return false;
 
+
 		// defaults for now, maybe base them on params in the future
 		int compression = COMPRESSION_NONE;
-		int predictor = PREDICTOR_HORIZONTAL;
+		int predictor = 1;
 		int units = RESUNIT_INCH;
 		double xres = 72.0;
 		double yres = 72.0;
@@ -507,10 +517,23 @@ namespace twophoton
 
 		readParam(params, TIFFTAG_COMPRESSION, compression);
 		readParam(params, TIFFTAG_PREDICTOR, predictor);
+		TIFFSetField(pTiffHandle, TIFFTAG_ROWSPERSTRIP, 8);
 
 		int colorspace = channels > 1 ? PHOTOMETRIC_RGB : PHOTOMETRIC_MINISBLACK;
 
-		if (!TIFFSetField(pTiffHandle, TIFFTAG_IMAGEWIDTH, width) || !TIFFSetField(pTiffHandle, TIFFTAG_IMAGELENGTH, height) || !TIFFSetField(pTiffHandle, TIFFTAG_BITSPERSAMPLE, bitsPerChannel) || !TIFFSetField(pTiffHandle, TIFFTAG_COMPRESSION, compression) || !TIFFSetField(pTiffHandle, TIFFTAG_PHOTOMETRIC, colorspace) || !TIFFSetField(pTiffHandle, TIFFTAG_SAMPLESPERPIXEL, channels) || !TIFFSetField(pTiffHandle, TIFFTAG_PLANARCONFIG, planarConfig) || !TIFFSetField(pTiffHandle, TIFFTAG_ROWSPERSTRIP, rowsPerStrip) || !TIFFSetField(pTiffHandle, TIFFTAG_RESOLUTIONUNIT, units) || !TIFFSetField(pTiffHandle, TIFFTAG_XRESOLUTION, xres) || !TIFFSetField(pTiffHandle, TIFFTAG_YRESOLUTION, yres) || !TIFFSetField(pTiffHandle, TIFFTAG_SAMPLEFORMAT, sampleformat) || !TIFFSetField(pTiffHandle, TIFFTAG_ORIENTATION, orientation))
+		if (!TIFFSetField(pTiffHandle, TIFFTAG_IMAGEWIDTH, width) || 
+		    !TIFFSetField(pTiffHandle, TIFFTAG_IMAGELENGTH, height) || 
+			!TIFFSetField(pTiffHandle, TIFFTAG_BITSPERSAMPLE, bitsPerChannel) || 
+			!TIFFSetField(pTiffHandle, TIFFTAG_COMPRESSION, compression) || 
+			!TIFFSetField(pTiffHandle, TIFFTAG_PHOTOMETRIC, colorspace) || 
+			!TIFFSetField(pTiffHandle, TIFFTAG_SAMPLESPERPIXEL, channels) || 
+			!TIFFSetField(pTiffHandle, TIFFTAG_PLANARCONFIG, planarConfig) || 
+			!TIFFSetField(pTiffHandle, TIFFTAG_ROWSPERSTRIP, 8) || 
+			!TIFFSetField(pTiffHandle, TIFFTAG_RESOLUTIONUNIT, units) || 
+			!TIFFSetField(pTiffHandle, TIFFTAG_XRESOLUTION, xres) || 
+			!TIFFSetField(pTiffHandle, TIFFTAG_YRESOLUTION, yres) || 
+			!TIFFSetField(pTiffHandle, TIFFTAG_SAMPLEFORMAT, sampleformat) || 
+			!TIFFSetField(pTiffHandle, TIFFTAG_ORIENTATION, orientation))
 		{
 			TIFFClose(pTiffHandle);
 			return false;
@@ -522,10 +545,6 @@ namespace twophoton
 			return false;
 		}
 
-		size_t scanlineSize = TIFFScanlineSize(pTiffHandle);
-		const size_t buffer_size = bitsPerChannel * channels * rowsPerStrip * width;
-		std::unique_ptr<int16_t[]> buffer = std::make_unique<int16_t[]>(buffer_size);
-		int tileidx = 0;
 		auto data = img.memptr();
 
 		if (!data)
@@ -534,10 +553,12 @@ namespace twophoton
 			return false;
 		}
 
+		std::cout " ----- tags for writing ------ " << std::endl;
+		getTags(pTiffHandle);
+
 		for (int y = 0; y < height; ++y)
 		{
-			std::memcpy(buffer.get(), img.colptr(y), scanlineSize);
-			int writeResult = TIFFWriteScanline(pTiffHandle, buffer.get(), y, 0);
+			int writeResult = TIFFWriteScanline(pTiffHandle, img.colptr(y), y, 0);
 			if (writeResult != 1)
 			{
 				TIFFClose(pTiffHandle);
@@ -641,32 +662,46 @@ namespace twophoton
 	/  +++++++++++++++++++++++  SITiffIO  +++++++++++++++++++++++++++++++++++
 	 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ */
 
-	bool SITiffIO::openTiff(const std::string &fname)
+	bool SITiffIO::openTiff(const std::string &fname, const std::string mode)
 	{
-		tiff_fname = fname;
-		TiffReader = std::make_shared<SITiffReader>(fname);
-		if (TiffReader->open())
-		{
-			TiffReader->getSWTag(0); // ensures num channels are read
-			auto chans = TiffReader->getSavedChans();
-			if (chans.empty() || chans.size() == 0)
-				m_nchans = 1;
-			else
-				m_nchans = chans.size();
+		if (mode == "r") {
+			TiffReader = std::make_shared<SITiffReader>(fname);
+			if (TiffReader->open())
+			{
+				TiffReader->getSWTag(0); // ensures num channels are read
+				auto chans = TiffReader->getSavedChans();
+				if (chans.empty() || chans.size() == 0)
+					m_nchans = 1;
+				else
+					m_nchans = chans.size();
+				return true;
+			}
+		}
+		else if (mode == "w") {
+			TiffWriter = std::make_shared<SITiffWriter>();
+			if (TiffWriter->open(fname))
+				return true;
+			return false;
+
+		}
+		return false;
+	}
+
+	bool SITiffIO::closeReaderTiff() {
+		if (TiffReader == nullptr)
+			return false;
+		if (TiffReader->isOpen()) {
+			TiffReader->close();
 			return true;
 		}
 		return false;
 	}
 
-	bool SITiffIO::writeToTiff(const std::string &dst_fname)
-	{
-
-		if (TiffReader == nullptr)
+	bool SITiffIO::closeWriterTiff() {
+		if (TiffWriter == nullptr )
 			return false;
-
-		TiffWriter = std::make_shared<SITiffWriter>();
-		if (TiffWriter->open(dst_fname))
-		{
+		if (TiffWriter->isOpened()) {
+			TiffWriter->close();
 			return true;
 		}
 		return false;
@@ -957,7 +992,8 @@ PYBIND11_MODULE(scanimagetiffio, m)
 	py::class_<twophoton::SITiffIO>(m, "SITiffIO")
 		.def(py::init<>())
 		.def("open_tiff_file", &twophoton::SITiffIO::openTiff, "Open a tiff file")
-		.def("write_to_tiff", &twophoton::SITiffIO::writeToTiff, "Write to tiff file")
+		.def("close_reader_tif", &twophoton::SITiffIO::closeReaderTiff, "Close the tiff reader file")
+		.def("close_writer_tif", &twophoton::SITiffIO::closeWriterTiff, "Close the writer tiff file")
 		.def("open_log_file", &twophoton::SITiffIO::openLog, "Open a log file")
 		.def("open_xml_file", &twophoton::SITiffIO::openXML, "Open an xml file")
 		.def("get_n_frames", &twophoton::SITiffIO::countDirectories, "Count the number of frames")

@@ -56,6 +56,33 @@ static std::string grabStr(const std::string &source, const std::string &target)
 		return std::string();
 }
 
+static void getTags(TIFF * tif) {
+	if (tif) {
+		int length, width, comp, planar, sf, orientation, pred;
+		uint16_t photometric, bpp, spp;
+		uint32_t rps;
+		TIFFGetField(tif, TIFFTAG_IMAGELENGTH, &length);
+		TIFFGetField(tif, TIFFTAG_IMAGEWIDTH, &width);
+		TIFFGetField(tif, TIFFTAG_PHOTOMETRIC, &photometric);
+		TIFFGetField(tif, TIFFTAG_BITSPERSAMPLE, &bpp);
+		TIFFGetField(tif, TIFFTAG_SAMPLESPERPIXEL, &spp);
+		TIFFGetField(tif, TIFFTAG_ROWSPERSTRIP, &rps);
+		TIFFGetField(tif, TIFFTAG_COMPRESSION, &comp);
+		TIFFGetField(tif, TIFFTAG_PLANARCONFIG, &planar);
+		TIFFGetField(tif, TIFFTAG_SAMPLEFORMAT, &sf);
+		TIFFGetField(tif, TIFFTAG_ORIENTATION, &orientation);
+		TIFFGetField(tif, TIFFTAG_PREDICTOR, &pred);
+		std::cout << "Length: " << length << std::endl << 
+		"Width: " << width << std::endl << "Photometric: " << photometric <<
+		std::endl << "bits per sample: " << bpp << std::endl <<
+		"samples per pixel: " << spp << std::endl << "rows per strip: " <<
+		rps << std::endl << "compression: " << comp << std::endl << 
+		"planar: " << planar << std::endl << "sample format: " << sf  << std::endl << 
+		"orientation: " << orientation  << std::endl <<
+		"predictor: " << pred << std::endl;
+	}
+}
+
 namespace twophoton
 {
 	class SITiffReader;
@@ -491,8 +518,9 @@ namespace twophoton
 	class SITiffIO
 	{
 	public:
-		bool openTiff(const std::string &fname);
-		bool writeToTiff(const std::string &dst_fname);
+		bool openTiff(const std::string &fname, const std::string);
+		bool closeReaderTiff();
+		bool closeWriterTiff();
 		bool openLog(std::string fname);
 		bool openXML(std::string fname);
 		unsigned int countDirectories();
@@ -515,7 +543,6 @@ namespace twophoton
 		unsigned int channel2display = 1;
 
 	private:
-		std::string tiff_fname;
 		std::string log_fname;
 		std::shared_ptr<SITiffReader> TiffReader = nullptr;
 		std::shared_ptr<SITiffWriter> TiffWriter = nullptr;
