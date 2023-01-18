@@ -2,9 +2,9 @@ name: CMake
 
 on:
   push:
-    branches: [ armadillo ]
+    branches: [ master ]
   pull_request:
-    branches: [ armadillo ]
+    branches: [ master ]
 
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
@@ -20,12 +20,6 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    
-    # install dependencies
-    - name: boost
-      run: sudo apt-get update && sudo apt-get install -yq libboost-all-dev
-    - name: opencv
-      run: sudo apt-get update && sudo apt-get install -yq libopencv-dev
 
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
