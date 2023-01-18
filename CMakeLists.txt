@@ -20,7 +20,6 @@ FetchContent_Declare(
     GIT_REPOSITORY https://github.com/RUrlus/carma
     GIT_TAG        v0.6.3
 )
-
 FetchContent_MakeAvailable(carma)
 
 FetchContent_Declare(
@@ -28,6 +27,7 @@ FetchContent_Declare(
     GIT_REPOSITORY https://github.com/pybind/pybind11
     GIT_TAG        v2.10.0
 )
+FetchContent_MakeAvailable(pybind11)
 
 FetchContent_GetProperties(pybind11)
 if(NOT pybind11_POPULATED)
@@ -40,14 +40,13 @@ include_directories( ${TIFF_INCLUDE_DIRS} )
 include_directories( ${Python3_INCLUDE_DIRS} )
 include_directories(( ${Python3_NumPy_INCLUDE_DIRS}))
 
-
 pybind11_add_module(scanimagetiffio SHARED 
     src/ScanImageTiff.cpp 
     src/LogFileLoader.cpp
 )
 
 target_link_libraries(scanimagetiffio
-    PRIVATE
+    PUBLIC
     carma::carma
     PUBLIC
     ${TIFF_LIBRARIES}
@@ -60,3 +59,4 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 
 # install
 install(TARGETS scanimagetiffio DESTINATION ${Python3_SITEARCH}/scanimagetiffio)
+install(FILES "include/ScanImageTiff.h" DESTINATION include)
