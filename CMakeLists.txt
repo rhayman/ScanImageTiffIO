@@ -48,7 +48,6 @@ pybind11_add_module(scanimagetiffio SHARED
 target_link_libraries(scanimagetiffio
     PUBLIC
     carma::carma
-    PUBLIC
     ${TIFF_LIBRARIES}
     ${Python3_LIBRARIES}
     date::date
@@ -59,4 +58,22 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 
 # install
 install(TARGETS scanimagetiffio DESTINATION ${Python3_SITEARCH}/scanimagetiffio)
-install(FILES "include/ScanImageTiff.h" DESTINATION include)
+
+
+add_library(${PROJECT_NAME} SHARED src/ScanImageTiff.cpp 
+src/LogFileLoader.cpp)
+set_target_properties(${PROJECT_NAME} PROPERTIES PUBLIC_HEADER include/ScanImageTiff.h)
+target_link_libraries(${PROJECT_NAME}
+    PUBLIC
+    carma::carma
+    ${TIFF_LIBRARIES}
+    ${Python3_LIBRARIES}
+    date::date
+)
+install(TARGETS ${PROJECT_NAME}
+	LIBRARY DESTINATION lib
+	ARCHIVE DESTINATION lib
+	RUNTIME DESTINATION bin
+	INCLUDES DESTINATION include
+    PUBLIC_HEADER DESTINATION include
+)

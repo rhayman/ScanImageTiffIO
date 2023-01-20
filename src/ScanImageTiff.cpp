@@ -354,10 +354,8 @@ namespace twophoton
 	{
 		if (m_tif)
 		{
-					getTags(m_tif);
-
-			arma::Mat<int16_t> frame;
 			int framenum = framedir;
+			arma::Mat<int16_t> frame;
 			/*
 			From the man pages for TIFFSetDirectory:
 
@@ -367,7 +365,7 @@ namespace twophoton
 			NB This differs from the 1-based indexing for framenumbers that ScanImage uses (fucking Matlab)
 			*/
 			if (TIFFSetDirectory(m_tif, framenum) == 0)
-				return frame;
+				return arma::Mat<int16_t>();
 			else
 			{
 				uint32_t w = 0, h = 0;
@@ -406,44 +404,23 @@ namespace twophoton
 						int tileidx = 0;
 
 						// ********* return frame created here ***********
-
-						frame = arma::Mat<int16_t>(h, w);
-						int16_t *data = frame.memptr();
-
-						for (unsigned int y = 0; y < m_imageheight; y += tile_height0)
-						{
-							unsigned int tile_height = tile_height0;
-
-							if (y + tile_height > m_imageheight)
-								tile_height = m_imageheight - y;
-							// tile_height = 8
-							// tile_width = 512
-
-							for (unsigned int x = 0; x < m_imagewidth; x += tile_width0, tileidx++)
-							{
-								unsigned int tile_width = tile_width0, ok;
-
-								if (x + tile_width > m_imagewidth)
-									tile_width = m_imagewidth - x;
-								// I've cut out lots of bpp testing etc here
-								// tileidx goes from 0 to 63
-								// buffer has 4096 int16_t's in
-								ok = (int)TIFFReadEncodedStrip(m_tif, tileidx, buffer.get(), buffer_size) >= 0;
-								if (!ok)
-								{
-									close();
-									return arma::Mat<int16_t>();
-								}
-
-								std::memcpy(data + tileidx * (tile_height * tile_width),
-											buffer.get(),
-											buffer_size);
-							}
+						
+						auto frame = arma::Mat<int16_t>(h, w, arma::fill::zeros);
+						auto *data = frame.memptr();
+						tdata_t buf = _TIFFmalloc(TIFFScanlineSize(m_tif));
+						uint16 s, nsamples;
+						TIFFGetField(m_tif, TIFFTAG_SAMPLESPERPIXEL, &nsamples);
+						uint32 row;
+						auto slsz = TIFFScanlineSize(m_tif);
+						for (row = 0; row < h; row++) {
+							TIFFReadScanline(m_tif, buf, row);
+							std::memcpy(frame.colptr(row), (int16_t*)buf, slsz);
 						}
+						_TIFFfree(buf);
+						return frame;
 					}
 				}
 			}
-			return frame;
 		}
 		return arma::Mat<int16_t>();
 	}
@@ -491,12 +468,6 @@ namespace twophoton
 
 		int rowsPerStrip = 8;
 		readParam(params, TIFFTAG_ROWSPERSTRIP, rowsPerStrip);
-		std::cout << "fileStep = " << fileStep << std::endl;
-		std::cout << "initial rowsPerStrip = " << rowsPerStrip << std::endl;
-		std::cout << "width = " << width << std::endl;
-		std::cout << "height = " << height << std::endl;
-		std::cout << "img.n_cols = " << img.n_cols << std::endl;
-		std::cout << "img.n_rows = " << img.n_rows << std::endl;
 		rowsPerStrip = height;
 		if (!(isOpened()))
 			pTiffHandle = TIFFOpen(m_filename.c_str(), "w8");
@@ -553,16 +524,18 @@ namespace twophoton
 			TIFFClose(pTiffHandle);
 			return false;
 		}
-
-		std::cout << " ----- tags for writing ------ " << std::endl;
-		getTags(pTiffHandle);
+		size_t scanlineSize = TIFFScanlineSize(pTiffHandle);
+		const size_t buffer_size = bitsPerChannel * channels * 16 * width;
+		tdata_t buf = _TIFFmalloc(scanlineSize);
 
 		for (int y = 0; y < height; ++y)
 		{
-			int writeResult = TIFFWriteScanline(pTiffHandle, img.colptr(y), y, 0);
+			std::memcpy((int16_t*)buf, img.colptr(y), scanlineSize);
+			int writeResult = TIFFWriteScanline(pTiffHandle, buf, y, 0);
 			if (writeResult != 1)
 			{
 				TIFFClose(pTiffHandle);
+				opened = false;
 				return false;
 			}
 		}
@@ -579,7 +552,7 @@ namespace twophoton
 		if (!m_tif)
 			return false;
 
-		TIFFWriteDirectory(pTiffHandle);
+		// TIFFWriteDirectory(pTiffHandle);
 		TIFFSetField(m_tif, TIFFTAG_IMAGEWIDTH, img.n_cols);
 		TIFFSetField(m_tif, TIFFTAG_IMAGELENGTH, img.n_rows);
 		TIFFSetField(m_tif, TIFFTAG_SAMPLESPERPIXEL, 1);
@@ -772,8 +745,9 @@ namespace twophoton
 			auto swtag = TiffReader->getSWTag(dir_to_read_write);
 			auto imtag = TiffReader->getImDescTag(dir_to_read_write);
 			TiffWriter->modifyChannel(swtag, channel2display);
-			TiffWriter->writeSIHdr(swtag, imtag);
 			arma::Mat<int16_t> write_frame = carma::arr_to_mat(frame, true);
+			TiffWriter->writeHdr(write_frame);
+			TiffWriter->writeSIHdr(swtag, imtag);
 			*TiffWriter << write_frame;
 		}
 	}

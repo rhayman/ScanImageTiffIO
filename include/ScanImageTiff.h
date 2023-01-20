@@ -277,10 +277,10 @@ namespace twophoton
 		virtual bool close();
 		virtual void operator<<(arma::Mat<int16_t> &frame);
 		bool writeSIHdr(const std::string swTag, const std::string imDescTag);
+		bool writeHdr(const arma::Mat<int16_t> &img);
 		std::string modifyChannel(std::string &, const unsigned int);
 	protected:
 		bool writeLibTiff(arma::Mat<int16_t> &img, const std::vector<int> &params);
-		bool writeHdr(const arma::Mat<int16_t> &img);
 		std::string m_filename;
 		TIFF *m_tif;
 		TIFF *pTiffHandle;
