@@ -740,15 +740,18 @@ namespace twophoton
 
 	void SITiffIO::writeFrame(py::array_t<int16_t> frame, unsigned int frame_num) const
 	{
-		if (TiffReader != nullptr && TiffWriter != nullptr)
+		if (TiffWriter != nullptr)
 		{
 			int dir_to_read_write = (frame_num * m_nchans - (m_nchans - channel2display)) - 1;
-			auto swtag = TiffReader->getSWTag(dir_to_read_write);
-			auto imtag = TiffReader->getImDescTag(dir_to_read_write);
-			TiffWriter->modifyChannel(swtag, channel2display);
+			std::string swtag, imtag;
+			if (TiffReader != nullptr) {
+				swtag = TiffReader->getSWTag(dir_to_read_write);
+				imtag = TiffReader->getImDescTag(dir_to_read_write);
+				TiffWriter->modifyChannel(swtag, channel2display);
+				TiffWriter->writeSIHdr(swtag, imtag);
+			}
 			arma::Mat<int16_t> write_frame = carma::arr_to_mat(frame, true);
 			TiffWriter->writeHdr(write_frame);
-			TiffWriter->writeSIHdr(swtag, imtag);
 			*TiffWriter << write_frame;
 		}
 	}
@@ -1015,7 +1018,7 @@ PYBIND11_MODULE(scanimagetiffio, m)
 	i_frame: int - the number of the frame to write out. 
 	
 	Note that an instance of scanimagetiffio must have both a file open for reading and
-	another open for writing for this function to work as headers need to be copied 
+	another open for writing for this function to copy the ScanImage headers as they need to be copied 
 	from the former to the latter.
 )mydelimiter")
 		.def("get_all_x", &twophoton::SITiffIO::getX, "Gets all the X values")
