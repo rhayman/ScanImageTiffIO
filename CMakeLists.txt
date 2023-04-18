@@ -4,11 +4,19 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 # ---------- libtiff -----------
-find_package(TIFF REQUIRED)
+# find_package(TIFF REQUIRED)
 # ---------- python ------------
 find_package (Python3 REQUIRED COMPONENTS Interpreter Development NumPy)
 
 include( FetchContent )
+
+FetchContent_Declare( tiff 
+    GIT_REPOSITORY https://gitlab.com/libtiff/libtiff.git
+    GIT_TAG master
+)
+set(tiff-docs OFF)
+FetchContent_MakeAvailable(tiff)
+
 FetchContent_Declare( date_src
 GIT_REPOSITORY https://github.com/HowardHinnant/date.git
 GIT_TAG        v3.0.1  # adjust tag/branch/commit as needed
@@ -47,6 +55,7 @@ pybind11_add_module(scanimagetiffio SHARED
 
 target_link_libraries(scanimagetiffio
     PUBLIC
+    tiff
     carma::carma
     ${TIFF_LIBRARIES}
     ${Python3_LIBRARIES}
