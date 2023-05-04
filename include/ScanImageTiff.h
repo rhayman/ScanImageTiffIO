@@ -12,11 +12,6 @@
 
 #include <carma>
 #include <armadillo>
-#include <pybind11/pybind11.h>
-#include <pybind11/numpy.h>
-#include <pybind11/stl.h>
-#include <pybind11/operators.h>
-#include <pybind11/stl_bind.h>
 
 // Some string utilities
 // Split a string given a delimiter and either return in a
@@ -56,8 +51,10 @@ static std::string grabStr(const std::string &source, const std::string &target)
 		return std::string();
 }
 
-static void getTags(TIFF * tif) {
-	if (tif) {
+static void getTags(TIFF *tif)
+{
+	if (tif)
+	{
 		int length, width, comp, planar, sf, orientation, pred;
 		uint16_t photometric, bpp, spp;
 		uint32_t rps;
@@ -72,14 +69,17 @@ static void getTags(TIFF * tif) {
 		TIFFGetField(tif, TIFFTAG_SAMPLEFORMAT, &sf);
 		TIFFGetField(tif, TIFFTAG_ORIENTATION, &orientation);
 		TIFFGetField(tif, TIFFTAG_PREDICTOR, &pred);
-		std::cout << "Length: " << length << std::endl << 
-		"Width: " << width << std::endl << "Photometric: " << photometric <<
-		std::endl << "bits per sample: " << bpp << std::endl <<
-		"samples per pixel: " << spp << std::endl << "rows per strip: " <<
-		rps << std::endl << "compression: " << comp << std::endl << 
-		"planar: " << planar << std::endl << "sample format: " << sf  << std::endl << 
-		"orientation: " << orientation  << std::endl <<
-		"predictor: " << pred << std::endl;
+		std::cout << "Length: " << length << std::endl
+				  << "Width: " << width << std::endl
+				  << "Photometric: " << photometric << std::endl
+				  << "bits per sample: " << bpp << std::endl
+				  << "samples per pixel: " << spp << std::endl
+				  << "rows per strip: " << rps << std::endl
+				  << "compression: " << comp << std::endl
+				  << "planar: " << planar << std::endl
+				  << "sample format: " << sf << std::endl
+				  << "orientation: " << orientation << std::endl
+				  << "predictor: " << pred << std::endl;
 	}
 }
 
@@ -279,12 +279,14 @@ namespace twophoton
 		bool writeSIHdr(const std::string swTag, const std::string imDescTag);
 		bool writeHdr(const arma::Mat<int16_t> &img);
 		std::string modifyChannel(std::string &, const unsigned int);
+
 	protected:
 		bool writeLibTiff(arma::Mat<int16_t> &img, const std::vector<int> &params);
 		std::string m_filename;
 		TIFF *m_tif;
 		TIFF *pTiffHandle;
 		bool opened = false;
+
 	private:
 		std::string replaceHeaderValue(std::string &, std::string, std::string);
 	};
@@ -350,7 +352,7 @@ namespace twophoton
 		Interpolate x, z, and theta based on tiff header
 		timestamps (taken from acquisition time of frame from scanimage)
 		*/
-		void interpolatePositionData(std::vector<double>);
+		// void interpolatePositionData(std::vector<double>);
 		/* given a tiff file timestamp returns the nearest index in the logfile
 		that matches that timestamp
 		*/

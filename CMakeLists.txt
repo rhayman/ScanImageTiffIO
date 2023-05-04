@@ -3,13 +3,11 @@ project(ScanImageTiff VERSION 1.0.1 DESCRIPTION "tiff file io for tiffs written 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-# ---------- libtiff -----------
-# find_package(TIFF REQUIRED)
 # ---------- python ------------
 find_package (Python3 REQUIRED COMPONENTS Interpreter Development NumPy)
 
 include( FetchContent )
-
+# ---------- libtiff latest stable-----------
 FetchContent_Declare( tiff 
     GIT_REPOSITORY https://gitlab.com/libtiff/libtiff.git
     GIT_TAG master
@@ -49,6 +47,7 @@ include_directories( ${Python3_INCLUDE_DIRS} )
 include_directories(( ${Python3_NumPy_INCLUDE_DIRS}))
 
 pybind11_add_module(scanimagetiffio SHARED 
+    src/ScanImageTiffPy.cpp
     src/ScanImageTiff.cpp 
     src/LogFileLoader.cpp
 )
