@@ -41,6 +41,14 @@ if(NOT pybind11_POPULATED)
     add_subdirectory(${pybind11_SOURCE_DIR} ${pybind11_BINARY_DIR})
 endif()
 
+FetchContent_Declare(
+    googletest
+    GIT_REPOSITORY https://github.com/google/googletest.git
+    GIT_TAG master
+)
+# prevent overriding the parent projects compiler and linker settings on Windows
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+FetchContent_MakeAvailable(googletest)
 # ---------- includes -----------
 include_directories( ${TIFF_INCLUDE_DIRS} )
 include_directories( ${Python3_INCLUDE_DIRS} )
@@ -67,9 +75,9 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 # install
 install(TARGETS scanimagetiffio DESTINATION ${Python3_SITEARCH}/scanimagetiffio)
 
-
-add_library(${PROJECT_NAME} SHARED src/ScanImageTiff.cpp 
-src/LogFileLoader.cpp)
+add_library(${PROJECT_NAME} SHARED 
+    src/ScanImageTiff.cpp 
+    src/LogFileLoader.cpp)
 set_target_properties(${PROJECT_NAME} PROPERTIES PUBLIC_HEADER include/ScanImageTiff.h)
 target_link_libraries(${PROJECT_NAME}
     PUBLIC
@@ -85,3 +93,11 @@ install(TARGETS ${PROJECT_NAME}
 	INCLUDES DESTINATION include
     PUBLIC_HEADER DESTINATION include
 )
+
+# ---------------------- testing ----------------
+add_executable(unit_tests
+    tests/yetToBeNamed.cpp
+)
+target_link_libraries(unit_tests PRIVATE scanimagetiffio gtest_main)
+include(GoogleTest)
+gtest_discover_tests(unit_tests)

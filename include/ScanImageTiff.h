@@ -198,6 +198,7 @@ namespace twophoton
 	class SITiffReader
 	{
 	public:
+		SITiffReader() = delete;
 		SITiffReader(std::string filename) : m_filename(filename){};
 		~SITiffReader();
 		bool open();
