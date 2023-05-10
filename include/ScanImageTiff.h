@@ -199,14 +199,13 @@ namespace twophoton
 	{
 	public:
 		SITiffReader() = delete;
-		SITiffReader(std::string filename) : m_filename(filename){};
+		SITiffReader(const std::string &filename) : m_filename(filename){};
 		~SITiffReader();
 		bool open();
 		bool isOpen() { return isopened; }
 		bool readheader();
 		arma::Mat<int16_t> readframe(int framedir = 0);
 		bool close();
-		bool release();
 		int getVersion() const { return headerdata->getVersion(); }
 
 		std::string getfilename() const { return m_filename; }

@@ -339,17 +339,6 @@ namespace twophoton
 		}
 	}
 
-	bool SITiffReader::release()
-	{
-		if (m_tif)
-		{
-			TIFFClose(m_tif);
-			return true;
-		}
-		else
-			return false;
-	}
-
 	arma::Mat<int16_t> SITiffReader::readframe(int framedir)
 	{
 		if (m_tif)
@@ -670,6 +659,7 @@ namespace twophoton
 		if (TiffReader->isOpen())
 		{
 			TiffReader->close();
+			TiffReader = nullptr;
 			return true;
 		}
 		return false;
