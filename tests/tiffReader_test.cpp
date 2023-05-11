@@ -96,3 +96,7 @@ TEST_F(TiffReaderTest, ImageSizeNotZero)
     EXPECT_GT(h, 0) << "Image width = " << std::to_string(w);
     EXPECT_GT(w, 0) << "Image height = " << std::to_string(h);
 }
+
+// TEST_F(TiffReaderTest, ReadFrame) {
+//     FrameTest();
+// }

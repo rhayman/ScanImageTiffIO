@@ -51,6 +51,19 @@ static std::string grabStr(const std::string &source, const std::string &target)
 		return std::string();
 }
 
+template<typename T>
+int findNearestIdx(const std::vector<T> & toBeSearched, const T & findMe)
+{
+	if (!(toBeSearched.empty()))
+	{
+		std::vector<T>::iterator low;
+		low = std::lower_bound(toBeSearched.begin(), toBeSearched.end(), findMe);
+		auto idx = low - toBeSearched.begin();
+		return idx;
+	}
+	return -1;
+}
+
 static void getTags(TIFF *tif)
 {
 	if (tif)
@@ -356,7 +369,6 @@ namespace twophoton
 		/* given a tiff file timestamp returns the nearest index in the logfile
 		that matches that timestamp
 		*/
-		int findNearestIdx(double tiffTimestamp);
 		bool isloaded = false;
 		// findStableFrames: pairs of start and end frames for frames with no head rotation
 		std::vector<std::pair<int, int>> findStableFrames(const unsigned int minFrames, const double minAngle = 1e-3);
@@ -381,6 +393,21 @@ namespace twophoton
 		bool hasAcquisition = false;
 		std::chrono::system_clock::time_point trigger_ptime;
 		void setTriggerIndex(int);
+	};
+
+	class RotaryEncoderLoader {
+		public:
+			RotaryEncoderLoader();
+			RotaryEncoderLoader(const std::string &);
+			~RotaryEncoderLoader();
+			std::string getFilename() { return m_filename; };
+			bool load();
+			std::vector<std::chrono::system_clock::time_point> getTimes();
+			std::vector<double> getRotations();
+		private:
+			std::string m_filename;
+			std::vector<std::chrono::system_clock::time_point> m_times;
+			std::vector<double> m_rotations;
 	};
 
 	/*
@@ -521,6 +548,7 @@ namespace twophoton
 	class SITiffIO
 	{
 	public:
+		~SITiffIO();
 		bool openTiff(const std::string &fname, const std::string);
 		bool closeReaderTiff();
 		bool closeWriterTiff();
@@ -550,6 +578,7 @@ namespace twophoton
 		std::shared_ptr<SITiffReader> TiffReader = nullptr;
 		std::shared_ptr<SITiffWriter> TiffWriter = nullptr;
 		std::shared_ptr<LogFileLoader> LogLoader = nullptr;
+		std::shared_ptr<RotaryEncoderLoader> RotaryLoader = nullptr;
 		std::shared_ptr<std::map<unsigned int, TransformContainer>> m_all_transforms = nullptr;
 	};
 }; // namespace twophoton

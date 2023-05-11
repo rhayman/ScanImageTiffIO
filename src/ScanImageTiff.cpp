@@ -344,7 +344,6 @@ namespace twophoton
 		if (m_tif)
 		{
 			int framenum = framedir;
-			arma::Mat<int16_t> frame;
 			/*
 			From the man pages for TIFFSetDirectory:
 
@@ -389,12 +388,11 @@ namespace twophoton
 							(!is_tiled && tile_height0 == std::numeric_limits<uint32_t>::max()))
 							tile_height0 = m_imageheight;
 
-						std::unique_ptr<int16_t[]> buffer = std::make_unique<int16_t[]>(buffer_size);
+						auto buffer = std::make_unique<int16_t[]>(buffer_size);
 						int tileidx = 0;
 
 						// ********* return frame created here ***********
-
-						auto frame = arma::Mat<int16_t>(h, w, arma::fill::zeros);
+						arma::Mat<int16_t> frame(h, w, arma::fill::zeros);
 						auto *data = frame.memptr();
 						tdata_t buf = _TIFFmalloc(TIFFScanlineSize(m_tif));
 						uint16 s, nsamples;
@@ -420,6 +418,7 @@ namespace twophoton
 		if (m_tif)
 		{
 			TIFFClose(m_tif);
+			m_tif = NULL;
 			isopened = false;
 			if (headerdata)
 				delete headerdata;
@@ -624,6 +623,10 @@ namespace twophoton
 	/* ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 	/  +++++++++++++++++++++++  SITiffIO  +++++++++++++++++++++++++++++++++++
 	 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ */
+	
+	SITiffIO::~SITiffIO() {
+
+	}
 
 	bool SITiffIO::openTiff(const std::string &fname, const std::string mode)
 	{
@@ -841,7 +844,7 @@ namespace twophoton
 		for (int i = startFrame; i < endFrame * nchans; i += nchans)
 		{
 			TiffReader->getFrameNumAndTimeStamp(i, frame_num, tiff_ts);
-			logfile_idx = LogLoader->findNearestIdx(tiff_ts);
+			logfile_idx = findNearestIdx(LogLoader->getTimes(), tiff_ts);
 			r = LogLoader->getRadianRotation(logfile_idx);
 			x = LogLoader->getXTranslation(logfile_idx);
 			z = LogLoader->getZTranslation(logfile_idx);

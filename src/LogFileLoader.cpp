@@ -12,7 +12,7 @@ namespace twophoton
 
 	// specify the format of the time data in the logfile so it's parsed
 	// correctly later on
-	static constexpr char time_fmt[] = "%Y-%m-%d %T";
+	static constexpr char logfile_time_fmt[] = "%Y-%m-%d %T";
 	using FpMilliseconds = std::chrono::duration<float, std::chrono::milliseconds::period>;
 
 	// Convert radians to degrees...
@@ -157,66 +157,7 @@ namespace twophoton
 	{
 		return 1 + closest(times, this_duration); // a vector of double - see calculateDurationsAndRotations() below
 	}
-	/*
-		void LogFileLoader::interpolatePositionData(std::vector<double> tiffTimestamps)
-		{
-			if (!m_interpolationDone)
-			{ // only interpolate once!
-				std::cout << "\nExtracting position data from logfile based on tiff file timestamps..." << std::endl;
-				zeroNormalize(x_translation);
-				zeroNormalize(z_translation);
-				if (!(times.empty()))
-				{
-					std::vector<double>::iterator low;
-					std::vector<double> interpRotations;
-					std::vector<double> interpX;
-					std::vector<double> interpZ;
-					std::vector<double> interpTimes;
-					std::vector<int> interpLineNumbers;
-					std::vector<std::chrono::system_clock::time_point> interpPTimes;
-					for (std::vector<double>::iterator i = tiffTimestamps.begin(); i != tiffTimestamps.end(); ++i)
-					{
-						low = std::lower_bound(times.begin(), times.end(), *i);
-						auto interpIdx = low - times.begin();
-						interpRotations.push_back(rotation_in_rads[interpIdx]);
-						interpX.push_back(x_translation[interpIdx]);
-						interpZ.push_back(z_translation[interpIdx]);
-						interpTimes.push_back(times[interpIdx]);
-						interpPTimes.push_back(ptimes[interpIdx]);
-						interpLineNumbers.push_back(logfile_line_numbers[interpIdx]);
-					}
-					auto sz = interpRotations.size();
 
-					x_translation.resize(sz);
-					x_translation.shrink_to_fit();
-					x_translation = interpX;
-
-					z_translation.resize(sz);
-					z_translation.shrink_to_fit();
-					z_translation = interpZ;
-
-					rotation_in_rads.resize(sz);
-					rotation_in_rads.shrink_to_fit();
-					rotation_in_rads = interpRotations;
-
-					times.resize(sz);
-					times.shrink_to_fit();
-					times = interpTimes;
-
-					ptimes.resize(sz);
-					ptimes.shrink_to_fit();
-					ptimes = interpPTimes;
-
-					logfile_line_numbers.resize(sz);
-					logfile_line_numbers.shrink_to_fit();
-					logfile_line_numbers = interpLineNumbers;
-				}
-				m_interpolationDone = true;
-				std::cout << "\nFinished extracting position data." << std::endl;
-				std::cout << "Final number of samples extracted from log file: " << x_translation.size() << std::endl;
-			}
-		}
-	*/
 	bool LogFileLoader::calculateDurationsAndRotations()
 	{
 		if (!hasAcquisition)
@@ -267,18 +208,6 @@ namespace twophoton
 			return false;
 	}
 
-	int LogFileLoader::findNearestIdx(double tiffTimestamp)
-	{
-		if (!(times.empty()))
-		{
-			std::vector<double>::iterator low;
-			low = std::lower_bound(times.begin(), times.end(), tiffTimestamp);
-			auto time_idx = low - times.begin();
-			return time_idx;
-		}
-		return -1;
-	}
-
 	bool LogFileLoader::load()
 	{
 		std::ifstream ifs(filename, std::ifstream::in);
@@ -321,8 +250,8 @@ namespace twophoton
 				pos = line.find(X_token);
 				s1 = line.substr(0, pos);
 				std::istringstream is(s1);
-				is >> date::parse(time_fmt, pt);
-				if (old_time != pt)
+				is >> date::parse(logfile_time_fmt, pt);
+				if (old_time != pt) // ie skip repeats of the same time (logging error?)
 				{
 					// get the line number first
 					logfile_line_numbers.push_back(line_index);

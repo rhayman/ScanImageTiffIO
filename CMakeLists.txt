@@ -14,6 +14,7 @@ FetchContent_Declare(
     GIT_TAG master
 )
 set(tiff-docs OFF)
+set(tiff-tests OFF)
 FetchContent_MakeAvailable(tiff)
 
 FetchContent_Declare(
@@ -89,9 +90,10 @@ install(TARGETS ${PROJECT_NAME}
 )
 
 # ---------------------- testing ----------------
+# ---- this should be moved into the tests folder -----
 option(ENABLE_TESTS "Enable tests" OFF)
 if (${ENABLE_TESTS})
-    message(STATUS "Testing is enabled")
+    message(STATUS "ScanImageTiffIO: Testing is enabled")
     enable_testing()
     FetchContent_Declare(
         googletest
@@ -107,6 +109,7 @@ if (${ENABLE_TESTS})
         tests/tiffReader_test.cpp
         tests/SITiffIO_test.cpp
         src/ScanImageTiff.cpp
+        src/LogFileLoader.cpp
     )
     
     target_link_libraries(unit_tests PUBLIC 
