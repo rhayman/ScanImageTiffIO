@@ -5,8 +5,8 @@
 
 namespace fs = std::filesystem;
 
-const static fs::path tiff_name{fs::current_path().string() + "/../tests/data/test_file1.tif"};
-const static fs::path log_name(fs::current_path().string() + "/../tests/data/test_logfile.txt");
+const static fs::path tiff_name{"test_file1.tif"};
+const static fs::path log_name("test_logfile.txt");
 
 class TiffReaderTest : public ::testing::Test
 {

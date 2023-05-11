@@ -51,13 +51,12 @@ static std::string grabStr(const std::string &source, const std::string &target)
 		return std::string();
 }
 
-template<typename T>
-int findNearestIdx(const std::vector<T> & toBeSearched, const T & findMe)
+template <typename T>
+int findNearestIdx(const std::vector<T> &toBeSearched, const T &findMe)
 {
 	if (!(toBeSearched.empty()))
 	{
-		std::vector<T>::iterator low;
-		low = std::lower_bound(toBeSearched.begin(), toBeSearched.end(), findMe);
+		auto low = std::lower_bound(toBeSearched.begin(), toBeSearched.end(), findMe);
 		auto idx = low - toBeSearched.begin();
 		return idx;
 	}
@@ -395,19 +394,21 @@ namespace twophoton
 		void setTriggerIndex(int);
 	};
 
-	class RotaryEncoderLoader {
-		public:
-			RotaryEncoderLoader();
-			RotaryEncoderLoader(const std::string &);
-			~RotaryEncoderLoader();
-			std::string getFilename() { return m_filename; };
-			bool load();
-			std::vector<std::chrono::system_clock::time_point> getTimes();
-			std::vector<double> getRotations();
-		private:
-			std::string m_filename;
-			std::vector<std::chrono::system_clock::time_point> m_times;
-			std::vector<double> m_rotations;
+	class RotaryEncoderLoader
+	{
+	public:
+		RotaryEncoderLoader();
+		RotaryEncoderLoader(const std::string &);
+		~RotaryEncoderLoader();
+		std::string getFilename() { return m_filename; };
+		bool load();
+		std::vector<std::chrono::system_clock::time_point> getTimes();
+		std::vector<double> getRotations();
+
+	private:
+		std::string m_filename;
+		std::vector<std::chrono::system_clock::time_point> m_times;
+		std::vector<double> m_rotations;
 	};
 
 	/*

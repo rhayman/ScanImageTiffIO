@@ -8,7 +8,6 @@
 
 namespace twophoton
 {
-
 	void SITiffHeader::read(TIFF *m_tif, int dirnum)
 	{
 		if (m_tif)
@@ -623,9 +622,9 @@ namespace twophoton
 	/* ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 	/  +++++++++++++++++++++++  SITiffIO  +++++++++++++++++++++++++++++++++++
 	 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ */
-	
-	SITiffIO::~SITiffIO() {
 
+	SITiffIO::~SITiffIO()
+	{
 	}
 
 	bool SITiffIO::openTiff(const std::string &fname, const std::string mode)
