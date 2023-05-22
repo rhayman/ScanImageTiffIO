@@ -584,8 +584,7 @@ namespace twophoton
 	{
 		if (opened)
 			return true;
-		else
-			return false;
+		return false;
 	}
 
 	bool SITiffWriter::open(std::string outputPath)
@@ -685,6 +684,12 @@ namespace twophoton
 		LogLoader = std::make_shared<LogFileLoader>(fname);
 		return LogLoader->load();
 	}
+
+
+  bool SITiffIO::openRotary(std::string fname) {
+    RotaryLoader = std::make_shared<RotaryEncoderLoader>(fname);
+    return RotaryLoader->load();
+  }
 
 	bool SITiffIO::openXML(std::string fname)
 	{

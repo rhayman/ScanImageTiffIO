@@ -10,16 +10,6 @@
 namespace twophoton
 {
 
-	// specify the format of the time data in the logfile so it's parsed
-	// correctly later on
-	static constexpr char logfile_time_fmt[] = "%Y-%m-%d %T";
-	using FpMilliseconds = std::chrono::duration<float, std::chrono::milliseconds::period>;
-
-	// Convert radians to degrees...
-	static inline double rad2deg(double rad) { return rad * (180.0 / M_PI); }
-	// ... and degrees to radians
-	static inline double deg2rad(double deg) { return deg * (M_PI / 180.0); }
-
 	// constrain angles to lie between 0 and 2*PI
 	static double constrainAngleToPi(double x)
 	{

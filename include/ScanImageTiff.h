@@ -2,16 +2,14 @@
 #define SCANIMAGETIFF_H_
 
 #include <tiffio.h>
-#include <iostream>
 #include <string>
-#include <map>
-#include <memory>
-
-#include <vector>
 #include <sstream>
-
+#include <vector>
+#include <chrono>
+#include <memory>
 #include <carma>
 #include <armadillo>
+
 
 // Some string utilities
 // Split a string given a delimiter and either return in a
@@ -95,8 +93,8 @@ static void getTags(TIFF *tif)
 	}
 }
 
-namespace twophoton
-{
+namespace twophoton{
+
 	class SITiffReader;
 
 	class SITiffHeader
@@ -302,7 +300,6 @@ namespace twophoton
 	private:
 		std::string replaceHeaderValue(std::string &, std::string, std::string);
 	};
-
 	/*
 	************************* LOG FILE LOADING STUFF *************************
 
@@ -314,6 +311,16 @@ namespace twophoton
 	Another issue is that apparently the rotary encoder or the controller
 	that's taking data from it can grab the same sample more than once
 	*/
+	// specify the format of the time data in the logfile so it's parsed
+	// correctly later on
+	static constexpr char logfile_time_fmt[] = "%Y-%m-%d %T";
+	using FpMilliseconds = std::chrono::duration<float, std::chrono::milliseconds::period>;
+
+	// Convert radians to degrees...
+	static inline double rad2deg(double rad) { return rad * (180.0 / M_PI); }
+	// ... and degrees to radians
+	static inline double deg2rad(double deg) { return deg * (M_PI / 180.0); }
+
 	static constexpr char init_rot_token[] = "Angular reference";
 	// The token for the amount of rotation
 	static constexpr char rot_token[] = "Rot";
@@ -335,7 +342,8 @@ namespace twophoton
 	// static constexpr unsigned int rotary_encoder_units_per_turn = 8845; // the old value
 	static constexpr unsigned int rotary_encoder_units_per_turn = 36800; // the new value
 
-	class LogFileLoader
+	
+class LogFileLoader
 	{
 	public:
 		LogFileLoader(){};
@@ -394,6 +402,7 @@ namespace twophoton
 		void setTriggerIndex(int);
 	};
 
+
 	class RotaryEncoderLoader
 	{
 	public:
@@ -410,8 +419,7 @@ namespace twophoton
 		std::vector<std::chrono::system_clock::time_point> m_times;
 		std::vector<double> m_rotations;
 	};
-
-	/*
+/*
 	This class holds the transformations that are to be applied to the images in a 2-photon (2P)
 	video file (a .tiff file) recorded from a rig that allows the animal to rotate using a bearing
 	that allows full 2D exploration of virtual reality (VR) environments. The transformations included are
@@ -554,6 +562,7 @@ namespace twophoton
 		bool closeReaderTiff();
 		bool closeWriterTiff();
 		bool openLog(std::string fname);
+		bool openRotary(std::string fname);
 		bool openXML(std::string fname);
 		unsigned int countDirectories();
 		void interpolateIndices();
@@ -583,4 +592,4 @@ namespace twophoton
 		std::shared_ptr<std::map<unsigned int, TransformContainer>> m_all_transforms = nullptr;
 	};
 }; // namespace twophoton
-#endif
+#endif // namespace twophoton
