@@ -95,6 +95,50 @@ static void getTags(TIFF *tif)
 
 namespace twophoton{
 
+	/*
+	************************* LOG FILE LOADING STUFF *************************
+
+	 In newer iterations of the logfile there's a value near the top
+	which gives the value for "North" - this is the token / key
+	defining that value. In older versions this was immediately before
+	'MicroscopeTriggered' string - that string now reads 'Started with SpaceBar'
+
+	Another issue is that apparently the rotary encoder or the controller
+	that's taking data from it can grab the same sample more than once
+	*/
+	// specify the format of the time data in the logfile so it's parsed
+	// correctly later on
+	static constexpr char logfile_time_fmt[] = "%Y-%m-%d %T";
+	using FpMilliseconds = std::chrono::duration<float, std::chrono::milliseconds::period>;
+
+	// Convert radians to degrees...
+	static inline double rad2deg(double rad) { return rad * (180.0 / M_PI); }
+	// ... and degrees to radians
+	static inline double deg2rad(double deg) { return deg * (M_PI / 180.0); }
+
+	static constexpr char init_rot_token[] = "Angular reference";
+	// The token for the amount of rotation
+	static constexpr char rot_token[] = "Rot";
+	// Token(s) for microscope recording initiation
+	static constexpr char scope_token[] = "MicroscopeTriggered";
+	static constexpr char rotary_trigger_token[] = "Trigger=1.000000";
+	static constexpr char spacebar_token[] = "Started with SpaceBar";
+	static constexpr char equal_token[] = "=";
+	// Mouse movement token(s)
+	static constexpr char mouse_move_token[] = "MouseMove";
+	static constexpr char X_token[] = "X=";
+	static constexpr char Z_token[] = "Z=";
+	static constexpr char MX_token[] = " MX=";
+	static constexpr char MY_token[] = " MY=";
+	static constexpr char GainX_token[] = "GainX=";
+	static constexpr char space_token[] = " ";
+
+	// The rotary encoder might (and has) change so the number of units
+	// per full rotation might change too
+	// static constexpr unsigned int rotary_encoder_units_per_turn = 8845; // the old value
+	static constexpr unsigned int rotary_encoder_units_per_turn = 36800; // the new value
+
+
 	class SITiffReader;
 
 	class SITiffHeader
@@ -300,48 +344,7 @@ namespace twophoton{
 	private:
 		std::string replaceHeaderValue(std::string &, std::string, std::string);
 	};
-	/*
-	************************* LOG FILE LOADING STUFF *************************
-
-	 In newer iterations of the logfile there's a value near the top
-	which gives the value for "North" - this is the token / key
-	defining that value. In older versions this was immediately before
-	'MicroscopeTriggered' string - that string now reads 'Started with SpaceBar'
-
-	Another issue is that apparently the rotary encoder or the controller
-	that's taking data from it can grab the same sample more than once
-	*/
-	// specify the format of the time data in the logfile so it's parsed
-	// correctly later on
-	static constexpr char logfile_time_fmt[] = "%Y-%m-%d %T";
-	using FpMilliseconds = std::chrono::duration<float, std::chrono::milliseconds::period>;
-
-	// Convert radians to degrees...
-	static inline double rad2deg(double rad) { return rad * (180.0 / M_PI); }
-	// ... and degrees to radians
-	static inline double deg2rad(double deg) { return deg * (M_PI / 180.0); }
-
-	static constexpr char init_rot_token[] = "Angular reference";
-	// The token for the amount of rotation
-	static constexpr char rot_token[] = "Rot";
-	// Token(s) for microscope recording initiation
-	static constexpr char scope_token[] = "MicroscopeTriggered";
-	static constexpr char spacebar_token[] = "Started with SpaceBar";
-	static constexpr char equal_token[] = "=";
-	// Mouse movement token(s)
-	static constexpr char mouse_move_token[] = "MouseMove";
-	static constexpr char X_token[] = "X=";
-	static constexpr char Z_token[] = "Z=";
-	static constexpr char MX_token[] = " MX=";
-	static constexpr char MY_token[] = " MY=";
-	static constexpr char GainX_token[] = "GainX=";
-	static constexpr char space_token[] = " ";
-
-	// The rotary encoder might (and has) change so the number of units
-	// per full rotation might change too
-	// static constexpr unsigned int rotary_encoder_units_per_turn = 8845; // the old value
-	static constexpr unsigned int rotary_encoder_units_per_turn = 36800; // the new value
-
+	
 	
 class LogFileLoader
 	{
@@ -418,6 +421,8 @@ class LogFileLoader
 		std::string m_filename;
 		std::vector<std::chrono::system_clock::time_point> m_times;
 		std::vector<double> m_rotations;
+		bool m_hasAcquisition = false;
+		std::chrono::system_clock::time_point m_trigger_time;
 	};
 /*
 	This class holds the transformations that are to be applied to the images in a 2-photon (2P)

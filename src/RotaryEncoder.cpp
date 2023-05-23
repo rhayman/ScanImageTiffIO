@@ -49,6 +49,11 @@ namespace twophoton
                     m_rotations.push_back(std::stof(rot_value));
                 }
             }
+            auto scope_triggered = line.find(rotary_trigger_token);
+            if (scope_triggered != std::string::npos) {
+                m_hasAcquisition = true;
+                m_trigger_time = pt;
+            }
         }
         return true;
     }
