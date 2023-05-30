@@ -144,7 +144,7 @@ namespace twophoton
 		return std::string();
 	}
 
-	unsigned int SITiffHeader::getSizePerDir(TIFF *m_tif, unsigned int dirnum)
+	unsigned int SITiffHeader::getSizePerDir(TIFF *m_tif, unsigned int dirnum) const
 	{
 		if (m_tif)
 		{
@@ -161,7 +161,7 @@ namespace twophoton
 			return 0;
 	}
 
-	void SITiffHeader::printHeader(TIFF *m_tif, int framenum)
+	void SITiffHeader::printHeader(TIFF *m_tif, int framenum) const
 	{
 		if (m_tif)
 		{
@@ -170,7 +170,7 @@ namespace twophoton
 		}
 	}
 
-	int SITiffHeader::countDirectories(TIFF *m_tif)
+	int SITiffHeader::countDirectories(TIFF *m_tif) const
 	{
 		int count = 0;
 		if (m_tif)
@@ -295,7 +295,7 @@ namespace twophoton
 		return false;
 	}
 
-	bool SITiffReader::readheader()
+	bool SITiffReader::readheader() const
 	{
 		if (m_tif)
 		{
@@ -819,13 +819,17 @@ namespace twophoton
 	{
 		if (TiffReader == nullptr)
 		{
-			// return some kind of error
+			std::cout << "WARNING: Tiff file is not loaded" << std::endl;
 			return;
 		}
 		if (LogLoader == nullptr)
 		{
-			// return some kind of error
+			std::cout << "WARNING: Log file is not loaded" << std::endl;
 			return;
+		}
+		if (RotaryLoader == nullptr)
+		{
+			std::cout << "WARNING: Rotary file is not loaded" << std::endl;
 		}
 
 		int startFrame = 0;
@@ -849,7 +853,10 @@ namespace twophoton
 		{
 			TiffReader->getFrameNumAndTimeStamp(i, frame_num, tiff_ts);
 			logfile_idx = findNearestIdx(LogLoader->getTimes(), tiff_ts);
-			r = LogLoader->getRadianRotation(logfile_idx);
+			if(RotaryLoader)
+				r = RotaryLoader->getRadianRotation(logfile_idx);
+			else
+				r = LogLoader->getRadianRotation(logfile_idx);
 			x = LogLoader->getXTranslation(logfile_idx);
 			z = LogLoader->getZTranslation(logfile_idx);
 
@@ -864,8 +871,21 @@ namespace twophoton
 		}
 	}
 
-	std::vector<double> SITiffIO::getTimeStamps() const
+	double SITiffIO::calcPosSampleRate() {
+		if(LogLoader)
+			return LogLoader->estimateSampleRate();
+		return 0;
+	}
+
+	double SITiffIO::calcRotarySampleRate() {
+		if(RotaryLoader)
+			return RotaryLoader->estimateSampleRate();
+		return 0;
+	}
+
+	std::vector<double> SITiffIO::getTiffTimeStamps() const
 	{
+		// m_all_transforms is populated in interpolateIndices() above
 		std::vector<double> result;
 		if (m_all_transforms != nullptr)
 		{
@@ -938,6 +958,14 @@ namespace twophoton
 			}
 		}
 		return result;
+	}
+
+	std::vector<ptime> SITiffIO::getLogFileTimes() const {
+		return LogLoader->getPTimes();
+	}
+
+	std::vector<ptime> SITiffIO::getRotaryTimes() const {
+		return RotaryLoader->getTimes();
 	}
 
 	std::tuple<unsigned int> SITiffIO::getNChannels() const

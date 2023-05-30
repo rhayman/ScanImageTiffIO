@@ -3,6 +3,7 @@
 #include <pybind11/stl.h>
 #include <pybind11/operators.h>
 #include <pybind11/stl_bind.h>
+#include <pybind11/chrono.h>
 #include "../include/ScanImageTiff.h"
 
 PYBIND11_MODULE(scanimagetiffio, m)
@@ -26,6 +27,7 @@ PYBIND11_MODULE(scanimagetiffio, m)
 	----------
 	fname: str - the name of the log file to open. Must match the tiff file or position data will be wrong
 )mydelimiter")
+        .def("open_rotary_file", &twophoton::SITiffIO::openRotary, "Open a rotary encoder log file")
         .def("open_xml_file", &twophoton::SITiffIO::openXML, "Open an xml file", py::arg("fname"), R"mydelimiter(
 	open_xml_file
 
@@ -50,7 +52,7 @@ PYBIND11_MODULE(scanimagetiffio, m)
 )mydelimiter")
         .def("write_frame", &twophoton::SITiffIO::writeFrame, "Write frame to file", py::arg("frame"), py::arg("i_frame"), R"mydelimiter(
 	write_frame
-
+begin
 	Parameters
 	----------
 	i_frame: int - the number of the frame to write out. 
@@ -63,6 +65,10 @@ PYBIND11_MODULE(scanimagetiffio, m)
         .def("get_all_z", &twophoton::SITiffIO::getZ, "Gets all the Z values")
         .def("get_all_theta", &twophoton::SITiffIO::getTheta, "Gets all the rotational values")
         .def("get_frame_numbers", &twophoton::SITiffIO::getFrameNumbers, "Gets all the frame numbers from the interpolated data")
-        .def("get_all_timestamps", &twophoton::SITiffIO::getTimeStamps, "Gets all the timestamps")
-        .def("get_channel_LUT", &twophoton::SITiffIO::getChannelLUT, "Gets the channel LUTs");
+        .def("get_channel_LUT", &twophoton::SITiffIO::getChannelLUT, "Gets the channel LUTs")
+        .def("calc_log_sample_rate", &twophoton::SITiffIO::calcPosSampleRate, "Estimate log file sample rate")
+        .def("calc_rotary_sample_rate", &twophoton::SITiffIO::calcRotarySampleRate, "Estimate rotary file sample rate")
+        .def("get_log_times", &twophoton::SITiffIO::getLogFileTimes, "Gets the times from the log file")
+        .def("get_rotary_times", &twophoton::SITiffIO::getRotaryTimes, "Gets the times from the rotary file")
+        .def("get_tiff_times", &twophoton::SITiffIO::getTiffTimeStamps, "Gets the times from the tiff file");
 }

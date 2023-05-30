@@ -26,8 +26,8 @@ namespace twophoton
         std::ifstream ifs{m_filename, std::ifstream::in};
         ifs.unsetf(std::ios_base::skipws);
         std::string line, old_line, s1;
-        std::chrono::system_clock::time_point pt;
-        std::chrono::system_clock::time_point old_time;
+        ptime pt;
+        ptime old_time;
         std::size_t pos;
         double rotation;
         std::cout << "Loading rotary encoder file: " << m_filename << std::endl;
@@ -58,14 +58,22 @@ namespace twophoton
         return true;
     }
 
-    std::vector<std::chrono::system_clock::time_point> RotaryEncoderLoader::getTimes()
+    std::vector<ptime> RotaryEncoderLoader::getTimes() const
     {
         return m_times;
     }
 
-    std::vector<double> RotaryEncoderLoader::getRotations()
+    std::vector<double> RotaryEncoderLoader::getRotations() const
     {
         return m_rotations;
+    }
+
+    double RotaryEncoderLoader::getRadianRotation(const int & index) const {
+        return deg2rad(m_rotations[index]);
+    }
+
+    double RotaryEncoderLoader::estimateSampleRate() const {
+        return getSampleRate(m_times);
     }
 
 } // namespace

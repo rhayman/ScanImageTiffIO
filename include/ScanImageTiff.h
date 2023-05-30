@@ -7,6 +7,9 @@
 #include <vector>
 #include <chrono>
 #include <memory>
+#include <ranges>
+#include <numeric>
+#include <algorithm>
 #include <carma>
 #include <armadillo>
 
@@ -110,6 +113,7 @@ namespace twophoton{
 	// correctly later on
 	static constexpr char logfile_time_fmt[] = "%Y-%m-%d %T";
 	using FpMilliseconds = std::chrono::duration<float, std::chrono::milliseconds::period>;
+	using ptime = std::chrono::system_clock::time_point;
 
 	// Convert radians to degrees...
 	static inline double rad2deg(double rad) { return rad * (180.0 / M_PI); }
@@ -138,6 +142,15 @@ namespace twophoton{
 	// static constexpr unsigned int rotary_encoder_units_per_turn = 8845; // the old value
 	static constexpr unsigned int rotary_encoder_units_per_turn = 36800; // the new value
 
+	static double getSampleRate(const std::vector<ptime> & times) {
+		std::vector<std::chrono::duration<double, std::milli>> time_diffs;
+		std::ranges::transform(times, times | std::views::drop(1),
+    		std::back_inserter(time_diffs), std::minus());
+		auto const count = static_cast<float>(time_diffs.size());
+		auto as_double = std::views::transform(time_diffs, [](auto & d) {return d.count(); });
+		auto mean_milli_df = std::abs(std::reduce(as_double.begin(), as_double.end(), 0.0) / count);
+		return 1000.0 / mean_milli_df;
+	}
 
 	class SITiffReader;
 
@@ -195,12 +208,12 @@ namespace twophoton{
 			stream << header.m_swTag;
 			return stream;
 		}
-		void printHeader(TIFF *m_tif, int framenum);
-		unsigned int getSizePerDir(TIFF *m_tif, unsigned int dirnum = 0);
-		std::vector<double> getTimeStamps() { return m_timestamps; }
-		int countDirectories(TIFF *);
-		const std::string getFrameNumberString() { return frameString; }
-		const std::string getFrameTimeStampString() { return frameTimeStamp; }
+		void printHeader(TIFF *m_tif, int framenum) const;
+		unsigned int getSizePerDir(TIFF *m_tif, unsigned int dirnum = 0) const;
+		std::vector<double> getTimeStamps() const { return m_timestamps; }
+		int countDirectories(TIFF *) const;
+		const std::string getFrameNumberString() const { return frameString; }
+		const std::string getFrameTimeStampString() const { return frameTimeStamp; }
 
 	private:
 		SITiffReader *m_parent;
@@ -257,7 +270,7 @@ namespace twophoton{
 		~SITiffReader();
 		bool open();
 		bool isOpen() { return isopened; }
-		bool readheader();
+		bool readheader() const;
 		arma::Mat<int16_t> readframe(int framedir = 0);
 		bool close();
 		int getVersion() const { return headerdata->getVersion(); }
@@ -355,21 +368,23 @@ class LogFileLoader
 		void setFilename(std::string);
 		std::string getFilename() { return filename; }
 		bool load();
-		int getRotation(int);
-		double getRadianRotation(int);
-		double getXTranslation(int);
-		double getZTranslation(int);
-		double getTime(int);
-		std::vector<double> getX();
-		std::vector<double> getZ();
-		std::vector<double> getTheta();
-		std::vector<int> getLineNums();
-		std::vector<double> getTimes(); // in miliiseconds
-		int findIndexOfNearestDuration(double /* frame acquisition time in fractional seconds - a key in the tiff header*/);
-		int getTriggerIndex();
-		std::chrono::system_clock::time_point getTriggerTime();
-		std::vector<std::chrono::system_clock::time_point> getPTimes();
-		bool containsAcquisition();
+		int getRotation(const int &) const;
+		double getRadianRotation(const int &) const;
+		double getXTranslation(const int &) const;
+		double getZTranslation(const int &) const;
+		double getTime(const int &) const;
+		std::vector<double> getX() const;
+		std::vector<double> getZ() const;
+		std::vector<double> getTheta() const;
+		std::vector<int> getLineNums() const;
+		std::vector<double> getTimes() const; // in miliiseconds
+		double estimateSampleRate() const;
+		 /* frame acquisition time in fractional seconds - a key in the tiff header*/
+		int findIndexOfNearestDuration(double) const;
+		int getTriggerIndex() const;
+		ptime getTriggerTime() const;
+		std::vector<ptime> getPTimes() const;
+		bool containsAcquisition() const;
 		bool interpTiffData(std::vector<double> /*timestamps from tiff headers*/);
 		/*
 		Interpolate x, z, and theta based on tiff header
@@ -395,13 +410,13 @@ class LogFileLoader
 		std::vector<double> x_translation;
 		std::vector<double> z_translation;
 		std::vector<double> rotation_in_rads;
-		std::vector<std::chrono::system_clock::time_point> ptimes;
+		std::vector<ptime> ptimes;
 		std::vector<double> times;
 		int trigger_index = 0;
 		int idx = 0; // index for location into various vectors
 		int init_rotation = 0;
 		bool hasAcquisition = false;
-		std::chrono::system_clock::time_point trigger_ptime;
+		ptime trigger_ptime;
 		void setTriggerIndex(int);
 	};
 
@@ -412,17 +427,19 @@ class LogFileLoader
 		RotaryEncoderLoader();
 		RotaryEncoderLoader(const std::string &);
 		~RotaryEncoderLoader();
-		std::string getFilename() { return m_filename; };
+		std::string getFilename() const { return m_filename; };
 		bool load();
-		std::vector<std::chrono::system_clock::time_point> getTimes();
-		std::vector<double> getRotations();
+		std::vector<ptime> getTimes() const;
+		std::vector<double> getRotations() const;
+		double getRadianRotation(const int &) const;
+		double estimateSampleRate() const;
 
 	private:
 		std::string m_filename;
-		std::vector<std::chrono::system_clock::time_point> m_times;
-		std::vector<double> m_rotations;
+		std::vector<ptime> m_times;
+		std::vector<double> m_rotations; // these are in degrees in the file
 		bool m_hasAcquisition = false;
-		std::chrono::system_clock::time_point m_trigger_time;
+		ptime m_trigger_time;
 	};
 /*
 	This class holds the transformations that are to be applied to the images in a 2-photon (2P)
@@ -575,11 +592,15 @@ class LogFileLoader
 		void setChannel(unsigned int i) { channel2display = i; }
 		py::array_t<int16_t> readFrame(int frame_num) const;
 		void writeFrame(py::array_t<int16_t>, unsigned int frame_num) const;
-		std::vector<double> getTimeStamps() const;
+		double calcPosSampleRate();
+		double calcRotarySampleRate();
+		std::vector<double> getTiffTimeStamps() const;
 		std::vector<double> getX() const;
 		std::vector<double> getZ() const;
 		std::vector<double> getTheta() const;
 		std::vector<double> getFrameNumbers() const;
+		std::vector<ptime> getLogFileTimes() const;
+		std::vector<ptime> getRotaryTimes() const;
 		std::pair<int, int> getChannelLUT();
 		std::tuple<double, double, double> getPos(const unsigned int) const;
 		std::tuple<double, double> getTrackerTranslation(const unsigned int) const;

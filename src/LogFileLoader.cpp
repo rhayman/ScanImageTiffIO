@@ -73,77 +73,81 @@ namespace twophoton
 		filename = f;
 	}
 
-	int LogFileLoader::getRotation(int idx)
+	int LogFileLoader::getRotation(const int & idx) const
 	{
 		return rotation[idx];
 	}
 
-	double LogFileLoader::getXTranslation(int idx)
+	double LogFileLoader::getXTranslation(const int & idx) const
 	{
 		return x_translation[idx];
 	}
 
-	double LogFileLoader::getZTranslation(int idx)
+	double LogFileLoader::getZTranslation(const int & idx) const
 	{
 		return z_translation[idx];
 	}
 
-	std::vector<double> LogFileLoader::getX()
+	std::vector<double> LogFileLoader::getX() const
 	{
 		return x_translation;
 	}
 
-	std::vector<double> LogFileLoader::getZ()
+	std::vector<double> LogFileLoader::getZ() const
 	{
 		return z_translation;
 	}
 
-	std::vector<double> LogFileLoader::getTheta()
+	std::vector<double> LogFileLoader::getTheta() const
 	{
 		return rotation_in_rads;
 	}
 
-	std::vector<int> LogFileLoader::getLineNums()
+	std::vector<int> LogFileLoader::getLineNums() const
 	{
 		return logfile_line_numbers;
 	}
 
-	double LogFileLoader::getRadianRotation(int idx)
+	double LogFileLoader::getRadianRotation(const int & idx) const
 	{
 		return rotation_in_rads[idx];
 	}
 
-	double LogFileLoader::getTime(int idx)
+	double LogFileLoader::getTime(const int & idx) const
 	{
 		return times[idx];
 	}
 
-	int LogFileLoader::getTriggerIndex()
+	int LogFileLoader::getTriggerIndex() const
 	{
 		return trigger_index;
 	}
 
-	bool LogFileLoader::containsAcquisition()
+	bool LogFileLoader::containsAcquisition() const
 	{
 		return hasAcquisition;
 	}
 
-	std::chrono::system_clock::time_point LogFileLoader::getTriggerTime()
+	ptime LogFileLoader::getTriggerTime() const
 	{
 		return trigger_ptime;
 	}
 
-	std::vector<std::chrono::system_clock::time_point> LogFileLoader::getPTimes()
+	std::vector<ptime> LogFileLoader::getPTimes() const
 	{
 		return ptimes;
 	}
 
-	std::vector<double> LogFileLoader::getTimes()
+	std::vector<double> LogFileLoader::getTimes() const
 	{
 		return times;
 	}
 
-	int LogFileLoader::findIndexOfNearestDuration(double this_duration)
+	double LogFileLoader::estimateSampleRate() const {
+		return getSampleRate(ptimes);
+	}
+
+	int LogFileLoader::findIndexOfNearestDuration(double this_duration) const
 	{
 		return 1 + closest(times, this_duration); // a vector of double - see calculateDurationsAndRotations() below
 	}
@@ -160,7 +164,7 @@ namespace twophoton
 			std::cout << "Calculating rotations and times from log file data..." << std::endl;
 			auto first_time = getTriggerTime();
 			unsigned int count = 0;
-			for (std::vector<std::chrono::system_clock::time_point>::iterator i = ptimes.begin(); i != ptimes.end(); ++i)
+			for (std::vector<ptime>::iterator i = ptimes.begin(); i != ptimes.end(); ++i)
 			{
 				auto duration = *i - first_time;
 				times.push_back(FpMilliseconds(duration).count() / 1000.0);
@@ -203,11 +207,11 @@ namespace twophoton
 		std::ifstream ifs(filename, std::ifstream::in);
 		ifs.unsetf(std::ios_base::skipws);
 		std::string line, old_line, s1;
-		std::chrono::system_clock::time_point pt;
-		std::chrono::system_clock::time_point old_time; //(boost::gregorian::date(2002,1,10),boost::posix_time::time_duration(1,2,3));// old line is our "memory" - see comment in while loop below and header file
+		ptime pt;
+		ptime old_time; //(boost::gregorian::date(2002,1,10),boost::posix_time::time_duration(1,2,3));// old line is our "memory" - see comment in while loop below and header file
 														// see comment before loop that sets trigger index below (after the next while statement)
 		// to understand why this temporary is used
-		std::chrono::system_clock::time_point tmp_trigger_ptime;
+		ptime tmp_trigger_ptime;
 		std::size_t pos, posZ;
 		double x_trans, z_trans;
 		unsigned int trig_index = 0;
