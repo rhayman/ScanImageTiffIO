@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.22)
 project(ScanImageTiff VERSION 1.0.2 DESCRIPTION "tiff file io for tiffs written with scanImage" LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # ---------- python ------------
 find_package (Python3 COMPONENTS Interpreter Development NumPy)
 
