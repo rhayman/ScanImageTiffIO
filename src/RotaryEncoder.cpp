@@ -72,8 +72,4 @@ namespace twophoton
         return deg2rad(m_rotations[index]);
     }
 
-    double RotaryEncoderLoader::estimateSampleRate() const {
-        return getSampleRate(m_times);
-    }
-
 } // namespace

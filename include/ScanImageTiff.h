@@ -7,7 +7,6 @@
 #include <vector>
 #include <chrono>
 #include <memory>
-#include <ranges>
 #include <numeric>
 #include <algorithm>
 #include <carma>
@@ -141,16 +140,6 @@ namespace twophoton{
 	// per full rotation might change too
 	// static constexpr unsigned int rotary_encoder_units_per_turn = 8845; // the old value
 	static constexpr unsigned int rotary_encoder_units_per_turn = 36800; // the new value
-
-	static double getSampleRate(const std::vector<ptime> & times) {
-		std::vector<std::chrono::duration<double, std::milli>> time_diffs;
-		std::ranges::transform(times, times | std::views::drop(1),
-    		std::back_inserter(time_diffs), std::minus());
-		auto const count = static_cast<float>(time_diffs.size());
-		auto as_double = std::views::transform(time_diffs, [](auto & d) {return d.count(); });
-		auto mean_milli_df = std::abs(std::reduce(as_double.begin(), as_double.end(), 0.0) / count);
-		return 1000.0 / mean_milli_df;
-	}
 
 	class SITiffReader;
 
@@ -378,7 +367,6 @@ class LogFileLoader
 		std::vector<double> getTheta() const;
 		std::vector<int> getLineNums() const;
 		std::vector<double> getTimes() const; // in miliiseconds
-		double estimateSampleRate() const;
 		 /* frame acquisition time in fractional seconds - a key in the tiff header*/
 		int findIndexOfNearestDuration(double) const;
 		int getTriggerIndex() const;
@@ -432,7 +420,6 @@ class LogFileLoader
 		std::vector<ptime> getTimes() const;
 		std::vector<double> getRotations() const;
 		double getRadianRotation(const int &) const;
-		double estimateSampleRate() const;
 
 	private:
 		std::string m_filename;
@@ -592,8 +579,6 @@ class LogFileLoader
 		void setChannel(unsigned int i) { channel2display = i; }
 		py::array_t<int16_t> readFrame(int frame_num) const;
 		void writeFrame(py::array_t<int16_t>, unsigned int frame_num) const;
-		double calcPosSampleRate();
-		double calcRotarySampleRate();
 		std::vector<double> getTiffTimeStamps() const;
 		std::vector<double> getX() const;
 		std::vector<double> getZ() const;

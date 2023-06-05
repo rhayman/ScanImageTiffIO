@@ -143,10 +143,6 @@ namespace twophoton
 		return times;
 	}
 
-	double LogFileLoader::estimateSampleRate() const {
-		return getSampleRate(ptimes);
-	}
-
 	int LogFileLoader::findIndexOfNearestDuration(double this_duration) const
 	{
 		return 1 + closest(times, this_duration); // a vector of double - see calculateDurationsAndRotations() below

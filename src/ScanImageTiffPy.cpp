@@ -66,8 +66,6 @@ begin
         .def("get_all_theta", &twophoton::SITiffIO::getTheta, "Gets all the rotational values")
         .def("get_frame_numbers", &twophoton::SITiffIO::getFrameNumbers, "Gets all the frame numbers from the interpolated data")
         .def("get_channel_LUT", &twophoton::SITiffIO::getChannelLUT, "Gets the channel LUTs")
-        .def("calc_log_sample_rate", &twophoton::SITiffIO::calcPosSampleRate, "Estimate log file sample rate")
-        .def("calc_rotary_sample_rate", &twophoton::SITiffIO::calcRotarySampleRate, "Estimate rotary file sample rate")
         .def("get_log_times", &twophoton::SITiffIO::getLogFileTimes, "Gets the times from the log file")
         .def("get_rotary_times", &twophoton::SITiffIO::getRotaryTimes, "Gets the times from the rotary file")
         .def("get_tiff_times", &twophoton::SITiffIO::getTiffTimeStamps, "Gets the times from the tiff file");

@@ -871,18 +871,6 @@ namespace twophoton
 		}
 	}
 
-	double SITiffIO::calcPosSampleRate() {
-		if(LogLoader)
-			return LogLoader->estimateSampleRate();
-		return 0;
-	}
-
-	double SITiffIO::calcRotarySampleRate() {
-		if(RotaryLoader)
-			return RotaryLoader->estimateSampleRate();
-		return 0;
-	}
-
 	std::vector<double> SITiffIO::getTiffTimeStamps() const
 	{
 		// m_all_transforms is populated in interpolateIndices() above
