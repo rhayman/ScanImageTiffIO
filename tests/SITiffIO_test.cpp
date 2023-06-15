@@ -48,7 +48,7 @@ TEST_F(SITiffIOTest, PositionProcessing)
 {
     S.openLog(log_name.string());
     S.interpolateIndices();
-    EXPECT_GT(S.getTimeStamps().size(), 0);
+    EXPECT_GT(S.getTiffTimeStamps().size(), 0);
     EXPECT_GT(S.getX().size(), 0);
     EXPECT_GT(S.getZ().size(), 0);
     EXPECT_GT(S.getTheta().size(), 0);

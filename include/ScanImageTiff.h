@@ -12,7 +12,6 @@
 #include <carma>
 #include <armadillo>
 
-
 // Some string utilities
 // Split a string given a delimiter and either return in a
 // pre-constructed vector (#1) or returns a new one (#2)
@@ -95,7 +94,8 @@ static void getTags(TIFF *tif)
 	}
 }
 
-namespace twophoton{
+namespace twophoton
+{
 
 	/*
 	************************* LOG FILE LOADING STUFF *************************
@@ -111,6 +111,7 @@ namespace twophoton{
 	// specify the format of the time data in the logfile so it's parsed
 	// correctly later on
 	static constexpr char logfile_time_fmt[] = "%Y-%m-%d %T";
+	static constexpr char epoch_time_fmt[] = "%Y  %m %d %H %M %S";
 	using FpMilliseconds = std::chrono::duration<float, std::chrono::milliseconds::period>;
 	using ptime = std::chrono::system_clock::time_point;
 
@@ -203,6 +204,7 @@ namespace twophoton{
 		int countDirectories(TIFF *) const;
 		const std::string getFrameNumberString() const { return frameString; }
 		const std::string getFrameTimeStampString() const { return frameTimeStamp; }
+		ptime getEpochTime(TIFF *m_tif);
 
 	private:
 		SITiffReader *m_parent;
@@ -249,6 +251,9 @@ namespace twophoton{
 		the map is 1-indexed for both members
 		*/
 		std::map<unsigned int, unsigned int> chanSaved;
+		// the "epoch" time which is when acquistion started according to
+		// the PC clock time
+		ptime m_epoch_time;
 	};
 
 	class SITiffReader
@@ -272,6 +277,7 @@ namespace twophoton{
 		std::map<int, std::pair<int, int>> getChanLut() const { return headerdata->getChanLut(); }
 		std::map<unsigned int, unsigned int> getSavedChans() const { return headerdata->getChanSaved(); }
 		std::map<int, int> getChanOffsets() const { return headerdata->getChanOffsets(); }
+		ptime getEpochTime() const { return headerdata->getEpochTime(m_tif); };
 
 		/*
 		The first argument is the directory in the tiff file you want the frame number & timestamp for
@@ -346,9 +352,8 @@ namespace twophoton{
 	private:
 		std::string replaceHeaderValue(std::string &, std::string, std::string);
 	};
-	
-	
-class LogFileLoader
+
+	class LogFileLoader
 	{
 	public:
 		LogFileLoader(){};
@@ -367,7 +372,7 @@ class LogFileLoader
 		std::vector<double> getTheta() const;
 		std::vector<int> getLineNums() const;
 		std::vector<double> getTimes() const; // in miliiseconds
-		 /* frame acquisition time in fractional seconds - a key in the tiff header*/
+											  /* frame acquisition time in fractional seconds - a key in the tiff header*/
 		int findIndexOfNearestDuration(double) const;
 		int getTriggerIndex() const;
 		ptime getTriggerTime() const;
@@ -408,7 +413,6 @@ class LogFileLoader
 		void setTriggerIndex(int);
 	};
 
-
 	class RotaryEncoderLoader
 	{
 	public:
@@ -420,28 +424,30 @@ class LogFileLoader
 		std::vector<ptime> getTimes() const;
 		std::vector<double> getRotations() const;
 		double getRadianRotation(const int &) const;
+		ptime getTriggerTime() const { return m_trigger_time; };
 
 	private:
 		std::string m_filename;
 		std::vector<ptime> m_times;
 		std::vector<double> m_rotations; // these are in degrees in the file
 		bool m_hasAcquisition = false;
+		bool foundTrigger = false;
 		ptime m_trigger_time;
 	};
-/*
-	This class holds the transformations that are to be applied to the images in a 2-photon (2P)
-	video file (a .tiff file) recorded from a rig that allows the animal to rotate using a bearing
-	that allows full 2D exploration of virtual reality (VR) environments. The transformations included are
-	described in the scoped enum above and are usually applied in that order. The objective is to
-	remove all rotation/ translation from the image so that what is left is a stabilised video file
-	that can be subsequently passed through other tools to extract the ROIs, fluorescent traces, do the spike
-	deconvolution steps etc.
+	/*
+		This class holds the transformations that are to be applied to the images in a 2-photon (2P)
+		video file (a .tiff file) recorded from a rig that allows the animal to rotate using a bearing
+		that allows full 2D exploration of virtual reality (VR) environments. The transformations included are
+		described in the scoped enum above and are usually applied in that order. The objective is to
+		remove all rotation/ translation from the image so that what is left is a stabilised video file
+		that can be subsequently passed through other tools to extract the ROIs, fluorescent traces, do the spike
+		deconvolution steps etc.
 
-	This class has serialization methods associated with it - the objective being to store the transformations
-	on disk in an .xml file. Each frame of the video file has an x, z and rotation value attached. These are
-	the positional information extracted from the movement of the animal through the VR (x,z) and the rotation
-	of the bearing as detected by a rotary encoder.
-	*/
+		This class has serialization methods associated with it - the objective being to store the transformations
+		on disk in an .xml file. Each frame of the video file has an x, z and rotation value attached. These are
+		the positional information extracted from the movement of the animal through the VR (x,z) and the rotation
+		of the bearing as detected by a rotary encoder.
+		*/
 
 	enum class TransformType : int
 	{
@@ -586,6 +592,9 @@ class LogFileLoader
 		std::vector<double> getFrameNumbers() const;
 		std::vector<ptime> getLogFileTimes() const;
 		std::vector<ptime> getRotaryTimes() const;
+		ptime getLogFileTriggerTime() const;
+		ptime getRotaryEncoderTriggerTime() const;
+		ptime getEpochTime() const;
 		std::pair<int, int> getChannelLUT();
 		std::tuple<double, double, double> getPos(const unsigned int) const;
 		std::tuple<double, double> getTrackerTranslation(const unsigned int) const;
@@ -602,5 +611,5 @@ class LogFileLoader
 		std::shared_ptr<RotaryEncoderLoader> RotaryLoader = nullptr;
 		std::shared_ptr<std::map<unsigned int, TransformContainer>> m_all_transforms = nullptr;
 	};
-}; // namespace twophoton
+};	   // namespace twophoton
 #endif // namespace twophoton

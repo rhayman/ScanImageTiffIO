@@ -10,6 +10,7 @@
 # Compiled binaries/ directories containing them
 bin/
 build/
+include/extern/
 .vscode/
 .cache
 

@@ -4,6 +4,7 @@
 #include <limits>
 #include <tuple>
 #include <memory>
+#include <date/date.h>
 #include <algorithm>
 
 namespace twophoton
@@ -273,6 +274,26 @@ namespace twophoton
 		}
 	}
 
+	ptime SITiffHeader::getEpochTime(TIFF *m_tif)
+	{
+		if (m_tif)
+		{
+			if (TIFFReadDirectory(m_tif) == 1)
+			{
+				std::string imdescTag = getImageDescTag(m_tif, 0);
+				if (!imdescTag.empty())
+				{
+					std::string epoch_str = grabStr(imdescTag, "epoch = ");
+					auto p1 = epoch_str.find("[") + 1;
+					auto p2 = epoch_str.find("]") - 1;
+					std::istringstream is(epoch_str.substr(p1, p2));
+					is >> date::parse(epoch_time_fmt, m_epoch_time);
+					return m_epoch_time;
+				}
+			}
+		}
+	}
+
 	/* -----------------------------------------------------------
 	class SITiffReader
 	------------------------------------------------------------*/
@@ -289,6 +310,7 @@ namespace twophoton
 			headerdata = new SITiffHeader{this};
 			headerdata->versionCheck(m_tif);
 			headerdata->getSoftwareTag(m_tif);
+			headerdata->getEpochTime(m_tif);
 			isopened = true;
 			return true;
 		}
@@ -685,11 +707,11 @@ namespace twophoton
 		return LogLoader->load();
 	}
 
-
-  bool SITiffIO::openRotary(std::string fname) {
-    RotaryLoader = std::make_shared<RotaryEncoderLoader>(fname);
-    return RotaryLoader->load();
-  }
+	bool SITiffIO::openRotary(std::string fname)
+	{
+		RotaryLoader = std::make_shared<RotaryEncoderLoader>(fname);
+		return RotaryLoader->load();
+	}
 
 	bool SITiffIO::openXML(std::string fname)
 	{
@@ -853,7 +875,7 @@ namespace twophoton
 		{
 			TiffReader->getFrameNumAndTimeStamp(i, frame_num, tiff_ts);
 			logfile_idx = findNearestIdx(LogLoader->getTimes(), tiff_ts);
-			if(RotaryLoader)
+			if (RotaryLoader)
 				r = RotaryLoader->getRadianRotation(logfile_idx);
 			else
 				r = LogLoader->getRadianRotation(logfile_idx);
@@ -948,12 +970,29 @@ namespace twophoton
 		return result;
 	}
 
-	std::vector<ptime> SITiffIO::getLogFileTimes() const {
+	std::vector<ptime> SITiffIO::getLogFileTimes() const
+	{
 		return LogLoader->getPTimes();
 	}
 
-	std::vector<ptime> SITiffIO::getRotaryTimes() const {
+	std::vector<ptime> SITiffIO::getRotaryTimes() const
+	{
 		return RotaryLoader->getTimes();
+	}
+
+	ptime SITiffIO::getLogFileTriggerTime() const
+	{
+		return LogLoader->getTriggerTime();
+	}
+
+	ptime SITiffIO::getRotaryEncoderTriggerTime() const
+	{
+		return RotaryLoader->getTriggerTime();
+	}
+
+	ptime SITiffIO::getEpochTime() const
+	{
+		return TiffReader->getEpochTime();
 	}
 
 	std::tuple<unsigned int> SITiffIO::getNChannels() const

@@ -45,14 +45,16 @@ namespace twophoton
                 {
                     m_times.push_back(pt);
                     auto pos_mx = line.find(rot_token);
-                    auto rot_value = line.substr(pos_mx+4, std::string::npos);
+                    auto rot_value = line.substr(pos_mx + 4, std::string::npos);
                     m_rotations.push_back(std::stof(rot_value));
                 }
             }
             auto scope_triggered = line.find(rotary_trigger_token);
-            if (scope_triggered != std::string::npos) {
+            if (scope_triggered != std::string::npos && foundTrigger == false)
+            {
                 m_hasAcquisition = true;
                 m_trigger_time = pt;
+                foundTrigger = true;
             }
         }
         return true;
@@ -68,7 +70,8 @@ namespace twophoton
         return m_rotations;
     }
 
-    double RotaryEncoderLoader::getRadianRotation(const int & index) const {
+    double RotaryEncoderLoader::getRadianRotation(const int &index) const
+    {
         return deg2rad(m_rotations[index]);
     }
 
