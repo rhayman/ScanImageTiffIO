@@ -55,7 +55,7 @@ int findNearestIdx(const std::vector<T> &toBeSearched, const T &findMe)
 {
 	if (!(toBeSearched.empty()))
 	{
-		auto low = std::lower_bound(toBeSearched.begin(), toBeSearched.end(), findMe);
+		auto low = std::upper_bound(toBeSearched.begin(), toBeSearched.end(), findMe);
 		auto idx = low - toBeSearched.begin();
 		return idx;
 	}
@@ -114,6 +114,7 @@ namespace twophoton
 	static constexpr char epoch_time_fmt[] = "%Y  %m %d %H %M %S";
 	using FpMilliseconds = std::chrono::duration<float, std::chrono::milliseconds::period>;
 	using ptime = std::chrono::system_clock::time_point;
+	using namespace std::chrono_literals;
 
 	// Convert radians to degrees...
 	static inline double rad2deg(double rad) { return rad * (180.0 / M_PI); }
@@ -369,11 +370,10 @@ namespace twophoton
 		std::vector<ptime> getPTimes() const { return m_ptimes; }
 		std::vector<double> getTimes() const { return m_times; } // in ms
 		std::vector<double> getTheta() const { return m_rotations_in_rads; };
-		bool interpTiffData(std::vector<double> tiffTimes);
 		bool isloaded = false;
 
 	protected:
-		bool _calculateDurationsAndRotations();
+		bool _calculateDurationsAndRotations(bool convertToRadians=true);
 		void setTriggerIndex(const int &n) { m_trigger_index = n; };
 		std::string m_filename;
 		std::vector<ptime> m_ptimes;

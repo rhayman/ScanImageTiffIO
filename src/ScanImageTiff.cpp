@@ -847,7 +847,6 @@ namespace twophoton
 		if (LogLoader == nullptr)
 		{
 			std::cout << "WARNING: Log file is not loaded" << std::endl;
-			return;
 		}
 		if (RotaryLoader == nullptr)
 		{
@@ -861,9 +860,9 @@ namespace twophoton
 		TiffReader->readheader(); // to get the number of channels...
 		auto nchans = TiffReader->getSavedChans().size();
 
-		double tiff_ts, x, z, r;
-		unsigned int frame_num;
-		int logfile_idx;
+		double tiff_ts = 0, x = 0, z = 0, r = 0;
+		unsigned int frame_num = 0;
+		int logfile_idx = 0, rotary_idx = 0;
 		TransformContainer tc{};
 
 		if (m_all_transforms == nullptr)
@@ -871,17 +870,24 @@ namespace twophoton
 		else
 			m_all_transforms->clear();
 
+		auto tiff_acquisition_start = getEpochTime();
+
 		for (int i = startFrame; i < endFrame * nchans; i += nchans)
 		{
 			TiffReader->getFrameNumAndTimeStamp(i, frame_num, tiff_ts);
-			logfile_idx = findNearestIdx(LogLoader->getTimes(), tiff_ts);
-			if (RotaryLoader)
-				r = RotaryLoader->getRadianRotation(logfile_idx);
-			else
+			auto chrono_time = tiff_ts * 1000000 * 1us;
+			auto int_chrono = std::chrono::duration_cast<std::chrono::microseconds>(chrono_time);
+			auto frame_time = tiff_acquisition_start + int_chrono;
+			if (LogLoader) {
+				logfile_idx = findNearestIdx(LogLoader->getPTimes(), frame_time);
+				x = LogLoader->getXTranslation(logfile_idx);
+				z = LogLoader->getZTranslation(logfile_idx);
 				r = LogLoader->getRadianRotation(logfile_idx);
-			x = LogLoader->getXTranslation(logfile_idx);
-			z = LogLoader->getZTranslation(logfile_idx);
-
+			}
+			if (RotaryLoader) {
+				rotary_idx = findNearestIdx(RotaryLoader->getPTimes(), frame_time);
+				r = RotaryLoader->getRadianRotation(rotary_idx);
+			}
 			tc.m_framenumber = (int)(i / nchans);
 			tc.m_timestamp = tiff_ts;
 			tc.setPosData(x, z, r);

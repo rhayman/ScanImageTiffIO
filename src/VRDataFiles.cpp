@@ -64,41 +64,25 @@ namespace twophoton
         return std::distance(std::begin(vec), it);
     }
 
-    bool VRDataFile::_calculateDurationsAndRotations()
+    bool VRDataFile::_calculateDurationsAndRotations(bool convertToRadians)
     {
         auto first_time = getTriggerTime();
         unsigned int count = 0;
+        double raw_rotation = 0;
         for (std::vector<ptime>::iterator i = m_ptimes.begin(); i != m_ptimes.end(); ++i)
         {
             auto duration = *i - first_time;
             m_times.push_back(FpMilliseconds(duration).count() / 1000.0);
-            auto raw_rotation = 2 * M_PI * (double(m_rotations[count]) / (double)rotary_encoder_units_per_turn);
-            m_rotations_in_rads.push_back(constrainAngleToPi(raw_rotation));
+            if ( convertToRadians) {
+                raw_rotation = 2 * M_PI * (double(m_rotations[count]) / (double)rotary_encoder_units_per_turn);
+                m_rotations_in_rads.push_back(constrainAngleToPi(raw_rotation));
+            }
+            else {
+                m_rotations_in_rads.push_back(m_rotations[count]);
+            }
             ++count;
         }
         return true;
-    }
-
-    bool VRDataFile::interpTiffData(std::vector<double> tiffTimestamps)
-    {
-        if (!(m_times.empty()))
-        {
-            std::cout << "\nInterpolating logfile data from .tiff file timestamps..." << std::endl;
-            std::vector<double>::iterator low;
-            std::vector<double> interpRotations;
-            for (std::vector<double>::iterator i = tiffTimestamps.begin(); i != tiffTimestamps.end(); ++i)
-            {
-                low = std::lower_bound(m_times.begin(), m_times.end(), *i);
-                interpRotations.push_back(m_rotations_in_rads[low - m_times.begin()]);
-            }
-            m_rotations_in_rads.resize(interpRotations.size());
-            m_rotations_in_rads.shrink_to_fit();
-            m_rotations_in_rads = interpRotations;
-            std::cout << "\nFinished interpolating logfile data." << std::endl;
-            return true;
-        }
-        else
-            return false;
     }
 
     bool RotaryEncoderLoader::load()
@@ -108,6 +92,7 @@ namespace twophoton
         std::string line, old_line, s1;
         ptime pt;
         ptime old_time;
+        ptime tmp_trigger_ptime;
         std::size_t pos;
         double rotation;
         std::cout << "Loading rotary encoder file: " << m_filename << std::endl;
@@ -133,11 +118,24 @@ namespace twophoton
             if (scope_triggered != std::string::npos && foundTrigger == false)
             {
                 m_hasAcquisition = true;
-                m_trigger_time = pt;
+                tmp_trigger_ptime = pt;
                 foundTrigger = true;
             }
+            old_time = pt;
         }
-        return true;
+        for (unsigned int i = 0; i < m_ptimes.size(); ++i)
+        {
+            if (tmp_trigger_ptime == m_ptimes[i])
+            {
+                m_trigger_time = m_ptimes[i];
+                setTriggerIndex(i);
+            }
+        }
+        if (calculateDurationsAndRotations())
+        {
+            isloaded = true;
+        }
+        return isloaded;
     }
     bool RotaryEncoderLoader::calculateDurationsAndRotations()
     {
@@ -150,7 +148,7 @@ namespace twophoton
         {
             std::cout << "Calculating rotations and times from rotary encoder data..." << std::endl;
         }
-        auto result = _calculateDurationsAndRotations();
+        auto result = _calculateDurationsAndRotations(false);
         std::cout << "Finished calculating rotations and times." << std::endl;
         std::cout << "The rotary encoder file has " << m_times.size() << " timestamps in it." << std::endl;
         return result;
@@ -188,7 +186,6 @@ namespace twophoton
         std::size_t pos, posZ;
         double x_trans, z_trans;
         unsigned int trig_index = 0;
-        int line_index = 0;
         std::cout << "\nLoading log file: " << m_filename << std::endl;
         while (std::getline(ifs, line))
         {
@@ -265,7 +262,6 @@ namespace twophoton
                 tmp_trigger_ptime = pt;
             }
             old_time = pt;
-            ++line_index;
         }
         /* I think we should set the start of logfile -> tifffile registration
         at the time point immediately following the string that says acquisition
