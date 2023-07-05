@@ -73,11 +73,13 @@ namespace twophoton
         {
             auto duration = *i - first_time;
             m_times.push_back(FpMilliseconds(duration).count() / 1000.0);
-            if ( convertToRadians) {
+            if (convertToRadians)
+            {
                 raw_rotation = 2 * M_PI * (double(m_rotations[count]) / (double)rotary_encoder_units_per_turn);
                 m_rotations_in_rads.push_back(constrainAngleToPi(raw_rotation));
             }
-            else {
+            else
+            {
                 m_rotations_in_rads.push_back(m_rotations[count]);
             }
             ++count;
@@ -139,15 +141,7 @@ namespace twophoton
     }
     bool RotaryEncoderLoader::calculateDurationsAndRotations()
     {
-        if (!containsAcquisition())
-        {
-            std::cout << "Warning: The file " << m_filename << " has no microscope trigger associated" << std::endl;
-            return false;
-        }
-        else
-        {
-            std::cout << "Calculating rotations and times from rotary encoder data..." << std::endl;
-        }
+        std::cout << "Calculating rotations and times from rotary encoder data..." << std::endl;
         auto result = _calculateDurationsAndRotations(false);
         std::cout << "Finished calculating rotations and times." << std::endl;
         std::cout << "The rotary encoder file has " << m_times.size() << " timestamps in it." << std::endl;
