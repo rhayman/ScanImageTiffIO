@@ -353,86 +353,68 @@ namespace twophoton
 		std::string replaceHeaderValue(std::string &, std::string, std::string);
 	};
 
-	class LogFileLoader
+	// An abstract base class for LogFileLoader and RotaryFileLoader
+	class VRDataFile
 	{
 	public:
-		LogFileLoader(){};
-		LogFileLoader(std::string);
-		~LogFileLoader(){};
-		void setFilename(std::string);
-		std::string getFilename() { return filename; }
-		bool load();
-		int getRotation(const int &) const;
-		double getRadianRotation(const int &) const;
-		double getXTranslation(const int &) const;
-		double getZTranslation(const int &) const;
-		double getTime(const int &) const;
-		std::vector<double> getX() const;
-		std::vector<double> getZ() const;
-		std::vector<double> getTheta() const;
-		std::vector<int> getLineNums() const;
-		std::vector<double> getTimes() const; // in miliiseconds
-											  /* frame acquisition time in fractional seconds - a key in the tiff header*/
-		int findIndexOfNearestDuration(double) const;
-		int getTriggerIndex() const;
-		ptime getTriggerTime() const;
-		std::vector<ptime> getPTimes() const;
-		bool containsAcquisition() const;
-		bool interpTiffData(std::vector<double> /*timestamps from tiff headers*/);
-		/*
-		Interpolate x, z, and theta based on tiff header
-		timestamps (taken from acquisition time of frame from scanimage)
-		*/
-		// void interpolatePositionData(std::vector<double>);
-		/* given a tiff file timestamp returns the nearest index in the logfile
-		that matches that timestamp
-		*/
+		explicit VRDataFile(std::string fname) { m_filename = fname; }
+		std::string getFilename() const { return m_filename; }
+		virtual bool load() = 0;
+		double getRadianRotation(const int &i) const { return m_rotations_in_rads[i]; }
+		int getRotation(const int &i) const { return m_rotations[i]; }
+		double getTime(const int &i) const { return m_times[i]; }
+		int getTriggerIndex() const { return m_trigger_index; }
+		bool containsAcquisition() const { return m_hasAcquisition; }
+		ptime getTriggerTime() const { return m_trigger_time; }
+		std::vector<ptime> getPTimes() const { return m_ptimes; }
+		std::vector<double> getTimes() const { return m_times; } // in ms
+		std::vector<double> getTheta() const { return m_rotations_in_rads; };
+		bool interpTiffData(std::vector<double> tiffTimes);
 		bool isloaded = false;
-		// findStableFrames: pairs of start and end frames for frames with no head rotation
-		std::vector<std::pair<int, int>> findStableFrames(const unsigned int minFrames, const double minAngle = 1e-3);
+
+	protected:
+		bool _calculateDurationsAndRotations();
+		void setTriggerIndex(const int &n) { m_trigger_index = n; };
+		std::string m_filename;
+		std::vector<ptime> m_ptimes;
+		std::vector<double> m_times;
+		std::vector<double> m_rotations; // these are in degrees in the file
+		std::vector<double> m_rotations_in_rads;
+		bool m_hasAcquisition = false;
+		bool foundTrigger = false;
+		ptime m_trigger_time;
+		int m_trigger_index = 0;
+		double m_init_rotation = 0;
+
+	private:
+		int m_idx = 0;
+	};
+
+	class LogFileLoader : public VRDataFile
+	{
+	public:
+		explicit LogFileLoader(std::string fname) : VRDataFile(fname){};
+		bool load() override;
+		double getXTranslation(const int &i) const { return m_x_translation[i]; };
+		double getZTranslation(const int &i) const { return m_z_translation[i]; };
+		std::vector<double> getX() const { return m_x_translation; };
+		std::vector<double> getZ() const { return m_z_translation; };
+		bool calculateDurationsAndRotations();
 
 	private:
 		// processData converts log file times to fractional seconds
 		// and converts rotations from log file units (rotary encoder units)
 		// into radians
-		bool calculateDurationsAndRotations();
-		bool m_interpolationDone = false;
-		std::string filename;
-		std::vector<int> logfile_line_numbers;
-		std::vector<int> rotation;
-		std::vector<double> x_translation;
-		std::vector<double> z_translation;
-		std::vector<double> rotation_in_rads;
-		std::vector<ptime> ptimes;
-		std::vector<double> times;
-		int trigger_index = 0;
-		int idx = 0; // index for location into various vectors
-		int init_rotation = 0;
-		bool hasAcquisition = false;
-		ptime trigger_ptime;
-		void setTriggerIndex(int);
+		std::vector<double> m_x_translation;
+		std::vector<double> m_z_translation;
 	};
 
-	class RotaryEncoderLoader
+	class RotaryEncoderLoader : public VRDataFile
 	{
 	public:
-		RotaryEncoderLoader();
-		RotaryEncoderLoader(const std::string &);
-		~RotaryEncoderLoader();
-		std::string getFilename() const { return m_filename; };
-		bool load();
-		std::vector<ptime> getTimes() const;
-		std::vector<double> getRotations() const;
-		double getRadianRotation(const int &) const;
-		ptime getTriggerTime() const { return m_trigger_time; };
-
-	private:
-		std::string m_filename;
-		std::vector<ptime> m_times;
-		std::vector<double> m_rotations; // these are in degrees in the file
-		bool m_hasAcquisition = false;
-		bool foundTrigger = false;
-		ptime m_trigger_time;
+		explicit RotaryEncoderLoader(std::string fname) : VRDataFile(fname){};
+		bool load() override;
+		bool calculateDurationsAndRotations();
 	};
 	/*
 		This class holds the transformations that are to be applied to the images in a 2-photon (2P)

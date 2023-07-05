@@ -18,7 +18,7 @@ if (${ENABLE_TESTS})
         tiffReader_test.cpp
         SITiffIO_test.cpp
         ../src/ScanImageTiff.cpp
-        ../src/LogFileLoader.cpp
+        ../src/VRDataFiles.cpp
     )
     
     target_link_libraries(unit_tests PUBLIC 

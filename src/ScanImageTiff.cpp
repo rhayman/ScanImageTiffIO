@@ -977,7 +977,7 @@ namespace twophoton
 
 	std::vector<ptime> SITiffIO::getRotaryTimes() const
 	{
-		return RotaryLoader->getTimes();
+		return RotaryLoader->getPTimes();
 	}
 
 	ptime SITiffIO::getLogFileTriggerTime() const

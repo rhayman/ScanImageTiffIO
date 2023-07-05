@@ -52,8 +52,7 @@ include_directories(( ${Python3_NumPy_INCLUDE_DIRS}))
 pybind11_add_module(scanimagetiffio SHARED 
     src/ScanImageTiffPy.cpp
     src/ScanImageTiff.cpp 
-    src/LogFileLoader.cpp
-    src/RotaryEncoder.cpp
+    src/VRDataFiles.cpp
 )
 
 target_link_libraries(scanimagetiffio
@@ -72,8 +71,7 @@ install(TARGETS scanimagetiffio DESTINATION ${Python3_SITEARCH}/scanimagetiffio)
 
 add_library(${PROJECT_NAME} SHARED 
     src/ScanImageTiff.cpp 
-    src/LogFileLoader.cpp
-    src/RotaryEncoder.cpp
+    src/VRDataFiles.cpp
 )
 set_target_properties(${PROJECT_NAME} PROPERTIES PUBLIC_HEADER include/ScanImageTiff.h)
 target_link_libraries(${PROJECT_NAME}
