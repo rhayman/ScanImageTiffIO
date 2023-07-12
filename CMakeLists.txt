@@ -64,6 +64,7 @@ target_link_libraries(scanimagetiffio
 )
 # # remove the "lib" from start of the library name
 set_target_properties(scanimagetiffio PROPERTIES PREFIX "")
+# generate the compile_commands.json file for clangd
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 
 # install
