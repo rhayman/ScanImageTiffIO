@@ -157,11 +157,12 @@ bool LogFileLoader::load() {
   ifs.unsetf(std::ios_base::skipws);
   std::string line, old_line, s1;
   ptime pt;
-  ptime old_time; //(boost::gregorian::date(2002,1,10),boost::posix_time::time_duration(1,2,3));//
-                  //old line is our "memory" - see comment in while loop below
-                  //and header file
-                  // see comment before loop that sets trigger index below
-                  // (after the next while statement)
+  ptime
+      old_time; //(boost::gregorian::date(2002,1,10),boost::posix_time::time_duration(1,2,3));//
+                // old line is our "memory" - see comment in while loop below
+                // and header file
+                // see comment before loop that sets trigger index below
+                // (after the next while statement)
   // to understand why this temporary is used
   ptime tmp_trigger_ptime;
   std::size_t pos, posZ;
