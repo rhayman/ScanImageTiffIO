@@ -1,11 +1,16 @@
 #include "../include/ScanImageTiff.h"
 #include "../include/rapidxml.hpp"
+#include "tiffio.h"
 #include <algorithm>
 #include <date/date.h>
+#include <filesystem>
 #include <limits>
 #include <memory>
+#include <stdexcept>
 #include <stdio.h>
 #include <tuple>
+
+namespace fs = std::filesystem;
 
 namespace twophoton {
 void SITiffHeader::read(TIFF *m_tif, int dirnum) {
@@ -65,92 +70,126 @@ void SITiffHeader::versionCheck(TIFF *m_tif) {
 
 std::string SITiffHeader::getSoftwareTag(TIFF *m_tif, unsigned int dirnum) {
   if (m_tif) {
-    TIFFSetDirectory(m_tif, dirnum);
-    if (version == 0) {
-      // with older versions the information for channels live
-      // in a different tag (ImageDescription) and some of that
-      // information doesn't even exist so has to be inferred...
-      std::string imdesc = getImageDescTag(m_tif, dirnum);
-      if (!imdesc.empty()) {
-        std::string chanSave = grabStr(imdesc, channelSaved);
-        chanSaved[0] = 1;
+    if (TIFFSetDirectory(m_tif, dirnum) == 1) {
+      if (version == 0) {
+        // with older versions the information for channels live
+        // in a different tag (ImageDescription) and some of that
+        // information doesn't even exist so has to be inferred...
+        std::string imdesc = getImageDescTag(m_tif, dirnum);
+        if (!imdesc.empty()) {
+          std::string chanSave = grabStr(imdesc, channelSaved);
+          chanSaved[0] = 1;
 
-        std::string chanLUTs = grabStr(imdesc, channelLUT);
-        parseChannelLUT(chanLUTs);
+          std::string chanLUTs = grabStr(imdesc, channelLUT);
+          parseChannelLUT(chanLUTs);
 
-        std::string chanOffsets = grabStr(imdesc, channelOffsets);
-        parseChannelOffsets(chanOffsets);
-        return imdesc;
+          std::string chanOffsets = grabStr(imdesc, channelOffsets);
+          parseChannelOffsets(chanOffsets);
+          return imdesc;
+        } else
+          return std::string();
+      } else if (version == 1) {
+        char *swTag;
+        if (TIFFGetField(m_tif, TIFFTAG_SOFTWARE, &swTag) == 1) {
+          m_swTag = swTag;
+          std::string chanNames = grabStr(m_swTag, channelNames);
+          std::string chanLUTs = grabStr(m_swTag, channelLUT);
+          std::string chanSave = grabStr(m_swTag, channelSaved);
+          std::string chanOffsets = grabStr(m_swTag, channelOffsets);
+          parseChannelLUT(chanLUTs);
+          parseChannelOffsets(chanOffsets);
+          parseSavedChannels(chanSave);
+          return m_swTag;
+        } else
+          return std::string();
       } else
         return std::string();
-    } else if (version == 1) {
-      char *swTag;
-      if (TIFFGetField(m_tif, TIFFTAG_SOFTWARE, &swTag) == 1) {
-        m_swTag = swTag;
-        std::string chanNames = grabStr(m_swTag, channelNames);
-        std::string chanLUTs = grabStr(m_swTag, channelLUT);
-        std::string chanSave = grabStr(m_swTag, channelSaved);
-        std::string chanOffsets = grabStr(m_swTag, channelOffsets);
-        parseChannelLUT(chanLUTs);
-        parseChannelOffsets(chanOffsets);
-        parseSavedChannels(chanSave);
-        return m_swTag;
-      } else
-        return std::string();
-    } else
+    } else {
       return std::string();
+    }
   }
   return std::string();
 }
 
 std::string SITiffHeader::getImageDescTag(TIFF *m_tif, unsigned int dirnum) {
   if (m_tif) {
-    TIFFSetDirectory(m_tif, dirnum);
-    char *imdesc;
-    if (TIFFGetField(m_tif, TIFFTAG_IMAGEDESCRIPTION, &imdesc) == 1) {
-      m_imdesc = imdesc;
-      return imdesc;
-    } else {
-      std::cout << "Image description tag empty\n";
-      return std::string();
+    if (TIFFSetDirectory(m_tif, dirnum) == 1) {
+      char *imdesc;
+      if (TIFFGetField(m_tif, TIFFTAG_IMAGEDESCRIPTION, &imdesc) == 1) {
+        m_imdesc = imdesc;
+        return imdesc;
+      } else {
+        std::cout << "Image description tag empty\n";
+        return std::string();
+      }
     }
   }
-  std::cout << "m_tif not valid\n";
   return std::string();
 }
 
 unsigned int SITiffHeader::getSizePerDir(TIFF *m_tif,
                                          unsigned int dirnum) const {
   if (m_tif) {
-    TIFFSetDirectory(m_tif, dirnum);
-    uint32_t length;
-    uint32_t width;
-    TIFFGetField(m_tif, TIFFTAG_IMAGELENGTH, &length);
-    TIFFGetField(m_tif, TIFFTAG_IMAGEWIDTH, &width);
-    // hard-code the sample format (signed int) as SI seems to only
-    // use this which is of size 4
-    return (length * width * 4);
+    if (TIFFSetDirectory(m_tif, dirnum) == 1) {
+      uint32_t length;
+      uint32_t width;
+      TIFFGetField(m_tif, TIFFTAG_IMAGELENGTH, &length);
+      TIFFGetField(m_tif, TIFFTAG_IMAGEWIDTH, &width);
+      // hard-code the sample format (signed int) as SI seems to only
+      // use this which is of size 4
+      return (length * width * 4);
+    } else {
+      return 0;
+    }
   } else
     return 0;
 }
 
 void SITiffHeader::printHeader(TIFF *m_tif, int framenum) const {
   if (m_tif) {
-    TIFFSetDirectory(m_tif, framenum);
-    TIFFPrintDirectory(m_tif, stdout, 0);
+    if (TIFFSetDirectory(m_tif, framenum) == 1)
+      TIFFPrintDirectory(m_tif, stdout, 0);
+    else
+      return;
   }
 }
 
-int SITiffHeader::countDirectories(TIFF *m_tif) const {
+int SITiffHeader::countDirectories(TIFF *m_tif) {
   int count = 0;
+  try {
+    count = quickCountDirs(m_tif);
+  } catch (...) {
+    std::cout << "quick count failed, iterating through whole file..."
+              << std::endl;
+  }
   if (m_tif) {
-    TIFFSetDirectory(m_tif, count);
-    do {
-      ++count;
-    } while (TIFFReadDirectory(m_tif) == 1);
-    return count;
+    if (TIFFSetDirectory(m_tif, count) == 1) {
+      do {
+        ++count;
+      } while (TIFFReadDirectory(m_tif) == 1);
+      return count;
+    } else {
+      return count;
+    }
   }
   return 0;
+}
+
+int SITiffHeader::quickCountDirs(TIFF *m_tif) {
+  // Calculate the rough size of a directory in the tiff file
+  // including both the header and the image data
+  auto sw_tag = getSoftwareTag(m_tif, 0);
+  auto im_tag = getImageDescTag(m_tif, 0);
+  auto header_str = sw_tag + im_tag;
+  auto im_size_per_directory = getSizePerDir(m_tif, 0);
+  im_size_per_directory /= 2;
+  auto size_per_dir = im_size_per_directory + (header_str.size());
+  // get the size of the whole file on disk
+  auto tiff_name = TIFFFileName(m_tif);
+  std::filesystem::path f = std::string(tiff_name);
+  auto file_size = std::filesystem::file_size(f);
+  int estimated_num_frames = int(file_size / (size_per_dir));
+  return estimated_num_frames;
 }
 
 int SITiffHeader::scrapeHeaders(TIFF *m_tif, int &count) {
@@ -237,8 +276,11 @@ ptime SITiffHeader::getEpochTime(TIFF *m_tif) {
         is >> date::parse(epoch_time_fmt, m_epoch_time);
         return m_epoch_time;
       }
+      return ptime();
     }
+    return ptime();
   }
+  return ptime();
 }
 
 /* -----------------------------------------------------------
@@ -272,12 +314,14 @@ bool SITiffReader::readheader() const {
 std::vector<double> SITiffReader::getAllTimeStamps() const {
   if (m_tif) {
     std::cout << "Starting scraping timestamps..." << std::endl;
-    TIFFSetDirectory(m_tif, 0);
-    int count = 0;
-    do {
-    } while (headerdata->scrapeHeaders(m_tif, count) == 0);
-    std::cout << "Finished scraping timestamps..." << std::endl;
-    return headerdata->getTimeStamps();
+    if (TIFFSetDirectory(m_tif, 0) == 1) {
+      int count = 0;
+      do {
+      } while (headerdata->scrapeHeaders(m_tif, count) == 0);
+      std::cout << "Finished scraping timestamps..." << std::endl;
+      return headerdata->getTimeStamps();
+    }
+    return std::vector<double>();
   }
   return std::vector<double>();
 }
@@ -575,6 +619,7 @@ bool SITiffIO::openTiff(const std::string &fname, const std::string mode) {
     if (TiffReader->open()) {
       TiffReader->getSWTag(0); // ensures num channels are read
       auto chans = TiffReader->getSavedChans();
+      TiffReader->printHeaderSize();
       if (chans.empty() || chans.size() == 0)
         m_nchans = 1;
       else
@@ -871,6 +916,14 @@ std::vector<double> SITiffIO::getFrameNumbers() const {
   return result;
 }
 
+std::string SITiffIO::getSWTag(const int &n) const {
+  return TiffReader->getSWTag(n);
+}
+
+std::string SITiffIO::getImageDescTag(const int &n) const {
+  return TiffReader->getImDescTag(n);
+}
+
 std::vector<ptime> SITiffIO::getLogFileTimes() const {
   return LogLoader->getPTimes();
 }
@@ -906,4 +959,35 @@ std::pair<int, int> SITiffIO::getChannelLUT() {
   }
 }
 
+void SITiffIO::saveTiffTail(const int &n) {
+  // saves the last n frames of the tiff file currently
+  // open for reading
+  if (TiffReader == nullptr) {
+    std::invalid_argument("No file open for reading!");
+  }
+  if (!TiffWriter) {
+    TiffWriter = std::make_shared<SITiffWriter>();
+    fs::path reader_name = fs::path(TiffReader->getfilename());
+    auto new_name = reader_name.stem().string() + "_tail" +
+                    reader_name.extension().string();
+    TiffWriter->open(new_name);
+  }
+  auto n_frames = TiffReader->countDirectories();
+  std::cout << "Actual count = " << n_frames << std::endl;
+  if ((n_frames - n) <= 0) {
+    std::invalid_argument("n minus the total number of frames must be > 0");
+  }
+  std::string sw_tag, im_tag;
+  std::cout << "n_frames - n = " << (n_frames - n) << std::endl;
+  for (size_t i = n_frames - n; i < n_frames; ++i) {
+    auto this_dir = (i * m_nchans - (m_nchans - channel2display));
+    std::cout << "this_dir = " << this_dir << std::endl;
+    sw_tag = TiffReader->getSWTag(this_dir);
+    im_tag = TiffReader->getImDescTag(this_dir);
+    auto this_frame = TiffReader->readframe(this_dir);
+    TiffWriter->writeSIHdr(sw_tag, im_tag);
+    TiffWriter->writeHdr(this_frame);
+    *TiffWriter << this_frame;
+  }
+}
 } // namespace twophoton

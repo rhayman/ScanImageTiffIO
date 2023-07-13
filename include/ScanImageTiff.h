@@ -197,7 +197,7 @@ public:
   void printHeader(TIFF *m_tif, int framenum) const;
   unsigned int getSizePerDir(TIFF *m_tif, unsigned int dirnum = 0) const;
   std::vector<double> getTimeStamps() const { return m_timestamps; }
-  int countDirectories(TIFF *) const;
+  int countDirectories(TIFF *);
   const std::string getFrameNumberString() const { return frameString; }
   const std::string getFrameTimeStampString() const { return frameTimeStamp; }
   ptime getEpochTime(TIFF *m_tif);
@@ -216,7 +216,7 @@ private:
   void parseChannelOffsets(std::string); // fills out chanOffs map (see below)
   void parseSavedChannels(
       std::string savedchans); // fills out chanSaved map (see below)
-
+  int quickCountDirs(TIFF *);
   // Member variables
   // target key strings to grab from the tiff header (using grabStr)
   // these are set in versionCheck()
@@ -311,6 +311,12 @@ public:
     h = m_imageheight;
     w = m_imagewidth;
   }
+
+  void printHeaderSize() {
+    auto sw_tag = getSWTag(0);
+    auto im_tag = getImDescTag(0);
+    auto whole_header = sw_tag + im_tag;
+  }
   // called only by SITiffHeader
   void setImageSize(int h, int w) {
     m_imageheight = h;
@@ -348,7 +354,10 @@ public:
   virtual bool open(std::string outputPath);
   virtual bool close();
   virtual void operator<<(arma::Mat<int16_t> &frame);
+  // writeSIHdr adds ScanImage specific header information
   bool writeSIHdr(const std::string swTag, const std::string imDescTag);
+  // writeHdr fills out some tiff tags directly from information contained
+  // in the image such as width & length and hard codes some other tags
   bool writeHdr(const arma::Mat<int16_t> &img);
   std::string modifyChannel(std::string &, const unsigned int);
 
@@ -574,8 +583,11 @@ public:
   ptime getLogFileTriggerTime() const;
   ptime getRotaryEncoderTriggerTime() const;
   ptime getEpochTime() const;
+  void saveTiffTail(const int &);
   std::pair<int, int> getChannelLUT();
   std::tuple<double, double, double> getPos(const unsigned int) const;
+  std::string getSWTag(const int &) const;
+  std::string getImageDescTag(const int &) const;
   std::tuple<double, double> getTrackerTranslation(const unsigned int) const;
   std::tuple<std::vector<double>, std::vector<double>>
   getAllTrackerTranslation() const;

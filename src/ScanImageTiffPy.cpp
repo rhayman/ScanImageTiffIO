@@ -12,7 +12,7 @@ PYBIND11_MODULE(scanimagetiffio, m) {
       .def(py::init<>())
       .def("open_tiff_file", &twophoton::SITiffIO::openTiff, "Open a tiff file",
            py::arg("fname"), py::arg("'r' or 'w'"), R"mydelimiter(
-	open_tiff_file
+Open a tiff file for reading
 
 	Parameters
 	----------
@@ -24,7 +24,6 @@ PYBIND11_MODULE(scanimagetiffio, m) {
            "Close the writer tiff file")
       .def("open_log_file", &twophoton::SITiffIO::openLog, "Open a log file",
            py::arg("fname"), R"mydelimiter(
-	open_log_file
 
 	Parameters
 	----------
@@ -43,15 +42,51 @@ PYBIND11_MODULE(scanimagetiffio, m) {
       .def("get_n_frames", &twophoton::SITiffIO::countDirectories,
            "Count the number of frames")
       .def("set_channel", &twophoton::SITiffIO::setChannel,
-           "Sets the channel to take frames from", py::arg("channel"))
+           "Sets the channel to take frames from", py::arg("channel"),
+           R"mydelimiter(
+
+  Parameters
+  ----------
+  channel : int
+    The channel to take frames from
+
+  See also
+  --------
+  get_n_channels : get the number of channels available in this file
+           )mydelimiter")
       .def_readonly("get_n_channels", &twophoton::SITiffIO::m_nchans,
                     "Get the number of channels")
       .def_readonly("get_display_channel",
                     &twophoton::SITiffIO::channel2display,
-                    "Get the channel to display")
+                    "Get the channel to display", R"mydelimiter(
+
+  Returns
+  -------
+  channel : int
+    The channel that frames are currently being taken from
+
+  See also
+  --------
+  get_n_channels : The number of channels available in this file
+           )mydelimiter")
       .def("interp_times", &twophoton::SITiffIO::interpolateIndices,
            "Interpolate the times in the tiff frames to events (position and "
-           "time) in the log file")
+           "time) in the log file",
+           R"mydelimiter(
+
+  Calculates the positions and rotations that correspond to the timestamps
+  present in the tiff file.
+
+  Notes
+  -----
+  Position (x and y) is taken from the log file and rotational angle from the
+  rotary encoder file. If no rotary encoder file is loaded then rotation is 
+  taken from the log file, but in recent versions of this software that will 
+  always contain a value of 0.
+  Because this function has to extract the timestamp for each frame of the 
+  tiff file it has to do an exhaustive (and linear) search which can take a 
+  long time with large files.
+           )mydelimiter")
       .def("get_pos", &twophoton::SITiffIO::getPos,
            "Gets a 3-tuple of X, Z and theta for the given frame",
            py::arg("i_frame"))
@@ -63,7 +98,6 @@ PYBIND11_MODULE(scanimagetiffio, m) {
       .def("get_frame", &twophoton::SITiffIO::readFrame,
            "Gets the data/ image for the given frame", py::arg("i_frame"),
            R"mydelimiter(
-	get_frame
 
 	Parameters
 	----------
@@ -72,8 +106,7 @@ PYBIND11_MODULE(scanimagetiffio, m) {
       .def("write_frame", &twophoton::SITiffIO::writeFrame,
            "Write frame to file", py::arg("frame"), py::arg("i_frame"),
            R"mydelimiter(
-	write_frame
-begin
+
 	Parameters
 	----------
 	i_frame: int - the number of the frame to write out. 
@@ -89,13 +122,29 @@ begin
       .def("get_frame_numbers", &twophoton::SITiffIO::getFrameNumbers,
            "Gets all the frame numbers from the interpolated data")
       .def("get_channel_LUT", &twophoton::SITiffIO::getChannelLUT,
-           "Gets the channel LUTs")
+           "Gets the channel LUTs", R"mydelimiter(
+  Returns
+  -------
+  2-tuples of the channel look-up-table (LUT) values
+           )mydelimiter")
       .def("get_log_times", &twophoton::SITiffIO::getLogFileTimes,
-           "Gets the times from the log file")
+           "Gets the times from the log file", R"mydelimiter(
+  Returns
+  -------
+  A list of datetimes extracted from the logfile
+           )mydelimiter")
       .def("get_rotary_times", &twophoton::SITiffIO::getRotaryTimes,
-           "Gets the times from the rotary file")
+           "Gets the times from the rotary file", R"mydelimiter(
+  Returns
+  -------
+  A list of datetimes extracted from the rotary file
+           )mydelimiter")
       .def("get_tiff_times", &twophoton::SITiffIO::getTiffTimeStamps,
-           "Gets the times from the tiff file")
+           "Gets the times from the tiff file", R"mydelimiter(
+  Returns
+  -------
+  A list of datetimes from the tiff file
+           )mydelimiter")
       .def("get_logfile_trigger_time",
            &twophoton::SITiffIO::getLogFileTriggerTime,
            "Gets the time the logfile registered microscope acquisition")
@@ -103,5 +152,12 @@ begin
            &twophoton::SITiffIO::getRotaryEncoderTriggerTime,
            "Gets the time the rotary encoder registered acquisition")
       .def("get_epoch_time", &twophoton::SITiffIO::getEpochTime,
-           "Gets the epoch time from the tiff header");
+           "Gets the epoch time from the tiff header")
+      .def("get_sw_tag", &twophoton::SITiffIO::getSWTag,
+           "Get the software tag part of the header for frame n")
+      .def("get_image_description_tag", &twophoton::SITiffIO::getImageDescTag,
+           "Get the image description part of the header for frame n")
+      .def(
+          "save_tail", &twophoton::SITiffIO::saveTiffTail,
+          "Save the last n frames of the tiff file currently open for reading");
 }
