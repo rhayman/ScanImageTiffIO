@@ -17,6 +17,7 @@ Open a tiff file for reading
 	Parameters
 	----------
 	fname: str - the name of the file to open
+  mode: str - the mode to open the file in. Either "r" or "w" for reading or writing respectively
 )mydelimiter")
       .def("close_reader_tif", &twophoton::SITiffIO::closeReaderTiff,
            "Close the tiff reader file")
