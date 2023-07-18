@@ -157,7 +157,14 @@ Open a tiff file for reading
            "Get the software tag part of the header for frame n")
       .def("get_image_description_tag", &twophoton::SITiffIO::getImageDescTag,
            "Get the image description part of the header for frame n")
-      .def(
-          "save_tail", &twophoton::SITiffIO::saveTiffTail,
-          "Save the last n frames of the tiff file currently open for reading");
+      .def("save_tail", &twophoton::SITiffIO::saveTiffTail,
+           "Save the last n frames of the tiff file currently open for reading",
+           py::arg("n") = 1000, py::arg("fname") = "",
+           R"mydelimiter(
+    Parameters
+    ----------
+    n_frames: int - the number of frames at the tail of the file currently open for reading to save
+    fname: str - the name of the file to save the last n_frame images to. This will 
+    default to the currently open file name with _tail appended just before the file
+    type extension)mydelimiter");
 }
