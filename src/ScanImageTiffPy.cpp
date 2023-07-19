@@ -14,9 +14,9 @@ PYBIND11_MODULE(scanimagetiffio, m) {
            py::arg("fname"), py::arg("'r' or 'w'"), R"mydelimiter(
 Open a tiff file for reading
 
-	Parameters
-	----------
-	fname: str - the name of the file to open
+  Parameters
+  ----------
+  fname: str - the name of the file to open
 )mydelimiter")
       .def("close_reader_tif", &twophoton::SITiffIO::closeReaderTiff,
            "Close the tiff reader file")
@@ -25,19 +25,19 @@ Open a tiff file for reading
       .def("open_log_file", &twophoton::SITiffIO::openLog, "Open a log file",
            py::arg("fname"), R"mydelimiter(
 
-	Parameters
-	----------
-	fname: str - the name of the log file to open. Must match the tiff file or position data will be wrong
+  Parameters
+  ----------
+  fname: str - the name of the log file to open. Must match the tiff file or position data will be wrong
 )mydelimiter")
       .def("open_rotary_file", &twophoton::SITiffIO::openRotary,
            "Open a rotary encoder log file")
       .def("open_xml_file", &twophoton::SITiffIO::openXML, "Open an xml file",
            py::arg("fname"), R"mydelimiter(
-	open_xml_file
+  open_xml_file
 
-	Parameters
-	----------
-	fname: str - the name of the xml file to open (DEPRECATED). These files were generated to summarise file processing
+  Parameters
+  ----------
+  fname: str - the name of the xml file to open (DEPRECATED). These files were generated to summarise file processing
 )mydelimiter")
       .def("get_n_frames", &twophoton::SITiffIO::countDirectories,
            "Count the number of frames")
@@ -99,21 +99,21 @@ Open a tiff file for reading
            "Gets the data/ image for the given frame", py::arg("i_frame"),
            R"mydelimiter(
 
-	Parameters
-	----------
-	i_frame: int - the number of the frame to read (1-indexed)
+  Parameters
+  ----------
+  i_frame: int - the number of the frame to read (1-indexed)
 )mydelimiter")
       .def("write_frame", &twophoton::SITiffIO::writeFrame,
            "Write frame to file", py::arg("frame"), py::arg("i_frame"),
            R"mydelimiter(
 
-	Parameters
-	----------
-	i_frame: int - the number of the frame to write out. 
-	
-	Note that an instance of scanimagetiffio must have both a file open for reading and
-	another open for writing for this function to copy the ScanImage headers as they need to be copied 
-	from the former to the latter.
+  Parameters
+  ----------
+  i_frame: int - the number of the frame to write out. 
+  
+  Note that an instance of scanimagetiffio must have both a file open for reading and
+  another open for writing for this function to copy the ScanImage headers as they need to be copied 
+  from the former to the latter.
 )mydelimiter")
       .def("get_all_x", &twophoton::SITiffIO::getX, "Gets all the X values")
       .def("get_all_z", &twophoton::SITiffIO::getZ, "Gets all the Z values")
