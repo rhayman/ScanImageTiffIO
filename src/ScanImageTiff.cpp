@@ -8,6 +8,7 @@
 #include <memory>
 #include <stdexcept>
 #include <stdio.h>
+#include <string>
 #include <tuple>
 
 namespace fs = std::filesystem;
@@ -155,20 +156,19 @@ void SITiffHeader::printHeader(TIFF *m_tif, int framenum) const {
 }
 
 int SITiffHeader::countDirectories(TIFF *m_tif) {
-  int count = 0;
-  try {
-    count = quickCountDirs(m_tif);
-  } catch (...) {
-    std::cout << "quick count failed, iterating through whole file..."
-              << std::endl;
-  }
   if (m_tif) {
+    int count = 0;
+    count = quickCountDirs(m_tif);
     if (TIFFSetDirectory(m_tif, count) == 1) {
       do {
         ++count;
       } while (TIFFReadDirectory(m_tif) == 1);
       return count;
-    } else {
+    } else { // something went wrong with counting so set counter to 0
+      count = 0;
+      do {
+        ++count;
+      } while (TIFFReadDirectory(m_tif) == 1);
       return count;
     }
   }
@@ -615,6 +615,8 @@ SITiffIO::~SITiffIO() {}
 bool SITiffIO::openTiff(const std::string &fname, const std::string mode) {
 
   if (mode == "r") {
+    if (TiffReader)
+      TiffReader.reset();
     TiffReader = std::make_shared<SITiffReader>(fname);
     if (TiffReader->open()) {
       TiffReader->getSWTag(0); // ensures num channels are read
@@ -627,6 +629,8 @@ bool SITiffIO::openTiff(const std::string &fname, const std::string mode) {
       return true;
     }
   } else if (mode == "w") {
+    if (TiffWriter)
+      TiffWriter.reset();
     TiffWriter = std::make_shared<SITiffWriter>();
     if (TiffWriter->open(fname))
       return true;
@@ -640,7 +644,7 @@ bool SITiffIO::closeReaderTiff() {
     return false;
   if (TiffReader->isOpen()) {
     TiffReader->close();
-    TiffReader = nullptr;
+    // TiffReader = nullptr;
     return true;
   }
   return false;
@@ -651,6 +655,7 @@ bool SITiffIO::closeWriterTiff() {
     return false;
   if (TiffWriter->isOpened()) {
     TiffWriter->close();
+    TiffWriter = nullptr;
     return true;
   }
   return false;
@@ -959,35 +964,41 @@ std::pair<int, int> SITiffIO::getChannelLUT() {
   }
 }
 
-void SITiffIO::saveTiffTail(const int &n) {
+void SITiffIO::saveTiffTail(const int &n = 1000, std::string fname = "") {
   // saves the last n frames of the tiff file currently
   // open for reading
   if (TiffReader == nullptr) {
     std::invalid_argument("No file open for reading!");
   }
+  std::string new_name = "";
   if (!TiffWriter) {
     TiffWriter = std::make_shared<SITiffWriter>();
-    fs::path reader_name = fs::path(TiffReader->getfilename());
-    auto new_name = reader_name.stem().string() + "_tail" +
-                    reader_name.extension().string();
+    if (fname.empty()) {
+      fs::path reader_name = fs::path(TiffReader->getfilename());
+      new_name = reader_name.stem().string() + "_tail" +
+                 reader_name.extension().string();
+    } else {
+      new_name = fname;
+    }
     TiffWriter->open(new_name);
   }
   auto n_frames = TiffReader->countDirectories();
-  std::cout << "Actual count = " << n_frames << std::endl;
   if ((n_frames - n) <= 0) {
     std::invalid_argument("n minus the total number of frames must be > 0");
   }
   std::string sw_tag, im_tag;
-  std::cout << "n_frames - n = " << (n_frames - n) << std::endl;
+  int count = 0;
   for (size_t i = n_frames - n; i < n_frames; ++i) {
     auto this_dir = (i * m_nchans - (m_nchans - channel2display));
-    std::cout << "this_dir = " << this_dir << std::endl;
     sw_tag = TiffReader->getSWTag(this_dir);
     im_tag = TiffReader->getImDescTag(this_dir);
     auto this_frame = TiffReader->readframe(this_dir);
     TiffWriter->writeSIHdr(sw_tag, im_tag);
     TiffWriter->writeHdr(this_frame);
     *TiffWriter << this_frame;
+    ++count;
   }
+  TiffWriter.reset();
+  std::cout << "Written " << count << " frames to " << new_name << std::endl;
 }
 } // namespace twophoton
