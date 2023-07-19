@@ -15,6 +15,7 @@ FetchContent_Declare(
 )
 option(tiff-docs  "" OFF)
 option(tiff-tests ""  OFF)
+option(tiff-tools "" OFF)
 FetchContent_MakeAvailable(tiff)
 
 FetchContent_Declare(

@@ -12,11 +12,12 @@ PYBIND11_MODULE(scanimagetiffio, m) {
       .def(py::init<>())
       .def("open_tiff_file", &twophoton::SITiffIO::openTiff, "Open a tiff file",
            py::arg("fname"), py::arg("'r' or 'w'"), R"mydelimiter(
-Open a tiff file for reading
+  Open a tiff file for reading
 
-  Parameters
-  ----------
-  fname: str - the name of the file to open
+	Parameters
+	----------
+	fname: str - the name of the file to open
+  mode: str - the mode to open the file in. Either "r" or "w" for reading or writing respectively
 )mydelimiter")
       .def("close_reader_tif", &twophoton::SITiffIO::closeReaderTiff,
            "Close the tiff reader file")
@@ -157,7 +158,14 @@ Open a tiff file for reading
            "Get the software tag part of the header for frame n")
       .def("get_image_description_tag", &twophoton::SITiffIO::getImageDescTag,
            "Get the image description part of the header for frame n")
-      .def(
-          "save_tail", &twophoton::SITiffIO::saveTiffTail,
-          "Save the last n frames of the tiff file currently open for reading");
+      .def("save_tail", &twophoton::SITiffIO::saveTiffTail,
+           "Save the last n frames of the tiff file currently open for reading",
+           py::arg("n") = 1000, py::arg("fname") = "",
+           R"mydelimiter(
+    Parameters
+    ----------
+    n_frames: int - the number of frames at the tail of the file currently open for reading to save
+    fname: str - the name of the file to save the last n_frame images to. This will 
+    default to the currently open file name with _tail appended just before the file
+    type extension)mydelimiter");
 }

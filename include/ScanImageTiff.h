@@ -583,7 +583,7 @@ public:
   ptime getLogFileTriggerTime() const;
   ptime getRotaryEncoderTriggerTime() const;
   ptime getEpochTime() const;
-  void saveTiffTail(const int &);
+  void saveTiffTail(const int &, std::string);
   std::pair<int, int> getChannelLUT();
   std::tuple<double, double, double> getPos(const unsigned int) const;
   std::string getSWTag(const int &) const;
