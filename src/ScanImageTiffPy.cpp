@@ -77,6 +77,7 @@ PYBIND11_MODULE(scanimagetiffio, m) {
       .def("interp_times", &twophoton::SITiffIO::interpolateIndices,
            "Interpolate the times in the tiff frames to events (position and "
            "time) in the log file",
+           py::arg("n") = 0,
            R"pbdoc(
 
   Calculates the positions and rotations that correspond to the timestamps
