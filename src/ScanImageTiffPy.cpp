@@ -107,7 +107,7 @@ PYBIND11_MODULE(scanimagetiffio, m) {
   Parameters
   ----------
   i_frame: int - the number of the frame to read (1-indexed)
-)pbdoc")
+           )pbdoc")
       .def("write_frame", &twophoton::SITiffIO::writeFrame,
            "Write frame to file", py::arg("frame"), py::arg("i_frame"),
            R"pbdoc(
