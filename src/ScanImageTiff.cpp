@@ -986,6 +986,7 @@ SITiffIO::tail(const int &n) {
     result.slice(slice_count) = F;
     ++slice_count;
   }
+  interpolateIndices(n_frames - n);
   auto angles = getTheta();
   return std::make_tuple(carma::cube_to_arr(result), angles);
 }
