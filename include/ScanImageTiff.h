@@ -401,7 +401,7 @@ protected:
   std::vector<double> m_rotations_in_rads;
   bool m_hasAcquisition = false;
   bool foundTrigger = false;
-  ptime m_trigger_time;
+  ptime m_trigger_time = ptime();
   int m_trigger_index = 0;
   double m_init_rotation = 0;
 

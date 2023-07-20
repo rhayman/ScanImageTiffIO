@@ -978,13 +978,13 @@ SITiffIO::tail(const int &n) {
   }
   unsigned int w, h;
   TiffReader->getImageSize(h, w);
-  arma::Cube<int16_t> result(h, w, n);
-  int slice_count = 0;
+  arma::Cube<int16_t> result(n, h, w);
+  int row_count = 0;
   for (size_t i = n_frames - n; i < n_frames; i++) {
     int dir_to_read = (i * m_nchans - (m_nchans - channel2display)) - 1;
     auto F = TiffReader->readframe(dir_to_read);
-    result.slice(slice_count) = F;
-    ++slice_count;
+    result.row(row_count) = F;
+    ++row_count;
   }
   interpolateIndices(n_frames - n);
   auto angles = getTheta();

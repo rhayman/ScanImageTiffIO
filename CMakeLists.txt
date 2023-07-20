@@ -69,7 +69,7 @@ set_target_properties(scanimagetiffio PROPERTIES PREFIX "")
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 
 # install
-install(TARGETS scanimagetiffio DESTINATION ${Python3_SITEARCH}/scanimagetiffio)
+install(TARGETS scanimagetiffio DESTINATION ${Python3_SITEARCH})
 
 add_library(${PROJECT_NAME} SHARED 
     src/ScanImageTiff.cpp 

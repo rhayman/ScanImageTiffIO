@@ -121,8 +121,9 @@ bool RotaryEncoderLoader::load() {
 bool RotaryEncoderLoader::calculateDurationsAndRotations() {
   if (!containsAcquisition()) {
     std::cout << "Warning: The file " << m_filename
-              << " has no microscope trigger associated" << std::endl;
-    return false;
+              << " has no microscope trigger associated. Proceeding to "
+                 "calculate times anyway..."
+              << std::endl;
   } else {
     std::cout << "Calculating rotations and times from rotary encoder data..."
               << std::endl;
