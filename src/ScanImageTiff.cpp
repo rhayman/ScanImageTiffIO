@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <string>
 #include <tuple>
+#include <valarray>
 
 namespace fs = std::filesystem;
 
@@ -976,7 +977,13 @@ py::array_t<int16_t> SITiffIO::tail(const int &n) {
   unsigned int w, h;
   TiffReader->getImageSize(h, w);
   arma::Cube<int16_t> result(h, w, n);
-
+  int slice_count = 0;
+  for (size_t i = n_frames - n; i < n_frames; i++) {
+    int dir_to_read = (i * m_nchans - (m_nchans - channel2display)) - 1;
+    auto F = TiffReader->readframe(dir_to_read);
+    result.slice(slice_count) = F;
+    ++slice_count;
+  }
   return carma::cube_to_arr(result);
 }
 

@@ -158,6 +158,21 @@ PYBIND11_MODULE(scanimagetiffio, m) {
            "Get the software tag part of the header for frame n")
       .def("get_image_description_tag", &twophoton::SITiffIO::getImageDescTag,
            "Get the image description part of the header for frame n")
+      .def("tail", &twophoton::SITiffIO::tail,
+           "Get the last n frames from the file currently open for reading",
+           py::arg("n") = 1000,
+           R"mydelimiter(
+    
+    Grabs the last n frames of the file currently open for reading as an ndarray
+
+    Parameters
+    ----------
+    n: int - the number of frames to get 
+
+    Returns
+    -------
+    frames: ndarray
+           )mydelimiter")
       .def("save_tail", &twophoton::SITiffIO::saveTiffTail,
            "Save the last n frames of the tiff file currently open for reading",
            py::arg("n") = 1000, py::arg("fname") = "",
