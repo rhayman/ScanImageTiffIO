@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <date/date.h>
 #include <filesystem>
+#include <functional>
 #include <limits>
 #include <memory>
 #include <stdexcept>
@@ -966,7 +967,8 @@ std::pair<int, int> SITiffIO::getChannelLUT() {
   }
 }
 
-py::array_t<int16_t> SITiffIO::tail(const int &n) {
+std::tuple<py::array_t<int16_t>, std::vector<double>>
+SITiffIO::tail(const int &n) {
   if (TiffReader == nullptr) {
     std::invalid_argument("No file open for reading!");
   }
@@ -984,7 +986,8 @@ py::array_t<int16_t> SITiffIO::tail(const int &n) {
     result.slice(slice_count) = F;
     ++slice_count;
   }
-  return carma::cube_to_arr(result);
+  auto angles = getTheta();
+  return std::make_tuple(carma::cube_to_arr(result), angles);
 }
 
 void SITiffIO::saveTiffTail(const int &n = 1000, std::string fname = "") {

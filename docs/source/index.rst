@@ -6,10 +6,18 @@
 Welcome to ScanImageTiffIO's documentation!
 ===========================================
 
-.. toctree::
-   :maxdepth: 2
-   :caption: Contents:
+A shared library written in C/C++ to load data recorded using ScanImage (http://scanimage.vidriotechnologies.com/).
 
+.. note::
+
+   This project is under active development.
+
+Contents
+--------
+
+.. toctree::
+
+  api
 
 
 Indices and tables

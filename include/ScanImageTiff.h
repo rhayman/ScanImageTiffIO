@@ -584,7 +584,7 @@ public:
   ptime getRotaryEncoderTriggerTime() const;
   ptime getEpochTime() const;
   void saveTiffTail(const int &, std::string);
-  py::array_t<int16_t> tail(const int &);
+  std::tuple<py::array_t<int16_t>, std::vector<double>> tail(const int &);
   std::pair<int, int> getChannelLUT();
   std::tuple<double, double, double> getPos(const unsigned int) const;
   std::string getSWTag(const int &) const;
