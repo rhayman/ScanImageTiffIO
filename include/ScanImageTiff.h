@@ -568,7 +568,7 @@ public:
   bool openRotary(std::string fname);
   bool openXML(std::string fname);
   unsigned int countDirectories();
-  void interpolateIndices();
+  void interpolateIndices(const int &);
   std::tuple<unsigned int> getNChannels() const;
   void setChannel(unsigned int i) { channel2display = i; }
   py::array_t<int16_t> readFrame(int frame_num) const;
@@ -584,6 +584,7 @@ public:
   ptime getRotaryEncoderTriggerTime() const;
   ptime getEpochTime() const;
   void saveTiffTail(const int &, std::string);
+  py::array_t<int16_t> tail(const int &);
   std::pair<int, int> getChannelLUT();
   std::tuple<double, double, double> getPos(const unsigned int) const;
   std::string getSWTag(const int &) const;

@@ -1,7 +1,9 @@
 #include "../include/ScanImageTiff.h"
 #include "../include/rapidxml.hpp"
+#include "carma_bits/converters.h"
 #include "tiffio.h"
 #include <algorithm>
+#include <cstdint>
 #include <date/date.h>
 #include <filesystem>
 #include <limits>
@@ -795,7 +797,7 @@ unsigned int SITiffIO::countDirectories() {
   return 0;
 }
 
-void SITiffIO::interpolateIndices() {
+void SITiffIO::interpolateIndices(const int &startFrame = 0) {
   if (TiffReader == nullptr) {
     std::cout << "WARNING: Tiff file is not loaded" << std::endl;
     return;
@@ -807,7 +809,6 @@ void SITiffIO::interpolateIndices() {
     std::cout << "WARNING: Rotary file is not loaded" << std::endl;
   }
 
-  int startFrame = 0;
   int endFrame = TiffReader->countDirectories();
   endFrame /= m_nchans;
   std::cout << "Counted " << endFrame << " frames" << std::endl;
@@ -962,6 +963,21 @@ std::pair<int, int> SITiffIO::getChannelLUT() {
     std::cout << "Channel not available" << std::endl;
     return std::make_pair(0, 0);
   }
+}
+
+py::array_t<int16_t> SITiffIO::tail(const int &n) {
+  if (TiffReader == nullptr) {
+    std::invalid_argument("No file open for reading!");
+  }
+  auto n_frames = TiffReader->countDirectories();
+  if ((n_frames - n) <= 0) {
+    std::invalid_argument("n minus the total number of frames must be > 0");
+  }
+  unsigned int w, h;
+  TiffReader->getImageSize(h, w);
+  arma::Cube<int16_t> result(h, w, n);
+
+  return carma::cube_to_arr(result);
 }
 
 void SITiffIO::saveTiffTail(const int &n = 1000, std::string fname = "") {
