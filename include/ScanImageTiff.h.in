@@ -1,0 +1,2 @@
+#define ScanImageTiffIO_VERSION_MAJOR @ScanImageTiff_VERSION_MAJOR @
+#define ScanImageTiffIO_VERSION_MINOR @ScanImageTiff_VERSION_MINOR @
