@@ -1,5 +1,4 @@
 #include "../include/ScanImageTiff.h"
-#include "../include/rapidxml.hpp"
 #include "carma_bits/converters.h"
 #include "tiffio.h"
 #include <algorithm>
@@ -625,7 +624,6 @@ bool SITiffIO::openTiff(const std::string &fname, const std::string mode) {
     if (TiffReader->open()) {
       TiffReader->getSWTag(0); // ensures num channels are read
       auto chans = TiffReader->getSavedChans();
-      TiffReader->printHeaderSize();
       if (chans.empty() || chans.size() == 0)
         m_nchans = 1;
       else
@@ -674,50 +672,6 @@ bool SITiffIO::openLog(std::string fname) {
 bool SITiffIO::openRotary(std::string fname) {
   RotaryLoader = std::make_shared<RotaryEncoderLoader>(fname);
   return RotaryLoader->load();
-}
-
-bool SITiffIO::openXML(std::string fname) {
-  if (m_all_transforms == nullptr)
-    m_all_transforms =
-        std::make_shared<std::map<unsigned int, TransformContainer>>();
-  else
-    m_all_transforms->clear();
-
-  rapidxml::xml_document<> doc;
-  rapidxml::xml_node<> *root_node;
-  rapidxml::xml_node<> *summary_node;
-  rapidxml::xml_node<> *transform_node;
-
-  std::ifstream ifs(fname);
-  std::vector<char> buffer((std::istreambuf_iterator<char>(ifs)),
-                           std::istreambuf_iterator<char>());
-  buffer.push_back('\0');
-  doc.parse<0>(&buffer[0]);
-  root_node = doc.first_node("opencv_storage");
-  summary_node = root_node->first_node("Summary");
-  transform_node = summary_node->next_sibling();
-
-  for (rapidxml::xml_node<> *underscore_node = transform_node->first_node("_");
-       underscore_node != nullptr;
-       underscore_node = underscore_node->next_sibling()) {
-    for (rapidxml::xml_node<> *frame_node =
-             underscore_node->first_node("Frame");
-         frame_node != nullptr; frame_node = frame_node->next_sibling()) {
-      std::cout << frame_node->name() << ": " << frame_node->value()
-                << std::endl;
-      if (std::find(possible_transforms.begin(), possible_transforms.end(),
-                    frame_node->name()) != possible_transforms.end()) {
-        // found one of the possible transforms, calculate the size of the mat
-        // to fit the values in
-        int n_rows = std::stoi(frame_node->first_node("rows")->value());
-        int n_cols = std::stoi(frame_node->first_node("cols")->value());
-        TransformContainer tc{std::stoi(frame_node->name()),
-                              std::stof(frame_node->value())};
-        m_all_transforms->emplace(std::stoi(frame_node->name()), tc);
-      }
-    }
-  }
-  return true;
 }
 
 py::array_t<int16_t> SITiffIO::readFrame(int frame_num) const {

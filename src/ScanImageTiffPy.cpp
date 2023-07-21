@@ -10,14 +10,14 @@ PYBIND11_MODULE(scanimagetiffio, m) {
 
   py::class_<twophoton::SITiffIO>(m, "SITiffIO")
       .def(py::init<>())
-      .def("open_tiff_file", &twophoton::SITiffIO::openTiff, "Open a tiff file",
-           py::arg("fname"), py::arg("'r' or 'w'"),
+      .def("open_tiff_file", &twophoton::SITiffIO::openTiff, py::arg("fname"),
+           py::arg("'r' or 'w'"),
            R"pbdoc(
   Open a tiff file for reading
 
-     Parameters
-     ----------
-     fname: str - the name of the file to open
+  Parameters
+  ----------
+  fname: str - the name of the file to open
   mode: str - the mode to open the file in. Either "r" or "w" for reading or writing respectively
 )pbdoc")
       .def("close_reader_tif", &twophoton::SITiffIO::closeReaderTiff,
@@ -28,21 +28,12 @@ PYBIND11_MODULE(scanimagetiffio, m) {
            py::arg("fname"),
            R"pbdoc(
 
- Parameters
+  Parameters
   ----------
   fname: str - the name of the log file to open. Must match the tiff file or position data will be wrong
 )pbdoc")
       .def("open_rotary_file", &twophoton::SITiffIO::openRotary,
            "Open a rotary encoder log file")
-      .def("open_xml_file", &twophoton::SITiffIO::openXML, "Open an xml file",
-           py::arg("fname"),
-           R"pbdoc(
-  open_xml_file
-
-  Parameters
-  ----------
-  fname: str - the name of the xml file to open (DEPRECATED). These files were generated to summarise file processing
-)pbdoc")
       .def("get_n_frames", &twophoton::SITiffIO::countDirectories,
            "Count the number of frames")
       .def("set_channel", &twophoton::SITiffIO::setChannel,
@@ -75,7 +66,8 @@ PYBIND11_MODULE(scanimagetiffio, m) {
   get_n_channels : The number of channels available in this file
            )pbdoc")
       .def("interp_times", &twophoton::SITiffIO::interpolateIndices,
-           "Interpolate the times in the tiff frames to events (position and "
+           "Interpolate the times in the tiff frames to events (position "
+           "and "
            "time) in the log file",
            py::arg("n") = 0,
            R"pbdoc(
@@ -137,9 +129,9 @@ PYBIND11_MODULE(scanimagetiffio, m) {
       .def("get_log_times", &twophoton::SITiffIO::getLogFileTimes,
            "Gets the times from the log file",
            R"pbdoc(
-  Returns
-  -------
-  A list of datetimes extracted from the logfile
+           Returns
+           -------
+           A list of datetimes extracted from the logfile
            )pbdoc")
       .def("get_rotary_times", &twophoton::SITiffIO::getRotaryTimes,
            "Gets the times from the rotary file",
@@ -184,7 +176,8 @@ PYBIND11_MODULE(scanimagetiffio, m) {
     angles: list of the rotation angles for each frame
            )pbdoc")
       .def("save_tail", &twophoton::SITiffIO::saveTiffTail,
-           "Save the last n frames of the tiff file currently open for reading",
+           "Save the last n frames of the tiff file currently open for "
+           "reading",
            py::arg("n") = 1000, py::arg("fname") = "",
            R"pbdoc(
     Parameters

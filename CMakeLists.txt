@@ -3,6 +3,7 @@ project(ScanImageTiff VERSION 1.0.2 DESCRIPTION "tiff file io for tiffs written 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
+configure_file(include/ScanImageTiff.h.in include/ScanImageTiff.h)
 # ---------- python ------------
 find_package (Python3 COMPONENTS Interpreter Development NumPy)
 
@@ -16,6 +17,7 @@ FetchContent_Declare(
 option(tiff-docs  "" OFF)
 option(tiff-tests ""  OFF)
 option(tiff-tools "" OFF)
+option(tiff-contrib "" OFF)
 FetchContent_MakeAvailable(tiff)
 
 FetchContent_Declare(
@@ -63,6 +65,7 @@ target_link_libraries(scanimagetiffio
     ${Python3_LIBRARIES}
     date::date
 )
+target_include_directories(scanimagetiffio PUBLIC "${PROJECT_BINARY_DIR}")
 # # remove the "lib" from start of the library name
 set_target_properties(scanimagetiffio PROPERTIES PREFIX "")
 # generate the compile_commands.json file for clangd

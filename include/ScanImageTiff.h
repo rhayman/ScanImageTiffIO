@@ -56,36 +56,6 @@ int findNearestIdx(const std::vector<T> &toBeSearched, const T &findMe) {
   return -1;
 }
 
-static void getTags(TIFF *tif) {
-  if (tif) {
-    int length, width, comp, planar, sf, orientation, pred;
-    uint16_t photometric, bpp, spp;
-    uint32_t rps;
-    TIFFGetField(tif, TIFFTAG_IMAGELENGTH, &length);
-    TIFFGetField(tif, TIFFTAG_IMAGEWIDTH, &width);
-    TIFFGetField(tif, TIFFTAG_PHOTOMETRIC, &photometric);
-    TIFFGetField(tif, TIFFTAG_BITSPERSAMPLE, &bpp);
-    TIFFGetField(tif, TIFFTAG_SAMPLESPERPIXEL, &spp);
-    TIFFGetField(tif, TIFFTAG_ROWSPERSTRIP, &rps);
-    TIFFGetField(tif, TIFFTAG_COMPRESSION, &comp);
-    TIFFGetField(tif, TIFFTAG_PLANARCONFIG, &planar);
-    TIFFGetField(tif, TIFFTAG_SAMPLEFORMAT, &sf);
-    TIFFGetField(tif, TIFFTAG_ORIENTATION, &orientation);
-    TIFFGetField(tif, TIFFTAG_PREDICTOR, &pred);
-    std::cout << "Length: " << length << std::endl
-              << "Width: " << width << std::endl
-              << "Photometric: " << photometric << std::endl
-              << "bits per sample: " << bpp << std::endl
-              << "samples per pixel: " << spp << std::endl
-              << "rows per strip: " << rps << std::endl
-              << "compression: " << comp << std::endl
-              << "planar: " << planar << std::endl
-              << "sample format: " << sf << std::endl
-              << "orientation: " << orientation << std::endl
-              << "predictor: " << pred << std::endl;
-  }
-}
-
 namespace twophoton {
 
 /*
@@ -132,8 +102,6 @@ static constexpr char space_token[] = " ";
 
 // The rotary encoder might (and has) change so the number of units
 // per full rotation might change too
-// static constexpr unsigned int rotary_encoder_units_per_turn = 8845; // the
-// old value
 static constexpr unsigned int rotary_encoder_units_per_turn =
     36800; // the new value
 
@@ -217,7 +185,6 @@ private:
   void parseSavedChannels(
       std::string savedchans); // fills out chanSaved map (see below)
   int quickCountDirs(TIFF *);
-  // Member variables
   // target key strings to grab from the tiff header (using grabStr)
   // these are set in versionCheck()
   std::string channelSaved;
@@ -312,11 +279,6 @@ public:
     w = m_imagewidth;
   }
 
-  void printHeaderSize() {
-    auto sw_tag = getSWTag(0);
-    auto im_tag = getImDescTag(0);
-    auto whole_header = sw_tag + im_tag;
-  }
   // called only by SITiffHeader
   void setImageSize(int h, int w) {
     m_imageheight = h;
@@ -566,7 +528,6 @@ public:
   bool closeWriterTiff();
   bool openLog(std::string fname);
   bool openRotary(std::string fname);
-  bool openXML(std::string fname);
   unsigned int countDirectories();
   void interpolateIndices(const int &);
   std::tuple<unsigned int> getNChannels() const;
@@ -593,6 +554,10 @@ public:
   std::tuple<std::vector<double>, std::vector<double>>
   getAllTrackerTranslation() const;
   auto getAllTransforms() { return m_all_transforms; }
+  void printVersion() {
+    std::cout << "Version " << ScanImageTiffIO_VERSION_MAJOR << "."
+              << ScanImageTiffIO_VERSION_MINOR << std::endl;
+  }
   unsigned int m_nchans = 1;
   unsigned int channel2display = 1;
 
