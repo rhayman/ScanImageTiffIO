@@ -50,6 +50,22 @@ make
 sudo make install
 ```
 
+If you want to build the documentation (auto-generated using Sphinx) then:
+
+```shell
+cd ScanImageTiffIO
+cd docs
+make html
+```
+
+The html documentation will now be in:
+
+```shell
+build/html/
+```
+
+You can open the index.html file in that folder with a web browser and the documentation should appear
+
 Windows 
 =======
 
