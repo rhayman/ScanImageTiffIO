@@ -117,6 +117,10 @@ PYBIND11_MODULE(scanimagetiffio, m) {
       .def("get_all_z", &twophoton::SITiffIO::getZ, "Gets all the Z values")
       .def("get_all_theta", &twophoton::SITiffIO::getTheta,
            "Gets all the rotational values")
+      .def("get_all_raw_x", &twophoton::SITiffIO::getRawX,
+           "Gets the raw, un-normalized X values")
+      .def("get_all_raw_z", &twophoton::SITiffIO::getRawZ,
+           "Gets the raw, un-normalized Z values")
       .def("get_frame_numbers", &twophoton::SITiffIO::getFrameNumbers,
            "Gets all the frame numbers from the interpolated data")
       .def("get_channel_LUT", &twophoton::SITiffIO::getChannelLUT,
@@ -185,5 +189,6 @@ PYBIND11_MODULE(scanimagetiffio, m) {
     n_frames: int - the number of frames at the tail of the file currently open for reading to save
     fname: str - the name of the file to save the last n_frame images to. This will 
     default to the currently open file name with _tail appended just before the file
-    type extension)pbdoc");
+    type extension)pbdoc")
+      .def("version", &twophoton::SITiffIO::printVersion);
 }

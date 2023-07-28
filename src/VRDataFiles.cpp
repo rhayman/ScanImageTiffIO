@@ -1,3 +1,4 @@
+#include <iterator>
 #define _USE_MATH_DEFINES
 #include "../include/ScanImageTiff.h"
 #include <algorithm>
@@ -145,6 +146,10 @@ bool LogFileLoader::calculateDurationsAndRotations() {
               << std::endl;
   }
   auto result = _calculateDurationsAndRotations();
+  std::copy(m_x_translation.begin(), m_x_translation.end(),
+            std::back_inserter(m_original_x_translation));
+  std::copy(m_z_translation.begin(), m_z_translation.end(),
+            std::back_inserter(m_original_z_translation));
   zeroNormalize(m_x_translation);
   zeroNormalize(m_z_translation);
   std::cout << "Finished calculating rotations and times." << std::endl;

@@ -376,9 +376,17 @@ public:
   explicit LogFileLoader(std::string fname) : VRDataFile(fname){};
   bool load() override;
   double getXTranslation(const int &i) const { return m_x_translation[i]; };
+  double getRawXTranslation(const int &i) const {
+    return m_original_x_translation[i];
+  };
   double getZTranslation(const int &i) const { return m_z_translation[i]; };
+  double getRawZTranslation(const int &i) const {
+    return m_original_z_translation[i];
+  };
   std::vector<double> getX() const { return m_x_translation; };
+  std::vector<double> getRawX() const { return m_original_x_translation; };
   std::vector<double> getZ() const { return m_z_translation; };
+  std::vector<double> getRawZ() const { return m_original_z_translation; };
   bool calculateDurationsAndRotations();
 
 private:
@@ -387,6 +395,8 @@ private:
   // into radians
   std::vector<double> m_x_translation;
   std::vector<double> m_z_translation;
+  std::vector<double> m_original_x_translation;
+  std::vector<double> m_original_z_translation;
 };
 
 class RotaryEncoderLoader : public VRDataFile {
@@ -439,6 +449,8 @@ public:
   double m_x = 0;
   double m_z = 0;
   double m_r = 0;
+  double m_orig_x = 0;
+  double m_orig_z = 0;
   TransformContainer(){};
   TransformContainer(const int &frame, const double &ts)
       : m_framenumber(frame), m_timestamp(ts){};
@@ -449,11 +461,21 @@ public:
     m_z = z;
     m_r = r;
   };
+  void setOrigPosData(double x, double z, double r) {
+    m_orig_x = x;
+    m_orig_z = z;
+    m_r = r;
+  }
   void getPosData(double &x, double &z, double &r) {
     x = m_x;
     z = m_z;
     r = m_r;
   };
+  void getOrigPosData(double &x, double &z, double &r) {
+    x = m_orig_x;
+    z = m_orig_z;
+    r = m_r;
+  }
   // Push a transform type and its contents onto the top of the container
   const TransformMap getTransforms() const { return m_transforms; }
   void addTransform(const TransformType &T, arma::mat M) {
@@ -537,6 +559,8 @@ public:
   std::vector<double> getTiffTimeStamps() const;
   std::vector<double> getX() const;
   std::vector<double> getZ() const;
+  std::vector<double> getRawX() const;
+  std::vector<double> getRawZ() const;
   std::vector<double> getTheta() const;
   std::vector<double> getFrameNumbers() const;
   std::vector<ptime> getLogFileTimes() const;
@@ -554,10 +578,7 @@ public:
   std::tuple<std::vector<double>, std::vector<double>>
   getAllTrackerTranslation() const;
   auto getAllTransforms() { return m_all_transforms; }
-  void printVersion() {
-    std::cout << "Version " << ScanImageTiffIO_VERSION_MAJOR << "."
-              << ScanImageTiffIO_VERSION_MINOR << std::endl;
-  }
+  void printVersion();
   unsigned int m_nchans = 1;
   unsigned int channel2display = 1;
 

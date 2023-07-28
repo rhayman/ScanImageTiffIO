@@ -1,4 +1,5 @@
 #include "../include/ScanImageTiff.h"
+#include "../include/ScanImageTiff_version.h"
 #include "carma_bits/converters.h"
 #include "tiffio.h"
 #include <algorithm>
@@ -771,7 +772,7 @@ void SITiffIO::interpolateIndices(const int &startFrame = 0) {
   TiffReader->readheader(); // to get the number of channels...
   auto nchans = TiffReader->getSavedChans().size();
 
-  double tiff_ts = 0, x = 0, z = 0, r = 0;
+  double tiff_ts = 0, x = 0, orig_x = 0, z = 0, orig_z = 0, r = 0;
   unsigned int frame_num = 0;
   int logfile_idx = 0, rotary_idx = 0;
   TransformContainer tc{};
@@ -793,7 +794,9 @@ void SITiffIO::interpolateIndices(const int &startFrame = 0) {
     if (LogLoader) {
       logfile_idx = findNearestIdx(LogLoader->getPTimes(), frame_time);
       x = LogLoader->getXTranslation(logfile_idx);
+      orig_x = LogLoader->getRawXTranslation(logfile_idx);
       z = LogLoader->getZTranslation(logfile_idx);
+      orig_z = LogLoader->getRawZTranslation(logfile_idx);
       r = LogLoader->getRadianRotation(logfile_idx);
     }
     if (RotaryLoader) {
@@ -803,6 +806,7 @@ void SITiffIO::interpolateIndices(const int &startFrame = 0) {
     tc.m_framenumber = (int)(i / nchans);
     tc.m_timestamp = tiff_ts;
     tc.setPosData(x, z, r);
+    tc.setOrigPosData(orig_x, orig_z, r);
     arma::mat A(1, 1);
     A = {r};
     tc.addTransform(TransformType::kInitialRotation, A);
@@ -846,6 +850,34 @@ std::vector<double> SITiffIO::getZ() const {
          ++it) {
       auto tc = it->second;
       tc.getPosData(x, z, t);
+      result.push_back(z);
+    }
+  }
+  return result;
+}
+
+std::vector<double> SITiffIO::getRawX() const {
+  std::vector<double> result;
+  if (m_all_transforms != nullptr) {
+    double x, z, t;
+    for (auto it = m_all_transforms->cbegin(); it != m_all_transforms->cend();
+         ++it) {
+      auto tc = it->second;
+      tc.getOrigPosData(x, z, t);
+      result.push_back(x);
+    }
+  }
+  return result;
+}
+
+std::vector<double> SITiffIO::getRawZ() const {
+  std::vector<double> result;
+  if (m_all_transforms != nullptr) {
+    double x, z, t;
+    for (auto it = m_all_transforms->cbegin(); it != m_all_transforms->cend();
+         ++it) {
+      auto tc = it->second;
+      tc.getOrigPosData(x, z, t);
       result.push_back(z);
     }
   }
@@ -981,5 +1013,10 @@ void SITiffIO::saveTiffTail(const int &n = 1000, std::string fname = "") {
   }
   TiffWriter.reset();
   std::cout << "Written " << count << " frames to " << new_name << std::endl;
+}
+void SITiffIO::printVersion() {
+  std::cout << getScanImageTiffVersionMajor() << "."
+            << getScanImageTiffVersionMinor() << "."
+            << getScanImageTiffVersionPatch() << std::endl;
 }
 } // namespace twophoton
