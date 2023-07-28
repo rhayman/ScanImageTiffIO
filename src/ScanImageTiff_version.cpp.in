@@ -1,0 +1,19 @@
+#include "../include/ScanImageTiff_version.h"
+
+std::string getScanImageTiffVersion() { return "@ScanImageTiff_VERSION@"; }
+
+std::string getScanImageTiffVersionMajor() {
+  return "@ScanImageTiff_VERSION_MAJOR@";
+}
+
+std::string getScanImageTiffVersionMinor() {
+  return "@ScanImageTiff_VERSION_MINOR@";
+}
+
+std::string getScanImageTiffVersionPatch() {
+  return "@ScanImageTiff_VERSION_PATCH@";
+}
+
+std::string getScanImageTiffVersionTweak() {
+  return "@ScanImageTiff_VERSION_TWEAK@";
+}
