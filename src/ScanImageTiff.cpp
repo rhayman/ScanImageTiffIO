@@ -39,7 +39,6 @@ void SITiffHeader::read(TIFF *m_tif, int dirnum) {
     }
   }
 }
-
 void SITiffHeader::versionCheck(TIFF *m_tif) {
   if (m_tif) {
     m_imdesc = getImageDescTag(m_tif, 0);
@@ -932,6 +931,10 @@ ptime SITiffIO::getLogFileTriggerTime() const {
 
 ptime SITiffIO::getRotaryEncoderTriggerTime() const {
   return RotaryLoader->getTriggerTime();
+}
+
+unsigned int SITiffIO::getDisplayChannel() const {
+  return channel2display;
 }
 
 ptime SITiffIO::getEpochTime() const { return TiffReader->getEpochTime(); }

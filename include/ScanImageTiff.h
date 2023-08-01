@@ -554,6 +554,7 @@ public:
   void interpolateIndices(const int &);
   std::tuple<unsigned int> getNChannels() const;
   void setChannel(unsigned int i) { channel2display = i; }
+  unsigned int getDisplayChannel() const;
   py::array_t<int16_t> readFrame(int frame_num) const;
   void writeFrame(py::array_t<int16_t>, unsigned int frame_num) const;
   std::vector<double> getTiffTimeStamps() const;

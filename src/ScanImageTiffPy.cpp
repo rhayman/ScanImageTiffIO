@@ -10,185 +10,106 @@ PYBIND11_MODULE(scanimagetiffio, m) {
 
   py::class_<twophoton::SITiffIO>(m, "SITiffIO")
       .def(py::init<>())
-      .def("open_tiff_file", &twophoton::SITiffIO::openTiff, py::arg("fname"),
-           py::arg("'r' or 'w'"),
-           R"pbdoc(
-  Open a tiff file for reading
-
-  Parameters
-  ----------
-  fname: str - the name of the file to open
-  mode: str - the mode to open the file in. Either "r" or "w" for reading or writing respectively
-)pbdoc")
+      .def("open_tiff_file", &twophoton::SITiffIO::openTiff,
+           "Open a TIFF file for reading or writing.",
+           py::arg("fname"), py::arg("mode"))
       .def("close_reader_tif", &twophoton::SITiffIO::closeReaderTiff,
-           "Close the tiff reader file")
+           "Close the TIFF reader file.")
       .def("close_writer_tif", &twophoton::SITiffIO::closeWriterTiff,
-           "Close the writer tiff file")
-      .def("open_log_file", &twophoton::SITiffIO::openLog, "Open a log file",
-           py::arg("fname"),
-           R"pbdoc(
-
-  Parameters
-  ----------
-  fname: str - the name of the log file to open. Must match the tiff file or position data will be wrong
-)pbdoc")
+           "Close the TIFF writer file.")
+      .def("open_log_file", &twophoton::SITiffIO::openLog,
+           "Open a log file that contains position and time data.",
+           py::arg("fname"))
       .def("open_rotary_file", &twophoton::SITiffIO::openRotary,
-           "Open a rotary encoder log file")
-      .def("get_n_frames", &twophoton::SITiffIO::countDirectories,
-           "Count the number of frames")
+           "Open a rotary encoder log file that contains rotational angle data.")
+      .def("count_directories", &twophoton::SITiffIO::countDirectories,
+           "Count the number of frames in the TIFF file.")
       .def("set_channel", &twophoton::SITiffIO::setChannel,
-           "Sets the channel to take frames from", py::arg("channel"),
-           R"pbdoc(
-
-  Parameters
-  ----------
-  channel : int
-    The channel to take frames from
-
-  See also
-  --------
-  get_n_channels : get the number of channels available in this file
-           )pbdoc")
-      .def_readonly("get_n_channels", &twophoton::SITiffIO::m_nchans,
-                    "Get the number of channels")
-      .def_readonly("get_display_channel",
-                    &twophoton::SITiffIO::channel2display,
-                    "Get the channel to display",
-                    R"pbdoc(
-
-  Returns
-  -------
-  channel : int
-    The channel that frames are currently being taken from
-
-  See also
-  --------
-  get_n_channels : The number of channels available in this file
-           )pbdoc")
+           "Set the channel to take frames from.",
+           py::arg("channel"))
+      .def("get_n_frames", &twophoton::SITiffIO::countDirectories,
+           "Count the number of frames in the TIFF file.")
+      .def("get_n_channels", &twophoton::SITiffIO::getNChannels,
+           "Get the number of channels available in this file.")
+      .def("get_display_channel", &twophoton::SITiffIO::getDisplayChannel,
+           "Get the channel that frames are currently being taken from.")
       .def("interp_times", &twophoton::SITiffIO::interpolateIndices,
-           "Interpolate the times in the tiff frames to events (position "
-           "and "
-           "time) in the log file",
-           py::arg("n") = 0,
-           R"pbdoc(
-
-  Calculates the positions and rotations that correspond to the timestamps
-  present in the tiff file.
-
-  Notes
-  -----
-  Position (x and y) is taken from the log file and rotational angle from the
-  rotary encoder file. If no rotary encoder file is loaded then rotation is 
-  taken from the log file, but in recent versions of this software that will 
-  always contain a value of 0.
-  Because this function has to extract the timestamp for each frame of the 
-  tiff file it has to do an exhaustive (and linear) search which can take a 
-  long time with large files.
-           )pbdoc")
+           "Interpolate the indices of the TIFF frames to events (position and time) in the log file.",
+           py::arg("n") = 0)
       .def("get_pos", &twophoton::SITiffIO::getPos,
-           "Gets a 3-tuple of X, Z and theta for the given frame",
-           py::arg("i_frame"))
-      .def("get_tracker", &twophoton::SITiffIO::getTrackerTranslation,
-           "Get the x and y translation for a tracked bounding box",
-           py::arg("i_frame"))
-      .def("get_all_tracker", &twophoton::SITiffIO::getAllTrackerTranslation,
-           "Get all the x and y translations for a tracked bounding box")
+           "Get the position data for the current frame.",
+           py::arg("frame"))
       .def("get_frame", &twophoton::SITiffIO::readFrame,
-           "Gets the data/ image for the given frame", py::arg("i_frame"),
-           R"pbdoc(
-
-  Parameters
-  ----------
-  i_frame: int - the number of the frame to read (1-indexed)
-           )pbdoc")
+           "Get the image data for the current frame.",
+           py::arg("frame"))
       .def("write_frame", &twophoton::SITiffIO::writeFrame,
-           "Write frame to file", py::arg("frame"), py::arg("i_frame"),
-           R"pbdoc(
-
-  Parameters
-  ----------
-  i_frame: int - the number of the frame to write out. 
-  
-  Note that an instance of scanimagetiffio must have both a file open for reading and
-  another open for writing for this function to copy the ScanImage headers as they need to be copied 
-  from the former to the latter.
-)pbdoc")
-      .def("get_all_x", &twophoton::SITiffIO::getX, "Gets all the X values")
-      .def("get_all_z", &twophoton::SITiffIO::getZ, "Gets all the Z values")
+           "Write image data to the TIFF file.",
+           py::arg("frame"), py::arg("i_frame"))
+      .def("get_all_x", &twophoton::SITiffIO::getX,
+           "Get all the x position data from the log file.",
+           py::return_value_policy::reference_internal)
+      .def("get_all_z", &twophoton::SITiffIO::getZ,
+           "Get all the x position data from the log file.",
+           py::return_value_policy::reference_internal)
       .def("get_all_theta", &twophoton::SITiffIO::getTheta,
-           "Gets all the rotational values")
+           "Get all the x position data from the log file.",
+           py::return_value_policy::reference_internal)
       .def("get_all_raw_x", &twophoton::SITiffIO::getRawX,
-           "Gets the raw, un-normalized X values")
+           "Get all the x position data from the log file.",
+           py::return_value_policy::reference_internal)
       .def("get_all_raw_z", &twophoton::SITiffIO::getRawZ,
-           "Gets the raw, un-normalized Z values")
-      .def("get_frame_numbers", &twophoton::SITiffIO::getFrameNumbers,
-           "Gets all the frame numbers from the interpolated data")
-      .def("get_channel_LUT", &twophoton::SITiffIO::getChannelLUT,
-           "Gets the channel LUTs",
-           R"pbdoc(
-  Returns
-  -------
-  2-tuples of the channel look-up-table (LUT) values
-           )pbdoc")
-      .def("get_log_times", &twophoton::SITiffIO::getLogFileTimes,
-           "Gets the times from the log file",
-           R"pbdoc(
-           Returns
-           -------
-           A list of datetimes extracted from the logfile
-           )pbdoc")
-      .def("get_rotary_times", &twophoton::SITiffIO::getRotaryTimes,
-           "Gets the times from the rotary file",
-           R"pbdoc(
-  Returns
-  -------
-  A list of datetimes extracted from the rotary file
-           )pbdoc")
+           "Get all the x position data from the log file.",
+           py::return_value_policy::reference_internal)  
       .def("get_tiff_times", &twophoton::SITiffIO::getTiffTimeStamps,
-           "Gets the times from the tiff file",
-           R"pbdoc(
-  Returns
-  -------
-  A list of datetimes from the tiff file
-           )pbdoc")
+           "Get the times from the TIFF file.",
+           py::return_value_policy::reference_internal)
+      .def("get_frame_numbers", &twophoton::SITiffIO::getFrameNumbers,
+           "Get the frame numbers from the TIFF file.",
+           py::return_value_policy::reference_internal)
+      .def("get_channel_LUT", &twophoton::SITiffIO::getChannelLUT,
+           "Get the channel LUT from the TIFF file.",
+           py::return_value_policy::reference_internal)
+      .def("get_log_times", &twophoton::SITiffIO::getLogFileTimes,
+           "Get the times from the log file.",
+           py::return_value_policy::reference_internal)
+      .def("get_rotary_times", &twophoton::SITiffIO::getRotaryTimes,
+           "Get the times from the log file.",
+           py::return_value_policy::reference_internal)
       .def("get_logfile_trigger_time",
            &twophoton::SITiffIO::getLogFileTriggerTime,
-           "Gets the time the logfile registered microscope acquisition")
+           "Get the time the logfile registered microscope acquisition.")
       .def("get_rotary_encoder_trigger_time",
            &twophoton::SITiffIO::getRotaryEncoderTriggerTime,
-           "Gets the time the rotary encoder registered acquisition")
+           "Get the time the rotary encoder registered acquisition.")
       .def("get_epoch_time", &twophoton::SITiffIO::getEpochTime,
-           "Gets the epoch time from the tiff header")
+           "Get the epoch time from the TIFF header.")
       .def("get_sw_tag", &twophoton::SITiffIO::getSWTag,
-           "Get the software tag part of the header for frame n")
+           "Get the software tag part of the header for frame n.",
+           py::arg("frame"))
       .def("get_image_description_tag", &twophoton::SITiffIO::getImageDescTag,
-           "Get the image description part of the header for frame n")
+           "Get the image description part of the header for frame n.",
+           py::arg("frame"))
       .def("tail", &twophoton::SITiffIO::tail,
-           "Get the last n frames from the file currently open for reading",
+           "Get the last n frames from the file currently open for reading.",
            py::arg("n") = 1000,
+           py::return_value_policy::reference_internal,
            R"pbdoc(
-    
-    Grabs the last n frames of the file currently open for reading as an ndarray
+           Grabs the last n frames of the file currently open for reading as an ndarray.
 
-    Parameters
-    ----------
-    n: int - the number of frames to get 
-
-    Returns
-    -------
-    frames: ndarray
-    angles: list of the rotation angles for each frame
+           :param n: The number of frames to get.
+           :type n: int
+           :return: A tuple containing an ndarray of the last n frames and a list of the rotation angles for each frame.
+           :rtype: tuple(numpy.ndarray, list[float])
            )pbdoc")
       .def("save_tail", &twophoton::SITiffIO::saveTiffTail,
-           "Save the last n frames of the tiff file currently open for "
-           "reading",
+           "Save the last n frames of the TIFF file currently open for reading.",
            py::arg("n") = 1000, py::arg("fname") = "",
            R"pbdoc(
-    Parameters
-    ----------
-    n_frames: int - the number of frames at the tail of the file currently open for reading to save
-    fname: str - the name of the file to save the last n_frame images to. This will 
-    default to the currently open file name with _tail appended just before the file
-    type extension)pbdoc")
-      .def("version", &twophoton::SITiffIO::printVersion);
+           Save the last n frames of the TIFF file currently open for reading.
+
+           :param n: The number of frames at the tail of the file currently open for reading to save.
+           :type n: int
+           :param fname: The name of the file to save the last n_frame images to. This will default to the currently open file name with _tail appended just before the file type extension.
+           :type fname: str
+           )pbdoc");
 }
