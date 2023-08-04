@@ -1,16 +1,20 @@
 #ifndef SCANIMAGETIFF_H_
 #define SCANIMAGETIFF_H_
 
-#include <algorithm>
-#include <armadillo>
 #include <carma>
+#include <armadillo>
+#include <algorithm>
 #include <chrono>
 #include <memory>
 #include <numeric>
 #include <sstream>
 #include <string>
-#include <tiffio.h>
 #include <vector>
+#include <tiffio.h>
+
+// fix for windows visual c++
+#define _USE_MATH_DEFINES
+#include <math.h>
 
 // Some string utilities
 // Split a string given a delimiter and either return in a

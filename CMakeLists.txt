@@ -2,6 +2,9 @@ cmake_minimum_required(VERSION 3.22)
 project(ScanImageTiff VERSION 1.0.3 DESCRIPTION "tiff file io for tiffs written with scanImage" LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+if (WIN32)
+    set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
+endif()
 
 configure_file(src/ScanImageTiff_version.cpp.in ScanImageTiff_version.cpp @ONLY)
 add_library(ScanImageTiff_version STATIC ScanImageTiff_version.cpp)
@@ -62,6 +65,7 @@ pybind11_add_module(scanimagetiffio SHARED
 target_link_libraries(scanimagetiffio
     PUBLIC
     tiff
+    armadillo
     carma::carma
     ${Python3_LIBRARIES}
     date::date
@@ -83,6 +87,7 @@ add_library(${PROJECT_NAME} SHARED
 set_target_properties(${PROJECT_NAME} PROPERTIES PUBLIC_HEADER include/ScanImageTiff.h)
 target_link_libraries(${PROJECT_NAME}
     PUBLIC
+    armadillo
     carma::carma
     tiff
     ${Python3_LIBRARIES}

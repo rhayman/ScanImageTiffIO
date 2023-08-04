@@ -1,5 +1,4 @@
 #include <iterator>
-#define _USE_MATH_DEFINES
 #include "../include/ScanImageTiff.h"
 #include <algorithm>
 #include <chrono>
