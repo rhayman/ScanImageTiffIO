@@ -348,8 +348,10 @@ void SITiffReader::getFrameNumAndTimeStamp(const unsigned int dirnum,
 }
 
 arma::Mat<int16_t> SITiffReader::readframe(int framedir) {
+  std::cout << "HERE" << std::endl;
   if (m_tif) {
     int framenum = framedir;
+    std::cout << "framedir = " << framedir << std::endl;
     /*
     From the man pages for TIFFSetDirectory:
 
@@ -677,6 +679,7 @@ bool SITiffIO::openRotary(std::string fname) {
 py::array_t<int16_t> SITiffIO::readFrame(int frame_num) const {
   if (TiffReader != nullptr) {
     int dir_to_read = (frame_num * m_nchans - (m_nchans - channel2display)) - 1;
+    std::cout << "dir_to_read: " << dir_to_read << std::endl;
     auto F = TiffReader->readframe(dir_to_read);
     return carma::mat_to_arr(F, true);
   }
@@ -933,9 +936,7 @@ ptime SITiffIO::getRotaryEncoderTriggerTime() const {
   return RotaryLoader->getTriggerTime();
 }
 
-unsigned int SITiffIO::getDisplayChannel() const {
-  return channel2display;
-}
+unsigned int SITiffIO::getDisplayChannel() const { return channel2display; }
 
 ptime SITiffIO::getEpochTime() const { return TiffReader->getEpochTime(); }
 

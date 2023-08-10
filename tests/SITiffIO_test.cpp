@@ -1,8 +1,11 @@
 #include "../include/ScanImageTiff.h"
 #include <cassert>
+#include <cstdint>
 #include <filesystem>
 #include <gtest/gtest.h>
 #include <iostream>
+#include <pybind11/numpy.h>
+#include <pybind11/stl.h>
 
 namespace fs = std::filesystem;
 
@@ -12,10 +15,7 @@ const static fs::path rotary_name("test_rotaryfile.txt");
 
 class TiFFReaderTest : public ::testing::Test {
 protected:
-  void SetUp() override {
-    assert(fs::exists(tiff_name));
-    R.open();
-  }
+  void SetUp() override { assert(fs::exists(tiff_name)); }
   twophoton::SITiffReader R{tiff_name.string()};
 };
 
@@ -61,7 +61,8 @@ TEST_F(SITiffIOTest, ChannelProcessing) {
 }
 
 TEST_F(SITiffIOTest, ReadFrame) {
-  py::array_t<int16_t> f = S.readFrame(1);
+  py::array_t<int16_t> ff({512, 512});
+  auto f = S.readFrame(1);
   EXPECT_TRUE(f.ndim() > 0);
 }
 
