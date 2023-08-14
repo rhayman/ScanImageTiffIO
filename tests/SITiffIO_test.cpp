@@ -5,6 +5,7 @@
 #include <gtest/gtest.h>
 #include <iostream>
 #include <pybind11/numpy.h>
+#include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
 namespace fs = std::filesystem;
@@ -61,8 +62,9 @@ TEST_F(SITiffIOTest, ChannelProcessing) {
 }
 
 TEST_F(SITiffIOTest, ReadFrame) {
-  py::array_t<int16_t> ff({512, 512});
+  std::cout << "creating py::array_t..." << std::endl;
   auto f = S.readFrame(1);
+  std::cout << "created py::array_t!" << std::endl;
   EXPECT_TRUE(f.ndim() > 0);
 }
 

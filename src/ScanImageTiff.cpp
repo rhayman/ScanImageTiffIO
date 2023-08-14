@@ -365,6 +365,7 @@ arma::Mat<int16_t> SITiffReader::readframe(int framedir) {
     if (TIFFSetDirectory(m_tif, framenum) == 0)
       return arma::Mat<int16_t>();
     else {
+      std::cout << "doing this" << std::endl;
       uint32_t w = 0, h = 0;
       uint16_t photometric = 0;
       auto buffer_size = TIFFStripSize(m_tif);
@@ -402,18 +403,23 @@ arma::Mat<int16_t> SITiffReader::readframe(int framedir) {
           int tileidx = 0;
 
           // ********* return frame created here ***********
+          std::cout << "creating arma::Mat..." << std::endl;
           arma::Mat<int16_t> frame(h, w, arma::fill::zeros);
+          std::cout << "created mat" << std::endl;
           auto *data = frame.memptr();
           tdata_t buf = _TIFFmalloc(TIFFScanlineSize(m_tif));
           uint16 s, nsamples;
           TIFFGetField(m_tif, TIFFTAG_SAMPLESPERPIXEL, &nsamples);
           uint32 row;
           auto slsz = TIFFScanlineSize(m_tif);
+          std::cout << "about to memcpy" << std::endl;
           for (row = 0; row < h; row++) {
             TIFFReadScanline(m_tif, buf, row);
             std::memcpy(frame.colptr(row), (int16_t *)buf, slsz);
           }
+          std::cout << "freeing buffer" << std::endl;
           _TIFFfree(buf);
+          std::cout << "about to return frame" << std::endl;
           return frame;
         }
       }
@@ -683,7 +689,7 @@ py::array_t<int16_t> SITiffIO::readFrame(int frame_num) const {
     auto F = TiffReader->readframe(dir_to_read);
     return carma::mat_to_arr(F, true);
   }
-  return py::array_t<int16_t>();
+  return std::move(py::array_t<int16_t>());
 }
 
 void SITiffIO::writeFrame(py::array_t<int16_t> frame,
