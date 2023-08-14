@@ -24,6 +24,7 @@ if (${ENABLE_TESTS})
     target_link_libraries(unit_tests PUBLIC 
         ${PROJECT_NAME}
         GTest::gtest_main
+        carma::carma
     )
     include(GoogleTest)
     gtest_discover_tests(unit_tests)

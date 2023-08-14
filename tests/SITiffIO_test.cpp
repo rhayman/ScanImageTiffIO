@@ -61,14 +61,20 @@ TEST_F(SITiffIOTest, ChannelProcessing) {
   EXPECT_NE(std::get<0>(S.getChannelLUT()), 0);
 }
 
-TEST_F(SITiffIOTest, ReadFrame) {
-  std::cout << "creating py::array_t..." << std::endl;
-  auto f = S.readFrame(1);
-  std::cout << "created py::array_t!" << std::endl;
-  EXPECT_TRUE(f.ndim() > 0);
+TEST_F(SITiffIOTest, TimeProcessing) {
+  std::chrono::system_clock::time_point tp{};
+  S.openLog(log_name.string());
+  S.openRotary(rotary_name.string());
+  EXPECT_GT(S.getEpochTime(), tp);
+  EXPECT_GT(S.getRotaryEncoderTriggerTime(), tp);
+  EXPECT_GT(S.getLogFileTriggerTime(), tp);
+
+  EXPECT_GT(S.getLogFileTimes().size(), 0);
+  EXPECT_GT(S.getRotaryTimes().size(), 0);
 }
 
-// TEST_F(SITiffIOTest, Tail)
-// {
-//     auto tail = S.tail(5);
-// }
+TEST_F(SITiffIOTest, Tags) {
+  EXPECT_STRNE(S.getSWTag(1).c_str(), "blah");
+  EXPECT_STRNE(S.getImageDescTag(1).c_str(), "blah");
+  EXPECT_NE(S.getChannelLUT().first, -1000000);
+}

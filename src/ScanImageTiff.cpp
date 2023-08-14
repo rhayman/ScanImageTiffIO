@@ -348,10 +348,8 @@ void SITiffReader::getFrameNumAndTimeStamp(const unsigned int dirnum,
 }
 
 arma::Mat<int16_t> SITiffReader::readframe(int framedir) {
-  std::cout << "HERE" << std::endl;
   if (m_tif) {
     int framenum = framedir;
-    std::cout << "framedir = " << framedir << std::endl;
     /*
     From the man pages for TIFFSetDirectory:
 
@@ -365,10 +363,8 @@ arma::Mat<int16_t> SITiffReader::readframe(int framedir) {
     if (TIFFSetDirectory(m_tif, framenum) == 0)
       return arma::Mat<int16_t>();
     else {
-      std::cout << "doing this" << std::endl;
       uint32_t w = 0, h = 0;
       uint16_t photometric = 0;
-      auto buffer_size = TIFFStripSize(m_tif);
       if (TIFFGetField(m_tif, TIFFTAG_IMAGEWIDTH, &w) &&  // normally = 512
           TIFFGetField(m_tif, TIFFTAG_IMAGELENGTH, &h) && // normally = 512
           TIFFGetField(m_tif, TIFFTAG_PHOTOMETRIC,
@@ -399,28 +395,19 @@ arma::Mat<int16_t> SITiffReader::readframe(int framedir) {
                tile_height0 == std::numeric_limits<uint32_t>::max()))
             tile_height0 = m_imageheight;
 
-          auto buffer = std::make_unique<int16_t[]>(buffer_size);
           int tileidx = 0;
 
           // ********* return frame created here ***********
-          std::cout << "creating arma::Mat..." << std::endl;
           arma::Mat<int16_t> frame(h, w, arma::fill::zeros);
-          std::cout << "created mat" << std::endl;
-          auto *data = frame.memptr();
           tdata_t buf = _TIFFmalloc(TIFFScanlineSize(m_tif));
-          uint16 s, nsamples;
-          TIFFGetField(m_tif, TIFFTAG_SAMPLESPERPIXEL, &nsamples);
           uint32 row;
           auto slsz = TIFFScanlineSize(m_tif);
-          std::cout << "about to memcpy" << std::endl;
           for (row = 0; row < h; row++) {
             TIFFReadScanline(m_tif, buf, row);
             std::memcpy(frame.colptr(row), (int16_t *)buf, slsz);
           }
-          std::cout << "freeing buffer" << std::endl;
           _TIFFfree(buf);
-          std::cout << "about to return frame" << std::endl;
-          return frame;
+          return std::move(frame);
         }
       }
     }
@@ -682,14 +669,14 @@ bool SITiffIO::openRotary(std::string fname) {
   return RotaryLoader->load();
 }
 
-py::array_t<int16_t> SITiffIO::readFrame(int frame_num) const {
+py::array_t<int16_t> SITiffIO::readFrame(int frame_num) {
   if (TiffReader != nullptr) {
     int dir_to_read = (frame_num * m_nchans - (m_nchans - channel2display)) - 1;
-    std::cout << "dir_to_read: " << dir_to_read << std::endl;
     auto F = TiffReader->readframe(dir_to_read);
+    std::cout << "got readframe result" << std::endl;
     return carma::mat_to_arr(F, true);
   }
-  return std::move(py::array_t<int16_t>());
+  return py::array_t<int16_t>();
 }
 
 void SITiffIO::writeFrame(py::array_t<int16_t> frame,
