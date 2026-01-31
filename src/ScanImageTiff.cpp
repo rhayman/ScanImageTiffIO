@@ -2,18 +2,14 @@
 #include "../include/ScanImageTiff_version.h"
 #include "carma_bits/converters.h"
 #include "tiffio.h"
-#include <algorithm>
 #include <cstdint>
-#include <date/date.h>
 #include <filesystem>
-#include <functional>
 #include <limits>
 #include <memory>
 #include <stdexcept>
 #include <stdio.h>
 #include <string>
 #include <tuple>
-#include <valarray>
 
 namespace fs = std::filesystem;
 
@@ -276,7 +272,10 @@ ptime SITiffHeader::getEpochTime(TIFF *m_tif) {
         auto p1 = epoch_str.find("[") + 1;
         auto p2 = epoch_str.find("]") - 1;
         std::istringstream is(epoch_str.substr(p1, p2));
-        is >> date::parse(epoch_time_fmt, m_epoch_time);
+        // epoch_time_fmt is static constexpr char
+        // m_epoch_time is ptime which is std::chrono::system_clock::time_point;
+        // is >> date::parse(epoch_time_fmt, m_epoch_time);
+        is >> std::chrono::parse(epoch_time_fmt, m_epoch_time);
         return m_epoch_time;
       }
       return ptime();
@@ -382,6 +381,7 @@ arma::Mat<int16_t> SITiffReader::readframe(int framedir) {
         TIFFGetField(m_tif, TIFFTAG_ROWSPERSTRIP, &tile_height0);
 
         if ((!is_tiled) ||
+            // this line can't be true...
             (is_tiled && TIFFGetField(m_tif, TIFFTAG_TILEWIDTH, &tile_width0) &&
              TIFFGetField(m_tif, TIFFTAG_TILELENGTH, &tile_height0))) {
           if (!is_tiled)

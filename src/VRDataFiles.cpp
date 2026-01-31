@@ -1,12 +1,9 @@
-#include <iterator>
 #include "../include/ScanImageTiff.h"
 #include <algorithm>
 #include <chrono>
 #include <cmath>
-#include <date/date.h>
-#include <filesystem>
 #include <fstream>
-#include <numeric>
+#include <iterator>
 #include <string>
 
 namespace twophoton {
@@ -22,14 +19,14 @@ static double constrainAngleToPi(double x) {
 // from all others
 struct zeroRotations {
   double val;
-  zeroRotations(double v) : val(v){};
+  zeroRotations(double v) : val(v) {};
   void operator()(double &elem) const { elem -= val; }
 };
 
 // normalizes each value to lie between 0 and 1 - used in processData() below
 struct normalize {
   double minval, maxval;
-  normalize(double min, double max) : minval(min), maxval(max){};
+  normalize(double min, double max) : minval(min), maxval(max) {};
   void operator()(double &elem) const {
     elem = (elem - minval) / (maxval - minval);
   }
@@ -91,7 +88,7 @@ bool RotaryEncoderLoader::load() {
       pos = line.find(X_token);
       s1 = line.substr(0, pos);
       std::istringstream is(s1);
-      is >> date::parse(logfile_time_fmt, pt);
+      is >> std::chrono::parse(logfile_time_fmt, pt);
       if (old_time != pt) {
         m_ptimes.push_back(pt);
         auto pos_mx = line.find(rot_token);
@@ -198,7 +195,7 @@ bool LogFileLoader::load() {
       pos = line.find(X_token);
       s1 = line.substr(0, pos);
       std::istringstream is(s1);
-      is >> date::parse(logfile_time_fmt, pt);
+      is >> std::chrono::parse(logfile_time_fmt, pt);
       if (old_time != pt) // ie skip repeats of the same time (logging error?)
       {
         // grab the posix time

@@ -1,0 +1,20 @@
+[
+{
+  "directory": "/home/robin/gits/ScanImageTiffIO/build",
+  "command": "/usr/bin/c++ -DCARMA_USE_GENERATED_CONFIG=1 -DCARMA_VERSION_MAJOR=0 -DCARMA_VERSION_MINOR=8 -DCARMA_VERSION_NAME=0.8.0 -DCARMA_VERSION_PATCH=0 -DScanImageTiff_EXPORTS -I\"/home/robin/gits/ScanImageTiffIO/(\" -I\"/home/robin/gits/ScanImageTiffIO/)\" -I/home/robin/gits/ScanImageTiffIO/build/_deps/carma-src/extern/armadillo-code/include -I/home/robin/gits/ScanImageTiffIO/build/_deps/carma-src/include -I/home/robin/gits/ScanImageTiffIO/build/_deps/carma-build/include -I/home/robin/gits/ScanImageTiffIO/build/_deps/tiff-src/libtiff -I/home/robin/gits/ScanImageTiffIO/build/_deps/tiff-build/libtiff -isystem /home/robin/.local/share/uv/python/cpython-3.13.11-linux-x86_64-gnu/include/python3.13 -isystem /home/robin/.venv/lib/python3.13/site-packages/numpy/_core/include -isystem /home/robin/gits/ScanImageTiffIO/build/_deps/pybind11-src/include -O3 -DNDEBUG -std=gnu++20 -fPIC -Winvalid-pch -x c++-header -include /home/robin/gits/ScanImageTiffIO/build/CMakeFiles/ScanImageTiff.dir/cmake_pch.hxx -o CMakeFiles/ScanImageTiff.dir/cmake_pch.hxx.gch -c /home/robin/gits/ScanImageTiffIO/build/CMakeFiles/ScanImageTiff.dir/cmake_pch.hxx.cxx",
+  "file": "/home/robin/gits/ScanImageTiffIO/build/CMakeFiles/ScanImageTiff.dir/cmake_pch.hxx.cxx",
+  "output": "CMakeFiles/ScanImageTiff.dir/cmake_pch.hxx.gch"
+},
+{
+  "directory": "/home/robin/gits/ScanImageTiffIO/build",
+  "command": "/usr/bin/c++ -DCARMA_USE_GENERATED_CONFIG=1 -DCARMA_VERSION_MAJOR=0 -DCARMA_VERSION_MINOR=8 -DCARMA_VERSION_NAME=0.8.0 -DCARMA_VERSION_PATCH=0 -DScanImageTiff_EXPORTS -I\"/home/robin/gits/ScanImageTiffIO/(\" -I\"/home/robin/gits/ScanImageTiffIO/)\" -I/home/robin/gits/ScanImageTiffIO/build/_deps/carma-src/extern/armadillo-code/include -I/home/robin/gits/ScanImageTiffIO/build/_deps/carma-src/include -I/home/robin/gits/ScanImageTiffIO/build/_deps/carma-build/include -I/home/robin/gits/ScanImageTiffIO/build/_deps/tiff-src/libtiff -I/home/robin/gits/ScanImageTiffIO/build/_deps/tiff-build/libtiff -isystem /home/robin/.local/share/uv/python/cpython-3.13.11-linux-x86_64-gnu/include/python3.13 -isystem /home/robin/.venv/lib/python3.13/site-packages/numpy/_core/include -isystem /home/robin/gits/ScanImageTiffIO/build/_deps/pybind11-src/include -O3 -DNDEBUG -std=gnu++20 -fPIC -Winvalid-pch -include /home/robin/gits/ScanImageTiffIO/build/CMakeFiles/ScanImageTiff.dir/cmake_pch.hxx -o CMakeFiles/ScanImageTiff.dir/src/ScanImageTiff.cpp.o -c /home/robin/gits/ScanImageTiffIO/src/ScanImageTiff.cpp",
+  "file": "/home/robin/gits/ScanImageTiffIO/src/ScanImageTiff.cpp",
+  "output": "CMakeFiles/ScanImageTiff.dir/src/ScanImageTiff.cpp.o"
+},
+{
+  "directory": "/home/robin/gits/ScanImageTiffIO/build",
+  "command": "/usr/bin/c++ -DCARMA_USE_GENERATED_CONFIG=1 -DCARMA_VERSION_MAJOR=0 -DCARMA_VERSION_MINOR=8 -DCARMA_VERSION_NAME=0.8.0 -DCARMA_VERSION_PATCH=0 -DScanImageTiff_EXPORTS -I\"/home/robin/gits/ScanImageTiffIO/(\" -I\"/home/robin/gits/ScanImageTiffIO/)\" -I/home/robin/gits/ScanImageTiffIO/build/_deps/carma-src/extern/armadillo-code/include -I/home/robin/gits/ScanImageTiffIO/build/_deps/carma-src/include -I/home/robin/gits/ScanImageTiffIO/build/_deps/carma-build/include -I/home/robin/gits/ScanImageTiffIO/build/_deps/tiff-src/libtiff -I/home/robin/gits/ScanImageTiffIO/build/_deps/tiff-build/libtiff -isystem /home/robin/.local/share/uv/python/cpython-3.13.11-linux-x86_64-gnu/include/python3.13 -isystem /home/robin/.venv/lib/python3.13/site-packages/numpy/_core/include -isystem /home/robin/gits/ScanImageTiffIO/build/_deps/pybind11-src/include -O3 -DNDEBUG -std=gnu++20 -fPIC -Winvalid-pch -include /home/robin/gits/ScanImageTiffIO/build/CMakeFiles/ScanImageTiff.dir/cmake_pch.hxx -o CMakeFiles/ScanImageTiff.dir/src/VRDataFiles.cpp.o -c /home/robin/gits/ScanImageTiffIO/src/VRDataFiles.cpp",
+  "file": "/home/robin/gits/ScanImageTiffIO/src/VRDataFiles.cpp",
+  "output": "CMakeFiles/ScanImageTiff.dir/src/VRDataFiles.cpp.o"
+}
+]

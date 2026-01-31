@@ -22,29 +22,22 @@ option(tiff-docs  "" OFF)
 option(tiff-tests ""  OFF)
 option(tiff-tools "" OFF)
 option(tiff-contrib "" OFF)
-FetchContent_MakeAvailable(tiff)
-
-FetchContent_Declare(
-    date_src
-    GIT_REPOSITORY https://github.com/HowardHinnant/date.git
-    GIT_TAG        v3.0.1  # adjust tag/branch/commit as needed
-)
-FetchContent_MakeAvailable(date_src)
 
 FetchContent_Declare(
     carma
     GIT_REPOSITORY https://github.com/RUrlus/carma
-    GIT_TAG        v0.6.3
+    GIT_TAG stable 
 )
-FetchContent_MakeAvailable(carma)
 
 FetchContent_Declare(
     pybind11
     GIT_REPOSITORY https://github.com/pybind/pybind11
-    GIT_TAG        v2.10.0
+    GIT_TAG master
 )
-FetchContent_MakeAvailable(pybind11)
 
+FetchContent_MakeAvailable(tiff pybind11 carma)
+
+# ensure pybind11 is available
 FetchContent_GetProperties(pybind11)
 if(NOT pybind11_POPULATED)
     FetchContent_Populate(pybind11)
@@ -68,7 +61,6 @@ target_link_libraries(scanimagetiffio
     armadillo
     carma::carma
     ${Python3_LIBRARIES}
-    date::date
     ScanImageTiff_version
 )
 target_include_directories(scanimagetiffio PUBLIC "${CMAKE_CURRENT_BINARY_DIR}")
@@ -91,7 +83,6 @@ target_link_libraries(${PROJECT_NAME}
     carma::carma
     tiff
     ${Python3_LIBRARIES}
-    date::date
     ScanImageTiff_version
 )
 install(TARGETS ${PROJECT_NAME}

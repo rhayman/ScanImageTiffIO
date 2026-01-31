@@ -1,16 +1,15 @@
 #ifndef SCANIMAGETIFF_H_
 #define SCANIMAGETIFF_H_
 
-#include <carma>
-#include <armadillo>
 #include <algorithm>
+#include <armadillo>
+#include <carma>
 #include <chrono>
 #include <memory>
-#include <numeric>
 #include <sstream>
 #include <string>
-#include <vector>
 #include <tiffio.h>
+#include <vector>
 
 // fix for windows visual c++
 #define _USE_MATH_DEFINES
@@ -114,8 +113,8 @@ class SITiffReader;
 class SITiffHeader {
 public:
   SITiffHeader(SITiffReader *parent)
-      : m_parent(parent){}; // created on SITiffReader::open()
-  ~SITiffHeader(){};
+      : m_parent(parent) {}; // created on SITiffReader::open()
+  ~SITiffHeader() {};
   /*
   The main function that scrapes the header for all the relevant information
   The goal here is to be reduce the number of times the current directory is
@@ -228,7 +227,7 @@ private:
 class SITiffReader {
 public:
   SITiffReader() = delete;
-  SITiffReader(const std::string &filename) : m_filename(filename){};
+  SITiffReader(const std::string &filename) : m_filename(filename) {};
   ~SITiffReader();
   bool open();
   bool isOpen() { return isopened; }
@@ -312,7 +311,7 @@ private:
 
 class SITiffWriter {
 public:
-  SITiffWriter(){};
+  SITiffWriter() {};
   virtual ~SITiffWriter();
   bool write(arma::Mat<int16_t> &img, const std::vector<int> &params);
 
@@ -377,7 +376,7 @@ private:
 
 class LogFileLoader : public VRDataFile {
 public:
-  explicit LogFileLoader(std::string fname) : VRDataFile(fname){};
+  explicit LogFileLoader(std::string fname) : VRDataFile(fname) {};
   bool load() override;
   double getXTranslation(const int &i) const { return m_x_translation[i]; };
   double getRawXTranslation(const int &i) const {
@@ -405,7 +404,7 @@ private:
 
 class RotaryEncoderLoader : public VRDataFile {
 public:
-  explicit RotaryEncoderLoader(std::string fname) : VRDataFile(fname){};
+  explicit RotaryEncoderLoader(std::string fname) : VRDataFile(fname) {};
   bool load() override;
   bool calculateDurationsAndRotations();
 };
@@ -455,11 +454,11 @@ public:
   double m_r = 0;
   double m_orig_x = 0;
   double m_orig_z = 0;
-  TransformContainer(){};
+  TransformContainer() {};
   TransformContainer(const int &frame, const double &ts)
-      : m_framenumber(frame), m_timestamp(ts){};
+      : m_framenumber(frame), m_timestamp(ts) {};
 
-  ~TransformContainer(){};
+  ~TransformContainer() {};
   void setPosData(double x, double z, double r) {
     m_x = x;
     m_z = z;
@@ -596,5 +595,5 @@ private:
   std::shared_ptr<std::map<unsigned int, TransformContainer>> m_all_transforms =
       nullptr;
 };
-};     // namespace twophoton
+}; // namespace twophoton
 #endif // namespace twophoton
