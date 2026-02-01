@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.22)
-
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 option(ENABLE_TESTS "Enable tests" OFF)
+
 if (${ENABLE_TESTS})
     message(STATUS "ScanImageTiffIO: Testing is enabled")
     enable_testing()
