@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.22)
 
 option(ENABLE_TESTS "Enable tests" OFF)
 if (${ENABLE_TESTS})
@@ -15,8 +15,8 @@ if (${ENABLE_TESTS})
     FetchContent_MakeAvailable(googletest)
 
     add_executable(unit_tests
-        tiffReader_test.cpp
-        SITiffIO_test.cpp
+        test_tiffReader.cpp
+        test_SITiffIO.cpp
         ../src/ScanImageTiff.cpp
         ../src/VRDataFiles.cpp
     )
