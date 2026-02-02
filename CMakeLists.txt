@@ -1,7 +1,11 @@
 cmake_minimum_required(VERSION 3.22)
 project(ScanImageTiff VERSION 1.0.3 DESCRIPTION "tiff file io for tiffs written with scanImage" LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+# generate the compile_commands.json file for clangd
+set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
+
 if (WIN32)
     set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 endif()
@@ -66,8 +70,6 @@ target_link_libraries(scanimagetiffio
 target_include_directories(scanimagetiffio PUBLIC "${CMAKE_CURRENT_BINARY_DIR}")
 # # remove the "lib" from start of the library name
 set_target_properties(scanimagetiffio PROPERTIES PREFIX "")
-# generate the compile_commands.json file for clangd
-set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 
 # install
 install(TARGETS scanimagetiffio DESTINATION ${Python3_SITEARCH})
