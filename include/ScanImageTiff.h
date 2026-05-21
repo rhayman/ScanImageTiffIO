@@ -289,9 +289,9 @@ public:
   }
 
 private:
-  SITiffHeader *headerdata = nullptr;
+  std::unique_ptr<SITiffHeader> headerdata;
   std::string m_filename;
-  TIFF *m_tif = NULL;
+  TIFF *m_tif = nullptr;
   // some values to do with frame size, byte values etc
   unsigned int m_imagewidth = 512;
   unsigned int m_imageheight = 512;

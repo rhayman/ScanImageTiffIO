@@ -1,15 +1,13 @@
 cmake_minimum_required(VERSION 3.22)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-option(ENABLE_TESTS "Enable tests" OFF)
-
-if (${ENABLE_TESTS})
+if (BUILD_TESTING)
     message(STATUS "ScanImageTiffIO: Testing is enabled")
     enable_testing()
     FetchContent_Declare(
         googletest
         GIT_REPOSITORY https://github.com/google/googletest.git
-        GIT_TAG main
+        GIT_TAG v1.15.2
     )
     # prevent overriding the parent projects compiler and linker settings on Windows
     set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)

@@ -3,6 +3,7 @@ project(ScanImageTiff VERSION 1.0.3 DESCRIPTION "tiff file io for tiffs written 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+option(BUILD_TESTING "Build unit tests" ON)
 # generate the compile_commands.json file for clangd
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 
@@ -20,7 +21,7 @@ include( FetchContent )
 FetchContent_Declare(
     tiff 
     GIT_REPOSITORY https://gitlab.com/libtiff/libtiff.git
-    GIT_TAG master
+    GIT_TAG v4.7.1
 )
 option(tiff-docs  "" OFF)
 option(tiff-tests ""  OFF)
@@ -30,13 +31,13 @@ option(tiff-contrib "" OFF)
 FetchContent_Declare(
     carma
     GIT_REPOSITORY https://github.com/RUrlus/carma
-    GIT_TAG stable 
+    GIT_TAG c1db538e13e291ad0e5c95adb96bb315cc121b8f
 )
 
 FetchContent_Declare(
     pybind11
     GIT_REPOSITORY https://github.com/pybind/pybind11
-    GIT_TAG master
+    GIT_TAG v2.13.6
 )
 
 FetchContent_MakeAvailable(tiff pybind11 carma)
@@ -94,4 +95,7 @@ install(TARGETS ${PROJECT_NAME}
 	INCLUDES DESTINATION include
     PUBLIC_HEADER DESTINATION include
 )
-add_subdirectory(tests)
+if (BUILD_TESTING)
+  enable_testing()
+  add_subdirectory(tests)
+endif()
