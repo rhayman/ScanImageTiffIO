@@ -1,6 +1,5 @@
 #include "../include/ScanImageTiff.h"
 #include "../include/ScanImageTiff_version.h"
-#include "carma_bits/converters.h"
 #include "tiffio.h"
 #include <cstdint>
 #include <filesystem>
@@ -9,11 +8,56 @@
 #include <stdexcept>
 #include <stdio.h>
 #include <string>
+#include <type_traits>
 #include <tuple>
 
 namespace fs = std::filesystem;
 
 namespace twophoton {
+namespace {
+template <typename T>
+bool parseNumber(const std::string &value, T &out) {
+  try {
+    if constexpr (std::is_same_v<T, int>) {
+      out = std::stoi(value);
+    } else if constexpr (std::is_same_v<T, unsigned int>) {
+      out = static_cast<unsigned int>(std::stoul(value));
+    } else if constexpr (std::is_same_v<T, double>) {
+      out = std::stod(value);
+    } else {
+      return false;
+    }
+    return true;
+  } catch (...) {
+    return false;
+  }
+}
+
+int frameToDirectoryIndex(const unsigned int frame_num, const unsigned int nchans,
+                          const unsigned int channel) {
+  if (frame_num == 0 || nchans == 0 || channel == 0 || channel > nchans) {
+    return -1;
+  }
+  const auto frame_index = static_cast<long long>(frame_num - 1);
+  const auto dir_index = frame_index * static_cast<long long>(nchans) +
+                         static_cast<long long>(channel - 1);
+  if (dir_index > static_cast<long long>(std::numeric_limits<int>::max())) {
+    return -1;
+  }
+  return static_cast<int>(dir_index);
+}
+
+std::string normalizeDelimitedNumbers(std::string value) {
+  for (auto &ch : value) {
+    if (ch == '[' || ch == ']' || ch == '{' || ch == '}' || ch == ',' ||
+        ch == ';') {
+      ch = ' ';
+    }
+  }
+  return value;
+}
+} // namespace
+
 void SITiffHeader::read(TIFF *m_tif, int dirnum) {
   if (m_tif) {
     if (dirnum == -1)
@@ -215,49 +259,49 @@ int SITiffHeader::scrapeHeaders(TIFF *m_tif, int &count) {
 }
 
 void SITiffHeader::parseChannelLUT(std::string LUT) {
-  LUT.pop_back();
-  LUT = LUT.substr(2);
-  auto LUT_split = split(LUT, ' ');
-  for (auto &x : LUT_split) {
-    if (x.find('[') != std::string::npos)
-      x = x.substr(1);
-    if (x.find(']') != std::string::npos)
-      x.pop_back();
+  chanLUT.clear();
+  LUT = normalizeDelimitedNumbers(LUT);
+  std::istringstream iss(LUT);
+  std::vector<int> values;
+  std::string token;
+  while (iss >> token) {
+    int parsed = 0;
+    if (parseNumber(token, parsed)) {
+      values.push_back(parsed);
+    }
   }
   int count = 1;
-  for (unsigned int i = 0; i < LUT_split.size(); i += 2) {
-    chanLUT[count] = std::make_pair<int, int>(std::stoi(LUT_split[i]),
-                                              std::stoi(LUT_split[i + 1]));
+  for (size_t i = 0; i + 1 < values.size(); i += 2) {
+    chanLUT[count] = std::make_pair(values[i], values[i + 1]);
     ++count;
   }
 }
 
 void SITiffHeader::parseChannelOffsets(std::string offsets) {
-  offsets.pop_back();
-  offsets = offsets.substr(2);
-  auto offsets_split = split(offsets, ' ');
+  chanOffs.clear();
+  offsets = normalizeDelimitedNumbers(offsets);
+  std::istringstream iss(offsets);
+  std::string token;
   int count = 1;
-  for (auto &x : offsets_split) {
-    if (x.find('[') != std::string::npos)
-      x = x.substr(1);
-    if (x.find(']') != std::string::npos)
-      x.pop_back();
-    chanOffs[count] = std::stoi(x);
-    ++count;
+  while (iss >> token) {
+    int parsed = 0;
+    if (parseNumber(token, parsed)) {
+      chanOffs[count] = parsed;
+      ++count;
+    }
   }
 }
 
 void SITiffHeader::parseSavedChannels(std::string savedchans) {
-  // in case only a single channel has been saved
-  if (savedchans.size() == 2) {
-    chanSaved[0] = std::stoul(savedchans.substr(1));
-  } else {
-    savedchans.pop_back();
-    savedchans = savedchans.substr(2);
-    auto savedchans_split = split(savedchans, ';');
-    unsigned int count = 0;
-    for (auto &x : savedchans_split) {
-      chanSaved[count] = std::stoul(x);
+  chanSaved.clear();
+  savedchans = normalizeDelimitedNumbers(savedchans);
+  std::istringstream iss(savedchans);
+  std::string token;
+  unsigned int count = 0;
+  while (iss >> token) {
+    unsigned int parsed = 0;
+    if (parseNumber(token, parsed)) {
+      chanSaved[count] = parsed;
       ++count;
     }
   }
@@ -331,6 +375,8 @@ std::vector<double> SITiffReader::getAllTimeStamps() const {
 void SITiffReader::getFrameNumAndTimeStamp(const unsigned int dirnum,
                                            unsigned int &framenum,
                                            double &timestamp) const {
+  framenum = 0;
+  timestamp = 0.0;
   if (m_tif) {
     // strings to grab from the header
     const std::string frameNumberString = headerdata->getFrameNumberString();
@@ -341,8 +387,14 @@ void SITiffReader::getFrameNumAndTimeStamp(const unsigned int dirnum,
     std::string ts;
     frameN = grabStr(imdescTag, frameNumberString);
     ts = grabStr(imdescTag, frameTimeStampString);
-    framenum = std::stoi(frameN);
-    timestamp = std::stof(ts);
+    unsigned int frame_num_parsed = 0;
+    double timestamp_parsed = 0.0;
+    if (!parseNumber(frameN, frame_num_parsed) ||
+        !parseNumber(ts, timestamp_parsed)) {
+      return;
+    }
+    framenum = frame_num_parsed;
+    timestamp = timestamp_parsed;
   }
 }
 
@@ -677,29 +729,46 @@ bool SITiffIO::openRotary(std::string fname) {
   return RotaryLoader->load();
 }
 
-py::array_t<int16_t> SITiffIO::readFrame(int frame_num) {
-  if (TiffReader != nullptr) {
-    int dir_to_read = (frame_num * m_nchans - (m_nchans - channel2display)) - 1;
-    auto F = TiffReader->readframe(dir_to_read);
-    std::cout << "got readframe result" << std::endl;
-    return carma::mat_to_arr(F, true);
+void SITiffIO::setChannel(unsigned int i) {
+  if (i == 0 || i > m_nchans) {
+    throw std::out_of_range("Requested channel is out of bounds");
   }
-  return py::array_t<int16_t>();
+  channel2display = i;
 }
 
-void SITiffIO::writeFrame(py::array_t<int16_t> frame,
+arma::Mat<int16_t> SITiffIO::readFrame(int frame_num) {
+  if (TiffReader == nullptr || frame_num <= 0) {
+    return arma::Mat<int16_t>();
+  }
+  const auto total_directories = TiffReader->countDirectories();
+  const auto dir_to_read = frameToDirectoryIndex(static_cast<unsigned int>(frame_num),
+                                                 m_nchans, channel2display);
+  if (dir_to_read < 0 || dir_to_read >= total_directories) {
+    return arma::Mat<int16_t>();
+  }
+  return TiffReader->readframe(dir_to_read);
+}
+
+void SITiffIO::writeFrame(const arma::Mat<int16_t> &frame,
                           unsigned int frame_num) const {
-  if (TiffWriter != nullptr) {
+  if (TiffWriter != nullptr && frame_num > 0) {
     int dir_to_read_write =
-        (frame_num * m_nchans - (m_nchans - channel2display)) - 1;
+        frameToDirectoryIndex(frame_num, m_nchans, channel2display);
+    if (dir_to_read_write < 0) {
+      throw std::out_of_range("Requested frame/channel is out of bounds");
+    }
     std::string swtag, imtag;
     if (TiffReader != nullptr) {
+      const auto total_directories = TiffReader->countDirectories();
+      if (dir_to_read_write >= total_directories) {
+        throw std::out_of_range("Requested frame is out of bounds");
+      }
       swtag = TiffReader->getSWTag(dir_to_read_write);
       imtag = TiffReader->getImDescTag(dir_to_read_write);
       TiffWriter->modifyChannel(swtag, channel2display);
       TiffWriter->writeSIHdr(swtag, imtag);
     }
-    arma::Mat<int16_t> write_frame = carma::arr_to_mat(frame, true);
+    auto write_frame = frame;
     TiffWriter->writeHdr(write_frame);
     *TiffWriter << write_frame;
   }
@@ -796,15 +865,21 @@ void SITiffIO::interpolateIndices(const int &startFrame = 0) {
     auto frame_time = tiff_acquisition_start + int_chrono;
     if (LogLoader) {
       logfile_idx = findNearestIdx(LogLoader->getPTimes(), frame_time);
-      x = LogLoader->getXTranslation(logfile_idx);
-      orig_x = LogLoader->getRawXTranslation(logfile_idx);
-      z = LogLoader->getZTranslation(logfile_idx);
-      orig_z = LogLoader->getRawZTranslation(logfile_idx);
-      r = LogLoader->getRadianRotation(logfile_idx);
+      if (logfile_idx >= 0 &&
+          static_cast<size_t>(logfile_idx) < LogLoader->getPTimes().size()) {
+        x = LogLoader->getXTranslation(logfile_idx);
+        orig_x = LogLoader->getRawXTranslation(logfile_idx);
+        z = LogLoader->getZTranslation(logfile_idx);
+        orig_z = LogLoader->getRawZTranslation(logfile_idx);
+        r = LogLoader->getRadianRotation(logfile_idx);
+      }
     }
     if (RotaryLoader) {
       rotary_idx = findNearestIdx(RotaryLoader->getPTimes(), frame_time);
-      r = RotaryLoader->getRadianRotation(rotary_idx);
+      if (rotary_idx >= 0 &&
+          static_cast<size_t>(rotary_idx) < RotaryLoader->getPTimes().size()) {
+        r = RotaryLoader->getRadianRotation(rotary_idx);
+      }
     }
     tc.m_framenumber = (int)(i / nchans);
     tc.m_timestamp = tiff_ts;
@@ -958,28 +1033,40 @@ std::pair<int, int> SITiffIO::getChannelLUT() {
   }
 }
 
-std::tuple<py::array_t<int16_t>, std::vector<double>>
-SITiffIO::tail(const int &n) {
+std::tuple<arma::Cube<int16_t>, std::vector<double>> SITiffIO::tail(
+    const int &n) {
   if (TiffReader == nullptr) {
     throw std::invalid_argument("No file open for reading");
   }
-  auto n_frames = TiffReader->countDirectories();
-  if ((n_frames - n) <= 0) {
+  if (n <= 0) {
+    throw std::invalid_argument("n must be greater than 0");
+  }
+  const auto total_directories = TiffReader->countDirectories();
+  const auto n_frames = total_directories / static_cast<int>(m_nchans);
+  if (n > n_frames) {
     throw std::invalid_argument("n must be less than total frame count");
   }
   unsigned int w, h;
   TiffReader->getImageSize(h, w);
-  arma::Cube<int16_t> result(n, h, w);
-  int row_count = 0;
-  for (size_t i = n_frames - n; i < n_frames; i++) {
-    int dir_to_read = (i * m_nchans - (m_nchans - channel2display)) - 1;
+  arma::Cube<int16_t> result(h, w, n, arma::fill::zeros);
+  int slice_count = 0;
+  for (int i = n_frames - n; i < n_frames; i++) {
+    const int dir_to_read =
+        frameToDirectoryIndex(static_cast<unsigned int>(i + 1), m_nchans,
+                              channel2display);
+    if (dir_to_read < 0 || dir_to_read >= total_directories) {
+      throw std::out_of_range("Requested frame is out of bounds");
+    }
     auto F = TiffReader->readframe(dir_to_read);
-    result.row(row_count) = F;
-    ++row_count;
+    if (F.n_rows != h || F.n_cols != w) {
+      throw std::runtime_error("Frame dimensions are inconsistent");
+    }
+    result.slice(slice_count) = F;
+    ++slice_count;
   }
   interpolateIndices(n_frames - n);
   auto angles = getTheta();
-  return std::make_tuple(carma::cube_to_arr(result), angles);
+  return std::make_tuple(result, angles);
 }
 
 void SITiffIO::saveTiffTail(const int &n = 1000, std::string fname = "") {
@@ -1000,14 +1087,23 @@ void SITiffIO::saveTiffTail(const int &n = 1000, std::string fname = "") {
     }
     TiffWriter->open(new_name);
   }
-  auto n_frames = TiffReader->countDirectories();
-  if ((n_frames - n) <= 0) {
+  if (n <= 0) {
+    throw std::invalid_argument("n must be greater than 0");
+  }
+  const auto total_directories = TiffReader->countDirectories();
+  const auto n_frames = total_directories / static_cast<int>(m_nchans);
+  if (n > n_frames) {
     throw std::invalid_argument("n must be less than total frame count");
   }
   std::string sw_tag, im_tag;
   int count = 0;
-  for (size_t i = n_frames - n; i < n_frames; ++i) {
-    auto this_dir = (i * m_nchans - (m_nchans - channel2display));
+  for (int i = n_frames - n; i < n_frames; ++i) {
+    const int this_dir =
+        frameToDirectoryIndex(static_cast<unsigned int>(i + 1), m_nchans,
+                              channel2display);
+    if (this_dir < 0 || this_dir >= total_directories) {
+      throw std::out_of_range("Requested frame is out of bounds");
+    }
     sw_tag = TiffReader->getSWTag(this_dir);
     im_tag = TiffReader->getImDescTag(this_dir);
     auto this_frame = TiffReader->readframe(this_dir);

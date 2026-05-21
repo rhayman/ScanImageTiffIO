@@ -3,7 +3,6 @@
 
 #include <algorithm>
 #include <armadillo>
-#include <carma>
 #include <chrono>
 #include <memory>
 #include <sstream>
@@ -556,10 +555,10 @@ public:
   unsigned int countDirectories();
   void interpolateIndices(const int &);
   std::tuple<unsigned int> getNChannels() const;
-  void setChannel(unsigned int i) { channel2display = i; }
+  void setChannel(unsigned int i);
   unsigned int getDisplayChannel() const;
-  py::array_t<int16_t> readFrame(int frame_num);
-  void writeFrame(py::array_t<int16_t>, unsigned int frame_num) const;
+  arma::Mat<int16_t> readFrame(int frame_num);
+  void writeFrame(const arma::Mat<int16_t> &, unsigned int frame_num) const;
   std::vector<double> getTiffTimeStamps() const;
   std::vector<double> getX() const;
   std::vector<double> getZ() const;
@@ -573,7 +572,7 @@ public:
   ptime getRotaryEncoderTriggerTime() const;
   ptime getEpochTime() const;
   void saveTiffTail(const int &, std::string);
-  std::tuple<py::array_t<int16_t>, std::vector<double>> tail(const int &);
+  std::tuple<arma::Cube<int16_t>, std::vector<double>> tail(const int &);
   std::pair<int, int> getChannelLUT();
   std::tuple<double, double, double> getPos(const unsigned int) const;
   std::string getSWTag(const int &) const;

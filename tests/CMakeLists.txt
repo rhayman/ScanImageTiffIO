@@ -17,14 +17,11 @@ if (BUILD_TESTING)
     add_executable(unit_tests
         test_tiffReader.cpp
         test_SITiffIO.cpp
-        ../src/ScanImageTiff.cpp
-        ../src/VRDataFiles.cpp
     )
     
     target_link_libraries(unit_tests PUBLIC 
         ${PROJECT_NAME}
         GTest::gtest_main
-        carma::carma
     )
     include(GoogleTest)
     gtest_discover_tests(unit_tests)
