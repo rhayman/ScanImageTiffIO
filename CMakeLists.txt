@@ -31,7 +31,7 @@ option(tiff-contrib "" OFF)
 FetchContent_Declare(
     carma
     GIT_REPOSITORY https://github.com/RUrlus/carma
-    GIT_TAG 0f4ef1f8f0f6213ef31f5fdd37ef3e004896e92e
+    GIT_TAG c1db538e13e291ad0e5c95adb96bb315cc121b8f
 )
 
 FetchContent_Declare(
@@ -96,5 +96,6 @@ install(TARGETS ${PROJECT_NAME}
     PUBLIC_HEADER DESTINATION include
 )
 if (BUILD_TESTING)
+  enable_testing()
   add_subdirectory(tests)
 endif()
