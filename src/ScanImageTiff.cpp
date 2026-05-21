@@ -289,13 +289,13 @@ ptime SITiffHeader::getEpochTime(TIFF *m_tif) {
 class SITiffReader
 ------------------------------------------------------------*/
 SITiffReader::~SITiffReader() {
-  if (headerdata)
-    delete headerdata;
+  close();
 }
 bool SITiffReader::open() {
+  close();
   m_tif = TIFFOpen(m_filename.c_str(), "r");
   if (m_tif) {
-    headerdata = new SITiffHeader{this};
+    headerdata = std::make_unique<SITiffHeader>(this);
     headerdata->versionCheck(m_tif);
     headerdata->getSoftwareTag(m_tif);
     headerdata->getEpochTime(m_tif);
@@ -404,7 +404,10 @@ arma::Mat<int16_t> SITiffReader::readframe(int framedir) {
           auto slsz = TIFFScanlineSize(m_tif);
           for (row = 0; row < h; row++) {
             TIFFReadScanline(m_tif, buf, row);
-            std::memcpy(frame.colptr(row), (int16_t *)buf, slsz);
+            auto *src = static_cast<int16_t *>(buf);
+            for (uint32_t col = 0; col < w; ++col) {
+              frame(row, col) = src[col];
+            }
           }
           _TIFFfree(buf);
           return std::move(frame);
@@ -418,12 +421,12 @@ arma::Mat<int16_t> SITiffReader::readframe(int framedir) {
 bool SITiffReader::close() {
   if (m_tif) {
     TIFFClose(m_tif);
-    m_tif = NULL;
+    m_tif = nullptr;
     isopened = false;
-    if (headerdata)
-      delete headerdata;
+    headerdata.reset();
     return true;
   }
+  headerdata.reset();
   return false;
 }
 // ######################################################################
@@ -513,14 +516,19 @@ bool SITiffWriter::writeLibTiff(arma::Mat<int16_t> &img,
   tdata_t buf = _TIFFmalloc(scanlineSize);
 
   for (int y = 0; y < height; ++y) {
-    std::memcpy((int16_t *)buf, img.colptr(y), scanlineSize);
+    auto *dst = static_cast<int16_t *>(buf);
+    for (int x = 0; x < width; ++x) {
+      dst[x] = img(y, x);
+    }
     int writeResult = TIFFWriteScanline(pTiffHandle, buf, y, 0);
     if (writeResult != 1) {
+      _TIFFfree(buf);
       TIFFClose(pTiffHandle);
       opened = false;
       return false;
     }
   }
+  _TIFFfree(buf);
   TIFFWriteDirectory(pTiffHandle); // write into the next directory
   return true;
 }
@@ -953,11 +961,11 @@ std::pair<int, int> SITiffIO::getChannelLUT() {
 std::tuple<py::array_t<int16_t>, std::vector<double>>
 SITiffIO::tail(const int &n) {
   if (TiffReader == nullptr) {
-    std::invalid_argument("No file open for reading!");
+    throw std::invalid_argument("No file open for reading");
   }
   auto n_frames = TiffReader->countDirectories();
   if ((n_frames - n) <= 0) {
-    std::invalid_argument("n minus the total number of frames must be > 0");
+    throw std::invalid_argument("n must be less than total frame count");
   }
   unsigned int w, h;
   TiffReader->getImageSize(h, w);
@@ -978,7 +986,7 @@ void SITiffIO::saveTiffTail(const int &n = 1000, std::string fname = "") {
   // saves the last n frames of the tiff file currently
   // open for reading
   if (TiffReader == nullptr) {
-    std::invalid_argument("No file open for reading!");
+    throw std::invalid_argument("No file open for reading");
   }
   std::string new_name = "";
   if (!TiffWriter) {
@@ -994,7 +1002,7 @@ void SITiffIO::saveTiffTail(const int &n = 1000, std::string fname = "") {
   }
   auto n_frames = TiffReader->countDirectories();
   if ((n_frames - n) <= 0) {
-    std::invalid_argument("n minus the total number of frames must be > 0");
+    throw std::invalid_argument("n must be less than total frame count");
   }
   std::string sw_tag, im_tag;
   int count = 0;
