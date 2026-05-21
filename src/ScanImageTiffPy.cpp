@@ -1,4 +1,5 @@
 #include "../include/ScanImageTiff.h"
+#include "carma_bits/converters.h"
 #include <pybind11/chrono.h>
 #include <pybind11/numpy.h>
 #include <pybind11/operators.h>
@@ -39,10 +40,17 @@ PYBIND11_MODULE(scanimagetiffio, m) {
       .def("get_pos", &twophoton::SITiffIO::getPos,
            "Get the position data for the current frame.",
            py::arg("frame"))
-      .def("get_frame", &twophoton::SITiffIO::readFrame,
+      .def("get_frame",
+           [](twophoton::SITiffIO &self, int frame) {
+             return carma::mat_to_arr(self.readFrame(frame), true);
+           },
            "Get the image data for the current frame.",
            py::arg("frame"))
-      .def("write_frame", &twophoton::SITiffIO::writeFrame,
+      .def("write_frame",
+           [](twophoton::SITiffIO &self, py::array_t<int16_t> frame,
+              unsigned int i_frame) {
+             self.writeFrame(carma::arr_to_mat(frame, true), i_frame);
+           },
            "Write image data to the TIFF file.",
            py::arg("frame"), py::arg("i_frame"))
       .def("get_all_x", &twophoton::SITiffIO::getX,
@@ -89,18 +97,21 @@ PYBIND11_MODULE(scanimagetiffio, m) {
       .def("get_image_description_tag", &twophoton::SITiffIO::getImageDescTag,
            "Get the image description part of the header for frame n.",
            py::arg("frame"))
-      .def("tail", &twophoton::SITiffIO::tail,
+      .def("tail",
+           [](twophoton::SITiffIO &self, int n) {
+             auto [cube, angles] = self.tail(n);
+             return py::make_tuple(carma::cube_to_arr(cube), angles);
+           },
            "Get the last n frames from the file currently open for reading.",
            py::arg("n") = 1000,
-           py::return_value_policy::reference_internal,
            R"pbdoc(
-           Grabs the last n frames of the file currently open for reading as an ndarray.
+            Grabs the last n frames of the file currently open for reading as an ndarray.
 
-           :param n: The number of frames to get.
-           :type n: int
-           :return: A tuple containing an ndarray of the last n frames and a list of the rotation angles for each frame.
-           :rtype: tuple(numpy.ndarray, list[float])
-           )pbdoc")
+            :param n: The number of frames to get.
+            :type n: int
+            :return: A tuple containing an ndarray of the last n frames and a list of the rotation angles for each frame.
+            :rtype: tuple(numpy.ndarray, list[float])
+            )pbdoc")
       .def("save_tail", &twophoton::SITiffIO::saveTiffTail,
            "Save the last n frames of the TIFF file currently open for reading.",
            py::arg("n") = 1000, py::arg("fname") = "",
