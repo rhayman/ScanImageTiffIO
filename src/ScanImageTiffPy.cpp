@@ -6,6 +6,7 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #include <pybind11/stl_bind.h>
+#include <utility>
 
 PYBIND11_MODULE(scanimagetiffio, m) {
 
@@ -42,7 +43,8 @@ PYBIND11_MODULE(scanimagetiffio, m) {
            py::arg("frame"))
       .def("get_frame",
            [](twophoton::SITiffIO &self, int frame) {
-             return carma::mat_to_arr(self.readFrame(frame), true);
+             auto mat = self.readFrame(frame);
+             return carma::mat_to_arr(std::move(mat));
            },
            "Get the image data for the current frame.",
            py::arg("frame"))

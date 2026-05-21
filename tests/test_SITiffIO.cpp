@@ -4,9 +4,6 @@
 #include <filesystem>
 #include <gtest/gtest.h>
 #include <iostream>
-#include <pybind11/numpy.h>
-#include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
 
 namespace fs = std::filesystem;
 
