@@ -53,7 +53,13 @@ install(TARGETS ${PROJECT_NAME}
 )
 
 if (BUILD_PYTHON_BINDINGS)
-    find_package(Python3 COMPONENTS Interpreter Development NumPy REQUIRED)
+    find_package(Python3 COMPONENTS Interpreter Development NumPy)
+    if (NOT Python3_FOUND)
+        message(FATAL_ERROR
+            "BUILD_PYTHON_BINDINGS=ON requires Python3 Interpreter, Development, and NumPy components. "
+            "Install Python development headers and NumPy, or configure with -DBUILD_PYTHON_BINDINGS=OFF."
+        )
+    endif()
     FetchContent_Declare(
         carma
         GIT_REPOSITORY https://github.com/RUrlus/carma
